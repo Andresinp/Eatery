@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  background: #FFFDF7;
+  color: #161413;
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior: none;
+}
+
+/* MapLibre tweaks — hide the default attribution chrome, we'll show a subtle one */
+.maplibregl-ctrl-attrib.maplibregl-compact { display: none; }
+.maplibregl-ctrl-bottom-left,
+.maplibregl-ctrl-bottom-right { opacity: 0.5; }
+
+/* Dashed pill chip */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  border: 1px dashed rgba(22, 20, 19, 0.35);
+  font-size: 12px;
+  font-weight: 500;
+  color: #161413;
+  background: transparent;
+  white-space: nowrap;
+}
+.chip-amber {
+  border-color: rgba(245, 165, 36, 0.7);
+  background: rgba(245, 165, 36, 0.12);
+  color: #3A2A05;
+}
+.chip-leaf {
+  border-color: rgba(111, 185, 91, 0.7);
+  background: rgba(111, 185, 91, 0.12);
+  color: #1F3A12;
+}
+
+/* Custom map pin */
+.pin {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px 6px 6px;
+  border-radius: 9999px;
+  background: white;
+  border: 1.5px solid #161413;
+  box-shadow: 0 6px 14px -6px rgba(20, 16, 8, 0.35);
+  font-weight: 700;
+  font-size: 13px;
+  color: #161413;
+  cursor: pointer;
+  transform: translateY(0);
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 160ms;
+}
+.pin:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px -8px rgba(20, 16, 8, 0.4);
+}
+.pin .dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  line-height: 1;
+}
+.pin-amber .dot { background: #F5A524; color: #3A2A05; }
+.pin-leaf  .dot { background: #6FB95B; color: #1F3A12; }
+.pin.active {
+  background: #161413;
+  color: #FFFDF7;
+  border-color: #161413;
+}
