@@ -1,8 +1,12 @@
-import { jsx as _jsx } from "react/jsx-runtime";
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import MapHome from "./routes/MapHome";
+import ListingDetail from "./routes/ListingDetail";
+import Checkout from "./routes/Checkout";
+import MyOrders from "./routes/MyOrders";
+import OrderDetail from "./routes/OrderDetail";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./index.css";
-ReactDOM.createRoot(document.getElementById("root")).render(_jsx(React.StrictMode, { children: _jsx(BrowserRouter, { children: _jsx(Routes, { children: _jsx(Route, { path: "/", element: _jsx(MapHome, {}) }) }) }) }));
+ReactDOM.createRoot(document.getElementById("root")).render(_jsx(React.StrictMode, { children: _jsx(BrowserRouter, { children: _jsxs(Routes, { children: [_jsx(Route, { path: "/", element: _jsx(MapHome, {}) }), _jsx(Route, { path: "/listing/:id", element: _jsx(ListingDetail, {}) }), _jsx(Route, { path: "/listing/:id/book", element: _jsx(Checkout, {}) }), _jsx(Route, { path: "/orders", element: _jsx(MyOrders, {}) }), _jsx(Route, { path: "/orders/:id", element: _jsx(OrderDetail, {}) })] }) }) }));

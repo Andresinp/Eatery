@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import type { Listing } from "../types";
 import { Chip } from "./Chip";
 
@@ -8,7 +9,9 @@ export default function ListingSheet({
   listing: Listing;
   onClose: () => void;
 }) {
+  const nav = useNavigate();
   const isTable = listing.listing_type === "table";
+  const openDetail = () => nav(`/listing/${listing.id}`);
   return (
     <div className="absolute left-0 right-0 bottom-0 z-30 px-3 pb-3 pointer-events-none">
       <div className="mx-auto max-w-[680px] pointer-events-auto animate-slide-up">
@@ -122,6 +125,7 @@ export default function ListingSheet({
             )}
 
             <button
+              onClick={openDetail}
               className={
                 "w-full py-3.5 rounded-2xl font-semibold text-base border-2 border-ink transition " +
                 (isTable

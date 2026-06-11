@@ -1,22 +1,17 @@
+import { Link } from "react-router-dom";
 import type { Listing } from "../types";
 import { Chip } from "./Chip";
 
-export default function ListView({
-  listings,
-  onSelect,
-}: {
-  listings: Listing[];
-  onSelect: (l: Listing) => void;
-}) {
+export default function ListView({ listings }: { listings: Listing[] }) {
   return (
     <div className="absolute inset-0 z-10 bg-cream-50 overflow-y-auto animate-fade-in">
       <div className="max-w-[760px] mx-auto px-4 pt-24 pb-32 space-y-3">
         {listings.map((l) => {
           const isTable = l.listing_type === "table";
           return (
-            <button
+            <Link
               key={l.id}
-              onClick={() => onSelect(l)}
+              to={`/listing/${l.id}`}
               className="w-full text-left flex gap-3 p-3 rounded-2xl bg-white border-2 border-ink/90 hover:shadow-float transition"
             >
               <img
@@ -58,7 +53,7 @@ export default function ListView({
                   per {isTable ? "seat" : "unit"}
                 </div>
               </div>
-            </button>
+            </Link>
           );
         })}
       </div>

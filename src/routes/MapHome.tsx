@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import maplibregl, { Map as MLMap, Marker } from "maplibre-gl";
 import Logo from "../components/Logo";
 import FloatingButtons from "../components/FloatingButtons";
@@ -95,6 +96,12 @@ export default function MapHome() {
           <Logo />
         </div>
         <div className="flex items-center gap-2 pointer-events-auto">
+          <Link
+            to="/orders"
+            className="px-3 h-11 rounded-full bg-cream-50 border-2 border-ink grid place-items-center text-sm font-semibold shadow-float"
+          >
+            Orders
+          </Link>
           <button
             aria-label="Notifications"
             className="w-11 h-11 rounded-full bg-cream-50 border-2 border-ink grid place-items-center shadow-float"
@@ -130,15 +137,7 @@ export default function MapHome() {
       <div ref={containerRef} className="absolute inset-0" />
 
       {/* List view overlay */}
-      {showList && (
-        <ListView
-          listings={listings}
-          onSelect={(l) => {
-            setSelected(l);
-            setShowList(false);
-          }}
-        />
-      )}
+      {showList && <ListView listings={listings} />}
 
       {/* Floating actions */}
       <FloatingButtons
