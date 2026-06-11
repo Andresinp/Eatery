@@ -4,17 +4,14 @@ import TopBar from "../components/TopBar";
 import PhotoCarousel from "../components/PhotoCarousel";
 import QuantityStepper from "../components/QuantityStepper";
 import { Chip } from "../components/Chip";
-import { mockListings } from "../data/mockListings";
+import { findListing } from "../lib/listings";
 import { depositFor } from "../store/orders";
 import type { Listing, MarketListing, TableListing } from "../types";
 
 export default function ListingDetail() {
   const { id = "" } = useParams();
   const nav = useNavigate();
-  const listing = useMemo<Listing | undefined>(
-    () => mockListings.find((l) => l.id === id),
-    [id],
-  );
+  const listing = useMemo<Listing | undefined>(() => findListing(id), [id]);
   const [qty, setQty] = useState(1);
 
   if (!listing) {

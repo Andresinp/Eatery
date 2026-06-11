@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useParams, useSearchParams, Link } from "react-router-dom";
 import TopBar from "../components/TopBar";
-import { mockListings } from "../data/mockListings";
+import { findListing } from "../lib/listings";
 import { depositFor, useOrders, MOCK_EXACT_ADDRESSES } from "../store/orders";
 import type { MarketListing, TableListing } from "../types";
 
@@ -10,7 +10,7 @@ export default function Checkout() {
   const [search] = useSearchParams();
   const addOrder = useOrders((s) => s.addOrder);
 
-  const listing = useMemo(() => mockListings.find((l) => l.id === id), [id]);
+  const listing = useMemo(() => findListing(id), [id]);
   const qty = Math.max(1, parseInt(search.get("qty") || "1", 10));
 
   const [card, setCard] = useState({ number: "", exp: "", cvc: "" });

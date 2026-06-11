@@ -1,12 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import maplibregl, { Map as MLMap, Marker } from "maplibre-gl";
 import Logo from "../components/Logo";
 import FloatingButtons from "../components/FloatingButtons";
 import ListingSheet from "../components/ListingSheet";
 import ListView from "../components/ListView";
 import FilterPanel from "../components/FilterPanel";
-import { mockListings, MAP_CENTER } from "../data/mockListings";
+import { MAP_CENTER } from "../data/mockListings";
+import { useAllListings } from "../lib/listings";
 import type { Listing } from "../types";
 
 // Free, no-API-key style. Swap to Mapbox via VITE_MAPBOX_TOKEN later.
@@ -20,7 +21,8 @@ export default function MapHome() {
   const [showList, setShowList] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
 
-  const listings = useMemo(() => mockListings, []);
+  const listings = useAllListings();
+  const nav = useNavigate();
 
   // Init map once
   useEffect(() => {
@@ -127,7 +129,10 @@ export default function MapHome() {
           <button className="px-4 py-1.5 rounded-full bg-ink text-cream-50 text-sm font-semibold">
             Guest
           </button>
-          <button className="px-4 py-1.5 rounded-full text-ink/70 text-sm font-semibold">
+          <button
+            onClick={() => nav("/host")}
+            className="px-4 py-1.5 rounded-full text-ink/70 text-sm font-semibold hover:text-ink"
+          >
             Host
           </button>
         </div>
