@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import TopBar from "../components/TopBar";
 import { Chip } from "../components/Chip";
 import { useProfile } from "../store/profile";
+import { useSession } from "../store/session";
+import { isSupabaseConfigured } from "../lib/supabase";
 
 const DIETARY = ["Vegan", "Vegetarian", "Halal", "Kosher", "Gluten-Free", "Nut-Free", "Dairy-Free"];
 const ALLERGENS = ["Gluten", "Dairy", "Eggs", "Nuts", "Peanuts", "Shellfish", "Fish", "Soy", "Sesame"];
@@ -168,17 +170,22 @@ export default function Settings() {
         </Card>
 
         <Card title="Danger zone">
-          <button
-            onClick={() => {
-              if (confirm("Reset your local profile? This clears preferences and onboarding.")) {
-                reset();
-                nav("/onboarding");
-              }
-            }}
-            className="px-4 py-2.5 rounded-xl border-2 border-ink text-sm font-semibold"
-          >
-            Reset profile
-          </button>
+          <div className="flex flex-wrap gap-2">
+            {isSupabaseConfigured && (
+              <SignOutButton />
+            )}
+            <button
+              onClick={() => {
+                if (confirm("Reset your local profile? This clears preferences and onboarding.")) {
+                  reset();
+                  nav("/onboarding");
+                }
+              }}
+              className="px-4 py-2.5 rounded-xl border-2 border-ink text-sm font-semibold"
+            >
+              Reset profile
+            </button>
+          </div>
         </Card>
 
         <div className="text-center pt-2 pb-6">
@@ -186,6 +193,22 @@ export default function Settings() {
         </div>
       </div>
     </div>
+  );
+}
+
+function SignOutButton() {
+  const signOut = useSession((s) => s.signOut);
+  const nav = useNavigate();
+  return (
+    <button
+      onClick={async () => {
+        await signOut();
+        nav("/auth/login");
+      }}
+      className="px-4 py-2.5 rounded-xl border-2 border-ink bg-ink text-cream-50 text-sm font-semibold"
+    >
+      Sign out
+    </button>
   );
 }
 

@@ -16,6 +16,9 @@ import Notifications from "./routes/Notifications";
 import Chat from "./routes/Chat";
 import Onboarding from "./routes/Onboarding";
 import Settings from "./routes/Settings";
+import Login from "./routes/auth/Login";
+import Register from "./routes/auth/Register";
+import Verify from "./routes/auth/Verify";
 import OnboardingGate from "./OnboardingGate";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./index.css";
@@ -32,6 +35,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/chat/:order_id" element={<Chat />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/auth/login" element={<Login />} />
+        <Route path="/auth/register" element={<Register />} />
+        <Route path="/auth/verify" element={<Verify />} />
         <Route path="/listing/:id" element={<ListingDetail />} />
         <Route path="/listing/:id/book" element={<Checkout />} />
         <Route path="/orders" element={<MyOrders />} />
