@@ -3,12 +3,14 @@ import { useParams, useSearchParams, Link } from "react-router-dom";
 import TopBar from "../components/TopBar";
 import { findListing } from "../lib/listings";
 import { depositFor, useOrders, MOCK_EXACT_ADDRESSES } from "../store/orders";
+import { useNotifications } from "../store/notifications";
 import type { MarketListing, TableListing } from "../types";
 
 export default function Checkout() {
   const { id = "" } = useParams();
   const [search] = useSearchParams();
   const addOrder = useOrders((s) => s.addOrder);
+  const pushNotif = useNotifications((s) => s.push);
 
   const listing = useMemo(() => findListing(id), [id]);
   const qty = Math.max(1, parseInt(search.get("qty") || "1", 10));
@@ -64,6 +66,12 @@ export default function Checkout() {
         host_confirmed: false,
         guest_confirmed: false,
         created_at: new Date().toISOString(),
+      });
+      pushNotif({
+        type: "booking_confirmed",
+        title: isTable ? "Your seat is confirmed" : "Your order is confirmed",
+        body: `${listing!.title} with ${listing!.host_name} · ${when}`,
+        data: { order_id: orderId, listing_id: listing!.id },
       });
       setDone(orderId);
       setProcessing(false);

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import TopBar from "../components/TopBar";
 import PhotoCarousel from "../components/PhotoCarousel";
 import QuantityStepper from "../components/QuantityStepper";
@@ -49,13 +49,16 @@ export default function ListingDetail() {
             {listing.title}
           </h1>
 
-          <div className="flex items-center gap-3">
+          <Link
+            to={`/profile/${listing.host_name}`}
+            className="flex items-center gap-3 -mx-1 px-1 py-1 rounded-xl hover:bg-ink/5 transition"
+          >
             <img
               src={listing.host_avatar}
               alt={listing.host_name}
               className="w-12 h-12 rounded-full object-cover border border-ink/20"
             />
-            <div>
+            <div className="flex-1">
               <div className="flex items-center gap-1.5">
                 <span className="font-semibold">{listing.host_name}</span>
                 {listing.host_verified && (
@@ -66,7 +69,8 @@ export default function ListingDetail() {
                 ★ {listing.host_rating.toFixed(2)} · {isTable ? "Host" : "Maker"}
               </div>
             </div>
-          </div>
+            <span className="text-ink/40 text-lg">›</span>
+          </Link>
 
           <p className="text-[15px] text-ink/85 leading-relaxed">{listing.description}</p>
 

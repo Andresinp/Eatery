@@ -8,6 +8,8 @@ import ListView from "../components/ListView";
 import FilterPanel from "../components/FilterPanel";
 import { MAP_CENTER } from "../data/mockListings";
 import { useAllListings } from "../lib/listings";
+import { useNotifications } from "../store/notifications";
+import { useProfile } from "../store/profile";
 import type { Listing } from "../types";
 
 // Free, no-API-key style. Swap to Mapbox via VITE_MAPBOX_TOKEN later.
@@ -23,6 +25,8 @@ export default function MapHome() {
 
   const listings = useAllListings();
   const nav = useNavigate();
+  const unread = useNotifications((s) => s.items.filter((n) => !n.read).length);
+  const avatar = useProfile((s) => s.me.avatar);
 
   // Init map once
   useEffect(() => {
@@ -104,22 +108,27 @@ export default function MapHome() {
           >
             Orders
           </Link>
-          <button
+          <Link
+            to="/notifications"
             aria-label="Notifications"
-            className="w-11 h-11 rounded-full bg-cream-50 border-2 border-ink grid place-items-center shadow-float"
+            className="relative w-11 h-11 rounded-full bg-cream-50 border-2 border-ink grid place-items-center shadow-float"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M6 8a6 6 0 1 1 12 0c0 7 3 7 3 9H3c0-2 3-2 3-9z" />
               <path d="M10 21a2 2 0 0 0 4 0" />
             </svg>
-          </button>
-          <button className="w-11 h-11 rounded-full overflow-hidden border-2 border-ink shadow-float">
-            <img
-              src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&q=80"
-              alt="Profile"
-              className="w-full h-full object-cover"
-            />
-          </button>
+            {unread > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-amber border-2 border-ink text-[10px] font-bold text-amber-ink grid place-items-center">
+                {unread > 9 ? "9+" : unread}
+              </span>
+            )}
+          </Link>
+          <Link
+            to="/profile"
+            className="w-11 h-11 rounded-full overflow-hidden border-2 border-ink shadow-float"
+          >
+            <img src={avatar} alt="Profile" className="w-full h-full object-cover" />
+          </Link>
         </div>
       </header>
 

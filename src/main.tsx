@@ -10,14 +10,28 @@ import HostDashboard from "./routes/HostDashboard";
 import HostNew from "./routes/HostNew";
 import HostManageListing from "./routes/HostManageListing";
 import HostEarnings from "./routes/HostEarnings";
+import Profile from "./routes/Profile";
+import PublicProfile from "./routes/PublicProfile";
+import Notifications from "./routes/Notifications";
+import Chat from "./routes/Chat";
+import Onboarding from "./routes/Onboarding";
+import Settings from "./routes/Settings";
+import OnboardingGate from "./OnboardingGate";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <BrowserRouter>
+      <OnboardingGate />
       <Routes>
         <Route path="/" element={<MapHome />} />
+        <Route path="/onboarding" element={<Onboarding />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/profile/:id" element={<PublicProfile />} />
+        <Route path="/notifications" element={<Notifications />} />
+        <Route path="/chat/:order_id" element={<Chat />} />
+        <Route path="/settings" element={<Settings />} />
         <Route path="/listing/:id" element={<ListingDetail />} />
         <Route path="/listing/:id/book" element={<Checkout />} />
         <Route path="/orders" element={<MyOrders />} />

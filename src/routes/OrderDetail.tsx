@@ -90,9 +90,12 @@ export default function OrderDetail() {
         </div>
 
         <div className="flex gap-3">
-          <button className="flex-1 py-3 rounded-2xl border-2 border-ink font-semibold">
+          <Link
+            to={`/chat/${order.id}`}
+            className="flex-1 py-3 rounded-2xl border-2 border-ink font-semibold text-center"
+          >
             Message host
-          </button>
+          </Link>
           <button className="flex-1 py-3 rounded-2xl border-2 border-ink font-semibold">
             Cancel
           </button>
