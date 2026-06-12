@@ -6,13 +6,19 @@ import QuantityStepper from "../components/QuantityStepper";
 import { Chip } from "../components/Chip";
 import { findListing } from "../lib/listings";
 import { depositFor } from "../store/orders";
+import { useProfile } from "../store/profile";
 import type { Listing, MarketListing, TableListing } from "../types";
 
 export default function ListingDetail() {
   const { id = "" } = useParams();
   const nav = useNavigate();
   const listing = useMemo<Listing | undefined>(() => findListing(id), [id]);
+  const myExclusions = useProfile((s) => s.me.allergen_exclusions);
   const [qty, setQty] = useState(1);
+
+  const conflicts = listing
+    ? listing.allergen_flags.filter((a) => myExclusions.includes(a))
+    : [];
 
   if (!listing) {
     return (
@@ -108,7 +114,19 @@ export default function ListingDetail() {
             ))}
           </div>
 
-          {listing.allergen_flags.length > 0 && (
+          {conflicts.length > 0 && (
+            <div className="rounded-2xl border-2 border-red-600 bg-red-50 px-4 py-3 text-sm text-red-900">
+              <div className="font-display font-extrabold text-base mb-1">
+                ⚠ Contains {conflicts.join(", ")} — you've flagged{" "}
+                {conflicts.length === 1 ? "this" : "these"} as an allergy.
+              </div>
+              <div className="text-red-800/80">
+                You can change this list any time in Settings → Allergens to avoid.
+              </div>
+            </div>
+          )}
+
+          {listing.allergen_flags.length > 0 && conflicts.length === 0 && (
             <div className="rounded-2xl border border-amber/60 bg-amber/10 px-4 py-3 text-sm text-amber-ink">
               <div className="font-semibold mb-0.5">⚠ Allergen alert</div>
               <div>This listing contains: {listing.allergen_flags.join(", ")}.</div>
