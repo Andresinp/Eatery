@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import TopBar from "../components/TopBar";
+import CancelOrderDialog from "../components/CancelOrderDialog";
 import { useOrders } from "../store/orders";
+import type { CancellationReason } from "../lib/cancellation";
 
 export default function OrderDetail() {
   const { id = "" } = useParams();
@@ -10,6 +12,7 @@ export default function OrderDetail() {
 
   const [confirming, setConfirming] = useState(false);
   const [review, setReview] = useState<{ rating: number; comment: string } | null>(null);
+  const [cancelReason, setCancelReason] = useState<CancellationReason | null>(null);
 
   if (!order) {
     return (
@@ -34,7 +37,8 @@ export default function OrderDetail() {
       updateOrder(order.id, { guest_confirmed: true });
       setConfirming(true);
     } else {
-      updateOrder(order.id, { status: "no_show_host", guest_confirmed: true });
+      updateOrder(order.id, { guest_confirmed: true });
+      setCancelReason("no_show_host");
     }
   };
 
@@ -96,7 +100,11 @@ export default function OrderDetail() {
           >
             Message host
           </Link>
-          <button className="flex-1 py-3 rounded-2xl border-2 border-ink font-semibold">
+          <button
+            onClick={() => setCancelReason("by_guest")}
+            disabled={order.status !== "confirmed"}
+            className="flex-1 py-3 rounded-2xl border-2 border-ink font-semibold disabled:opacity-40"
+          >
             Cancel
           </button>
         </div>
@@ -165,8 +173,29 @@ export default function OrderDetail() {
           </div>
         )}
       </div>
+
+      {cancelReason && (
+        <CancelOrderDialog
+          orderId={order.id}
+          reason={cancelReason}
+          eventStartIso={iso(order.listing_snapshot.when)}
+          depositAmount={order.deposit_paid}
+          currency={order.listing_snapshot.currency}
+          onClose={() => setCancelReason(null)}
+          onDone={() => setCancelReason(null)}
+        />
+      )}
     </div>
   );
+}
+
+// Best-effort parser: the listing snapshot stores friendly date strings
+// like "Sat, 20:30" — we treat unparseable values as "now" so the policy
+// falls into the late-cancel bucket. Real bookings have ISO meal_time.
+function iso(raw: string): string {
+  const d = new Date(raw);
+  if (!isNaN(d.getTime())) return d.toISOString();
+  return new Date().toISOString();
 }
 
 function Row({ label, value, bold }: { label: string; value: string; bold?: boolean }) {

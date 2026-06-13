@@ -4,6 +4,7 @@ import TopBar from "../components/TopBar";
 import { Chip } from "../components/Chip";
 import { useHost } from "../store/hostListings";
 import { useOrders, type Order } from "../store/orders";
+import { cancelOrder as remoteCancel, isStripeConfigured } from "../lib/stripe";
 import type { MarketListing, TableListing } from "../types";
 
 export default function HostManageListing() {
@@ -78,12 +79,21 @@ export default function HostManageListing() {
                 <HostOrderRow
                   key={o.id}
                   order={o}
-                  onConfirm={(attended) =>
-                    updateOrder(o.id, {
-                      host_confirmed: true,
-                      status: attended ? "completed" : "no_show_guest",
-                    })
-                  }
+                  onConfirm={async (attended) => {
+                    if (attended) {
+                      updateOrder(o.id, { host_confirmed: true, status: "completed" });
+                      return;
+                    }
+                    if (isStripeConfigured) {
+                      try {
+                        await remoteCancel(o.id, "no_show_guest");
+                      } catch {
+                        // Surface failure but still reflect locally so the
+                        // UI doesn't get stuck.
+                      }
+                    }
+                    updateOrder(o.id, { host_confirmed: true, status: "no_show_guest" });
+                  }}
                 />
               ))}
             </div>

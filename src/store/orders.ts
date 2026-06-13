@@ -25,6 +25,7 @@ export interface Order {
   price_per_unit: number;
   deposit_paid: number;
   balance_due: number;
+  payment_intent_id?: string;
   status: OrderStatus;
   host_confirmed: boolean;
   guest_confirmed: boolean;

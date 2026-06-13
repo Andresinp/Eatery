@@ -4,6 +4,8 @@ import TopBar from "../components/TopBar";
 import { findListing } from "../lib/listings";
 import { depositFor, useOrders, MOCK_EXACT_ADDRESSES } from "../store/orders";
 import { useNotifications } from "../store/notifications";
+import StripeCheckout from "../components/StripeCheckout";
+import { isStripeConfigured } from "../lib/stripe";
 import type { MarketListing, TableListing } from "../types";
 
 export default function Checkout() {
@@ -40,40 +42,49 @@ export default function Checkout() {
     card.cvc.length >= 3 &&
     !processing;
 
-  const submit = () => {
+  const finalize = (
+    paymentIntentId: string | undefined,
+    confirmedDeposit: number,
+    confirmedBalance: number,
+  ) => {
+    const orderId = `o_${Math.random().toString(36).slice(2, 10)}`;
+    addOrder({
+      id: orderId,
+      listing_id: listing!.id,
+      listing_type: listing!.listing_type,
+      listing_snapshot: {
+        title: listing!.title,
+        photo: listing!.photo,
+        host_name: listing!.host_name,
+        host_avatar: listing!.host_avatar,
+        currency: listing!.currency,
+        location_display: listing!.location_display,
+        when,
+      },
+      exact_address: MOCK_EXACT_ADDRESSES[listing!.id] ?? listing!.location_display,
+      quantity: qty,
+      price_per_unit: listing!.price_per_unit,
+      deposit_paid: confirmedDeposit,
+      balance_due: confirmedBalance,
+      payment_intent_id: paymentIntentId,
+      status: "confirmed",
+      host_confirmed: false,
+      guest_confirmed: false,
+      created_at: new Date().toISOString(),
+    });
+    pushNotif({
+      type: "booking_confirmed",
+      title: isTable ? "Your seat is confirmed" : "Your order is confirmed",
+      body: `${listing!.title} with ${listing!.host_name} · ${when}`,
+      data: { order_id: orderId, listing_id: listing!.id },
+    });
+    setDone(orderId);
+  };
+
+  const submitMock = () => {
     setProcessing(true);
     setTimeout(() => {
-      const orderId = `o_${Math.random().toString(36).slice(2, 10)}`;
-      addOrder({
-        id: orderId,
-        listing_id: listing.id,
-        listing_type: listing.listing_type,
-        listing_snapshot: {
-          title: listing.title,
-          photo: listing.photo,
-          host_name: listing.host_name,
-          host_avatar: listing.host_avatar,
-          currency: listing.currency,
-          location_display: listing.location_display,
-          when,
-        },
-        exact_address: MOCK_EXACT_ADDRESSES[listing.id] ?? listing.location_display,
-        quantity: qty,
-        price_per_unit: listing.price_per_unit,
-        deposit_paid: deposit,
-        balance_due: balance,
-        status: "confirmed",
-        host_confirmed: false,
-        guest_confirmed: false,
-        created_at: new Date().toISOString(),
-      });
-      pushNotif({
-        type: "booking_confirmed",
-        title: isTable ? "Your seat is confirmed" : "Your order is confirmed",
-        body: `${listing!.title} with ${listing!.host_name} · ${when}`,
-        data: { order_id: orderId, listing_id: listing!.id },
-      });
-      setDone(orderId);
+      finalize(undefined, deposit, balance);
       setProcessing(false);
     }, 900);
   };
@@ -163,44 +174,61 @@ export default function Checkout() {
         </div>
 
         <div className="rounded-2xl border-2 border-ink/90 bg-white p-4 space-y-3">
-          <div className="font-display font-bold text-lg">Payment</div>
-          <label className="block">
-            <div className="text-xs uppercase tracking-wider text-ink/60 mb-1">Card number</div>
-            <input
-              inputMode="numeric"
-              placeholder="4242 4242 4242 4242"
-              value={card.number}
-              onChange={(e) =>
-                setCard({ ...card, number: e.target.value.replace(/[^\d ]/g, "") })
-              }
-              className="w-full px-3 py-2.5 rounded-xl border border-ink/20 bg-cream-50 focus:outline-none focus:border-ink"
+          <div className="flex items-center justify-between">
+            <div className="font-display font-bold text-lg">Payment</div>
+            <span className="chip">
+              {isStripeConfigured ? "Stripe · live" : "Test mode · mock"}
+            </span>
+          </div>
+
+          {isStripeConfigured ? (
+            <StripeCheckout
+              listingId={listing.id}
+              quantity={qty}
+              currency="EUR"
+              onSuccess={(r) => finalize(r.payment_intent_id, r.deposit, r.balance)}
             />
-          </label>
-          <div className="grid grid-cols-2 gap-3">
-            <label className="block">
-              <div className="text-xs uppercase tracking-wider text-ink/60 mb-1">Expiry</div>
-              <input
-                placeholder="MM/YY"
-                value={card.exp}
-                onChange={(e) => setCard({ ...card, exp: e.target.value })}
-                className="w-full px-3 py-2.5 rounded-xl border border-ink/20 bg-cream-50 focus:outline-none focus:border-ink"
-              />
-            </label>
-            <label className="block">
-              <div className="text-xs uppercase tracking-wider text-ink/60 mb-1">CVC</div>
-              <input
-                placeholder="123"
-                value={card.cvc}
-                onChange={(e) =>
-                  setCard({ ...card, cvc: e.target.value.replace(/\D/g, "") })
-                }
-                className="w-full px-3 py-2.5 rounded-xl border border-ink/20 bg-cream-50 focus:outline-none focus:border-ink"
-              />
-            </label>
-          </div>
-          <div className="text-xs text-ink/60">
-            Stripe will be wired here. Today, this is a mock for the UI flow.
-          </div>
+          ) : (
+            <>
+              <label className="block">
+                <div className="text-xs uppercase tracking-wider text-ink/60 mb-1">Card number</div>
+                <input
+                  inputMode="numeric"
+                  placeholder="4242 4242 4242 4242"
+                  value={card.number}
+                  onChange={(e) =>
+                    setCard({ ...card, number: e.target.value.replace(/[^\d ]/g, "") })
+                  }
+                  className="w-full px-3 py-2.5 rounded-xl border border-ink/20 bg-cream-50 focus:outline-none focus:border-ink"
+                />
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block">
+                  <div className="text-xs uppercase tracking-wider text-ink/60 mb-1">Expiry</div>
+                  <input
+                    placeholder="MM/YY"
+                    value={card.exp}
+                    onChange={(e) => setCard({ ...card, exp: e.target.value })}
+                    className="w-full px-3 py-2.5 rounded-xl border border-ink/20 bg-cream-50 focus:outline-none focus:border-ink"
+                  />
+                </label>
+                <label className="block">
+                  <div className="text-xs uppercase tracking-wider text-ink/60 mb-1">CVC</div>
+                  <input
+                    placeholder="123"
+                    value={card.cvc}
+                    onChange={(e) =>
+                      setCard({ ...card, cvc: e.target.value.replace(/\D/g, "") })
+                    }
+                    className="w-full px-3 py-2.5 rounded-xl border border-ink/20 bg-cream-50 focus:outline-none focus:border-ink"
+                  />
+                </label>
+              </div>
+              <div className="text-xs text-ink/60">
+                Add VITE_STRIPE_PUBLISHABLE_KEY + the Edge Functions to enable real Stripe.
+              </div>
+            </>
+          )}
         </div>
 
         <div className="rounded-2xl border-2 border-ink/90 bg-amber/15 p-4 space-y-1.5 text-sm">
@@ -228,19 +256,21 @@ export default function Checkout() {
         </div>
       </div>
 
-      <div className="fixed left-0 right-0 bottom-0 z-30 p-3 bg-gradient-to-t from-cream-50 via-cream-50/95 to-transparent pt-8">
-        <div className="max-w-[560px] mx-auto">
-          <button
-            disabled={!canPay}
-            onClick={submit}
-            className="w-full py-3.5 rounded-2xl font-semibold text-base border-2 border-ink bg-ink text-cream-50 disabled:opacity-40"
-          >
-            {processing
-              ? "Processing…"
-              : `Pay ${listing.currency}${deposit.toFixed(2)} deposit`}
-          </button>
+      {!isStripeConfigured && (
+        <div className="fixed left-0 right-0 bottom-0 z-30 p-3 bg-gradient-to-t from-cream-50 via-cream-50/95 to-transparent pt-8">
+          <div className="max-w-[560px] mx-auto">
+            <button
+              disabled={!canPay}
+              onClick={submitMock}
+              className="w-full py-3.5 rounded-2xl font-semibold text-base border-2 border-ink bg-ink text-cream-50 disabled:opacity-40"
+            >
+              {processing
+                ? "Processing…"
+                : `Pay ${listing.currency}${deposit.toFixed(2)} deposit`}
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
