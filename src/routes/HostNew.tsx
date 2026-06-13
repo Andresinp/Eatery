@@ -5,6 +5,7 @@ import TopBar from "../components/TopBar";
 import { Chip } from "../components/Chip";
 import { useHost, ME } from "../store/hostListings";
 import { detectAllergensAI, generateDescriptionAI } from "../lib/ai";
+import { MAP_STYLE_URL } from "../lib/map";
 import { MAP_CENTER } from "../data/mockListings";
 import type { Listing, ListingType } from "../types";
 
@@ -608,7 +609,7 @@ function Step4Location({ d, setD }: { d: Draft; setD: (n: Draft) => void }) {
     if (!containerRef.current || mapRef.current) return;
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: "https://tiles.openfreemap.org/styles/positron",
+      style: MAP_STYLE_URL,
       center: [d.lng, d.lat],
       zoom: 13.5,
     });

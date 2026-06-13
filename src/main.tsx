@@ -20,6 +20,7 @@ import Login from "./routes/auth/Login";
 import Register from "./routes/auth/Register";
 import Verify from "./routes/auth/Verify";
 import OnboardingGate from "./OnboardingGate";
+import InstallPrompt from "./components/InstallPrompt";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./index.css";
 
@@ -27,6 +28,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <BrowserRouter>
       <OnboardingGate />
+      <InstallPrompt />
       <Routes>
         <Route path="/" element={<MapHome />} />
         <Route path="/onboarding" element={<Onboarding />} />

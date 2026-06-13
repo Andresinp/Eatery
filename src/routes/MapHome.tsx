@@ -7,13 +7,11 @@ import ListingSheet from "../components/ListingSheet";
 import ListView from "../components/ListView";
 import FilterPanel from "../components/FilterPanel";
 import { MAP_CENTER } from "../data/mockListings";
+import { MAP_STYLE_URL } from "../lib/map";
 import { useAllListings } from "../lib/listings";
 import { useNotifications } from "../store/notifications";
 import { useProfile } from "../store/profile";
 import type { Listing } from "../types";
-
-// Free, no-API-key style. Swap to Mapbox via VITE_MAPBOX_TOKEN later.
-const MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
 
 export default function MapHome() {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -33,7 +31,7 @@ export default function MapHome() {
     if (!containerRef.current || mapRef.current) return;
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: MAP_STYLE,
+      style: MAP_STYLE_URL,
       center: MAP_CENTER,
       zoom: 13.2,
       attributionControl: { compact: true },

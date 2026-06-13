@@ -1,0 +1,47 @@
+{
+  "packageId": "app.eatery.twa",
+  "host": "eatery.app",
+  "name": "Eatery",
+  "launcherName": "Eatery",
+  "display": "standalone",
+  "themeColor": "#F5A524",
+  "navigationColor": "#F5A524",
+  "navigationColorDark": "#161413",
+  "navigationDividerColor": "#F5A524",
+  "navigationDividerColorDark": "#161413",
+  "backgroundColor": "#FFFDF7",
+  "enableNotifications": true,
+  "startUrl": "/",
+  "iconUrl": "https://eatery.app/icon.svg",
+  "maskableIconUrl": "https://eatery.app/icon-maskable.svg",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "android.keystore",
+    "alias": "android"
+  },
+  "appVersionName": "0.1.0",
+  "appVersion": 1,
+  "shortcuts": [
+    {
+      "name": "Find food near me",
+      "shortName": "Map",
+      "url": "/",
+      "iconUrl": "https://eatery.app/icon.svg"
+    },
+    {
+      "name": "Host a meal",
+      "shortName": "Host",
+      "url": "/host/new",
+      "iconUrl": "https://eatery.app/icon.svg"
+    }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "fallbackType": "customtabs",
+  "features": { "playBilling": { "enabled": false } },
+  "alphaDependencies": { "enabled": false },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "orientation": "default",
+  "minSdkVersion": 21
+}
