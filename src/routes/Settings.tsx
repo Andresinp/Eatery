@@ -5,23 +5,19 @@ import { Chip } from "../components/Chip";
 import { useProfile } from "../store/profile";
 import { useSession } from "../store/session";
 import { isSupabaseConfigured } from "../lib/supabase";
+import { SUPPORTED_LANGUAGES, useT, type LanguageCode } from "../i18n";
 
 const DIETARY = ["Vegan", "Vegetarian", "Halal", "Kosher", "Gluten-Free", "Nut-Free", "Dairy-Free"];
 const ALLERGENS = ["Gluten", "Dairy", "Eggs", "Nuts", "Peanuts", "Shellfish", "Fish", "Soy", "Sesame"];
 
-const NOTIF_KEYS = [
-  ["bookings", "Bookings & orders", "When you book or receive an order"],
-  ["reminders", "Reminders", "Day-before and hour-before nudges"],
-  ["messages", "Messages", "New chat messages"],
-  ["reviews", "Review requests", "After a meal or pickup"],
-  ["marketing", "Tips & news", "Occasional updates from Eatery"],
-] as const;
+const NOTIF_KEYS = ["bookings", "reminders", "messages", "reviews", "marketing"] as const;
 
 export default function Settings() {
   const me = useProfile((s) => s.me);
   const update = useProfile((s) => s.update);
   const reset = useProfile((s) => s.reset);
   const nav = useNavigate();
+  const t = useT();
 
   const [email, setEmail] = useState(me.email);
   const [phoneCode, setPhoneCode] = useState("");
@@ -38,18 +34,18 @@ export default function Settings() {
 
   return (
     <div className="min-h-full bg-cream-50 pb-10">
-      <TopBar back title="Settings" />
+      <TopBar back title={t("settings.title")} />
 
       <div className="max-w-[640px] mx-auto px-4 pt-2 space-y-6">
-        <Card title="Account">
-          <Field label="Name">
+        <Card title={t("settings.account")}>
+          <Field label={t("settings.name")}>
             <input
               value={me.name}
               onChange={(e) => update({ name: e.target.value })}
               className="w-full px-3 py-2.5 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink"
             />
           </Field>
-          <Field label="Email">
+          <Field label={t("settings.email")}>
             <input
               type="email"
               value={email}
@@ -59,10 +55,10 @@ export default function Settings() {
               className="w-full px-3 py-2.5 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink"
             />
           </Field>
-          <Field label="Phone verification">
+          <Field label={t("settings.phoneVerification")}>
             {me.phone_verified ? (
               <div className="flex items-center gap-2 text-sm text-leaf-ink">
-                <span className="chip chip-leaf">📞 Verified</span>
+                <span className="chip chip-leaf">📞 {t("settings.verified")}</span>
               </div>
             ) : (
               <div className="flex items-center gap-2">
@@ -71,14 +67,14 @@ export default function Settings() {
                     onClick={() => setPhoneSent(true)}
                     className="px-4 py-2 rounded-xl border-2 border-ink font-semibold text-sm"
                   >
-                    Send SMS code
+                    {t("settings.sendSmsCode")}
                   </button>
                 ) : (
                   <>
                     <input
                       value={phoneCode}
                       onChange={(e) => setPhoneCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                      placeholder="6-digit code"
+                      placeholder={t("settings.sixDigitCode")}
                       className="flex-1 px-3 py-2 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink"
                     />
                     <button
@@ -86,7 +82,7 @@ export default function Settings() {
                       onClick={() => update({ phone_verified: true })}
                       className="px-4 py-2 rounded-xl border-2 border-ink bg-ink text-cream-50 font-semibold text-sm disabled:opacity-40"
                     >
-                      Verify
+                      {t("settings.verify")}
                     </button>
                   </>
                 )}
@@ -95,20 +91,18 @@ export default function Settings() {
           </Field>
         </Card>
 
-        <Card title="Identity verification">
-          <p className="text-sm text-ink/70">
-            Upload a government ID to get a verified badge — guests trust verified hosts.
-          </p>
+        <Card title={t("settings.identity")}>
+          <p className="text-sm text-ink/70">{t("settings.identityHint")}</p>
           <button
             disabled={me.identity_verified}
             onClick={() => update({ identity_verified: true })}
             className="px-4 py-2.5 rounded-xl border-2 border-ink font-semibold text-sm disabled:opacity-50"
           >
-            {me.identity_verified ? "✓ Verified" : "Upload ID (mock)"}
+            {me.identity_verified ? `✓ ${t("settings.verified")}` : t("settings.uploadId")}
           </button>
         </Card>
 
-        <Card title="Dietary preferences">
+        <Card title={t("settings.dietary")}>
           <div className="flex flex-wrap gap-1.5">
             {DIETARY.map((t) => {
               const on = me.dietary_prefs.includes(t);
@@ -121,10 +115,8 @@ export default function Settings() {
           </div>
         </Card>
 
-        <Card title="Allergens to avoid">
-          <p className="text-sm text-ink/70 mb-1">
-            We'll show a warning on any listing that contains these.
-          </p>
+        <Card title={t("settings.allergens")}>
+          <p className="text-sm text-ink/70 mb-1">{t("settings.allergensHint")}</p>
           <div className="flex flex-wrap gap-1.5">
             {ALLERGENS.map((t) => {
               const on = me.allergen_exclusions.includes(t);
@@ -137,53 +129,51 @@ export default function Settings() {
           </div>
         </Card>
 
-        <Card title="Notifications">
+        <Card title={t("settings.notifications")}>
           <div className="space-y-3">
-            {NOTIF_KEYS.map(([key, label, hint]) => (
+            {NOTIF_KEYS.map((key) => (
               <Toggle
                 key={key}
-                label={label}
-                hint={hint}
-                checked={me.notif[key as keyof typeof me.notif]}
-                onChange={(v) => setNotif(key as keyof typeof me.notif, v)}
+                label={t(`notif.${key}` as const)}
+                hint={t(`notif.${key}Hint` as const)}
+                checked={me.notif[key]}
+                onChange={(v) => setNotif(key, v)}
               />
             ))}
           </div>
         </Card>
 
-        <Card title="Payment methods">
-          <p className="text-sm text-ink/70">
-            Stripe-saved cards will live here. None yet.
-          </p>
+        <Card title={t("settings.payment")}>
+          <p className="text-sm text-ink/70">{t("settings.paymentHint")}</p>
         </Card>
 
-        <Card title="Language">
+        <Card title={t("settings.language")}>
           <select
             value={me.language}
-            onChange={(e) => update({ language: e.target.value })}
+            onChange={(e) => update({ language: e.target.value as LanguageCode })}
             className="w-full px-3 py-2.5 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink"
           >
-            <option value="en">English</option>
-            <option value="es">Español</option>
-            <option value="fr">Français</option>
+            {SUPPORTED_LANGUAGES.map((l) => (
+              <option key={l.code} value={l.code}>{l.label}</option>
+            ))}
           </select>
         </Card>
 
-        <Card title="Danger zone">
+        <Card title={t("settings.dangerZone")}>
           <div className="flex flex-wrap gap-2">
             {isSupabaseConfigured && (
               <SignOutButton />
             )}
             <button
               onClick={() => {
-                if (confirm("Reset your local profile? This clears preferences and onboarding.")) {
+                if (confirm(t("settings.resetConfirm"))) {
                   reset();
                   nav("/onboarding");
                 }
               }}
               className="px-4 py-2.5 rounded-xl border-2 border-ink text-sm font-semibold"
             >
-              Reset profile
+              {t("settings.resetProfile")}
             </button>
           </div>
         </Card>
@@ -199,6 +189,7 @@ export default function Settings() {
 function SignOutButton() {
   const signOut = useSession((s) => s.signOut);
   const nav = useNavigate();
+  const t = useT();
   return (
     <button
       onClick={async () => {
@@ -207,7 +198,7 @@ function SignOutButton() {
       }}
       className="px-4 py-2.5 rounded-xl border-2 border-ink bg-ink text-cream-50 text-sm font-semibold"
     >
-      Sign out
+      {t("settings.signOut")}
     </button>
   );
 }
