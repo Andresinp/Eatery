@@ -3,9 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import AuthShell from "./AuthShell";
 import { signUpWithEmail } from "../../lib/auth";
 import { isSupabaseConfigured } from "../../lib/supabase";
+import { useT } from "../../i18n";
 
 export default function Register() {
   const nav = useNavigate();
+  const t = useT();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -20,31 +22,28 @@ export default function Register() {
       setDone(true);
       setTimeout(() => nav("/auth/verify", { state: { email } }), 1200);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong");
+      setError(e instanceof Error ? e.message : t("auth.somethingWrong"));
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <AuthShell
-      title="Create your account"
-      subtitle="Browse open tables, order homemade food, share your cooking."
-    >
+    <AuthShell title={t("auth.createTitle")} subtitle={t("auth.createSubtitle")}>
       {!isSupabaseConfigured && (
         <div className="rounded-xl border border-amber/60 bg-amber/10 text-amber-ink text-sm px-3 py-2">
-          Supabase isn't configured yet. Add credentials to enable account creation.
+          {t("auth.notConfiguredRegister")}
         </div>
       )}
 
       {done ? (
         <div className="rounded-xl border border-leaf/60 bg-leaf/15 text-leaf-ink p-4 text-sm">
-          Check your email to confirm your account, then we'll continue.
+          {t("auth.confirmEmail")}
         </div>
       ) : (
         <>
           <label className="block">
-            <div className="text-xs uppercase tracking-wider text-ink/60 font-semibold mb-1">Email</div>
+            <div className="text-xs uppercase tracking-wider text-ink/60 font-semibold mb-1">{t("common.email")}</div>
             <input
               type="email"
               autoComplete="email"
@@ -54,7 +53,7 @@ export default function Register() {
             />
           </label>
           <label className="block">
-            <div className="text-xs uppercase tracking-wider text-ink/60 font-semibold mb-1">Password</div>
+            <div className="text-xs uppercase tracking-wider text-ink/60 font-semibold mb-1">{t("common.password")}</div>
             <input
               type="password"
               autoComplete="new-password"
@@ -62,7 +61,7 @@ export default function Register() {
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-3 py-2.5 rounded-xl border border-ink/20 bg-cream-50 focus:outline-none focus:border-ink"
             />
-            <div className="text-[11px] text-ink/50 mt-1">At least 8 characters.</div>
+            <div className="text-[11px] text-ink/50 mt-1">{t("onboarding.passwordHint")}</div>
           </label>
 
           {error && (
@@ -76,15 +75,15 @@ export default function Register() {
             onClick={submit}
             className="w-full py-3 rounded-2xl border-2 border-ink bg-ink text-cream-50 font-semibold disabled:opacity-40"
           >
-            {submitting ? "Creating…" : "Create account"}
+            {submitting ? t("auth.creating") : t("auth.createButton")}
           </button>
         </>
       )}
 
       <div className="text-center text-sm text-ink/60 pt-2">
-        Already have an account?{" "}
+        {t("auth.haveAccount")}{" "}
         <Link to="/auth/login" className="font-semibold text-ink underline-offset-4 hover:underline">
-          Sign in
+          {t("auth.signInLink")}
         </Link>
       </div>
     </AuthShell>

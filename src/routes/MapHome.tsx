@@ -1,16 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import maplibregl, { Map as MLMap, Marker } from "maplibre-gl";
 import Logo from "../components/Logo";
 import FloatingButtons from "../components/FloatingButtons";
 import ListingSheet from "../components/ListingSheet";
 import ListView from "../components/ListView";
 import FilterPanel from "../components/FilterPanel";
+import ViewToggle from "../components/ViewToggle";
 import { MAP_CENTER } from "../data/mockListings";
 import { MAP_STYLE_URL } from "../lib/map";
 import { useAllListings } from "../lib/listings";
 import { useNotifications } from "../store/notifications";
 import { useProfile } from "../store/profile";
+import { useT } from "../i18n";
 import type { Listing } from "../types";
 
 export default function MapHome() {
@@ -21,10 +23,10 @@ export default function MapHome() {
   const [showList, setShowList] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
 
-  const listings = useAllListings();
-  const nav = useNavigate();
+  const { listings, loading } = useAllListings();
   const unread = useNotifications((s) => s.items.filter((n) => !n.read).length);
   const avatar = useProfile((s) => s.me.avatar);
+  const t = useT();
 
   // Init map once
   useEffect(() => {
@@ -104,7 +106,7 @@ export default function MapHome() {
             to="/orders"
             className="px-3 h-11 rounded-full bg-cream-50 border-2 border-ink grid place-items-center text-sm font-semibold shadow-float"
           >
-            Orders
+            {t("nav.orders")}
           </Link>
           <Link
             to="/notifications"
@@ -130,23 +132,20 @@ export default function MapHome() {
         </div>
       </header>
 
-      {/* Mode pill */}
+      {/* Guest / Host toggle */}
       <div className="absolute top-[72px] left-1/2 -translate-x-1/2 z-30">
-        <div className="flex items-center gap-1 p-1 rounded-full bg-cream-50 border-2 border-ink shadow-float">
-          <button className="px-4 py-1.5 rounded-full bg-ink text-cream-50 text-sm font-semibold">
-            Guest
-          </button>
-          <button
-            onClick={() => nav("/host")}
-            className="px-4 py-1.5 rounded-full text-ink/70 text-sm font-semibold hover:text-ink"
-          >
-            Host
-          </button>
-        </div>
+        <ViewToggle mode="guest" />
       </div>
 
       {/* Map */}
       <div ref={containerRef} className="absolute inset-0" />
+
+      {/* Loading indicator while listings load from the database */}
+      {loading && (
+        <div className="absolute top-[124px] left-1/2 -translate-x-1/2 z-30 px-4 py-1.5 rounded-full bg-cream-50 border-2 border-ink shadow-float text-sm font-semibold">
+          {t("common.loading")}
+        </div>
+      )}
 
       {/* List view overlay */}
       {showList && <ListView listings={listings} />}

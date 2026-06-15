@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
 import type { Listing } from "../types";
 import { Chip } from "./Chip";
+import { useT } from "../i18n";
 
 export default function ListView({ listings }: { listings: Listing[] }) {
+  const t = useT();
   return (
     <div className="absolute inset-0 z-10 bg-cream-50 overflow-y-auto animate-fade-in">
       <div className="max-w-[760px] mx-auto px-4 pt-24 pb-32 space-y-3">
@@ -22,7 +24,7 @@ export default function ListView({ listings }: { listings: Listing[] }) {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <span className={"chip " + (isTable ? "chip-amber" : "chip-leaf")}>
-                    {isTable ? "🍽 Table" : "🛍 Market"}
+                    {isTable ? `🍽 ${t("map.table")}` : `🛍 ${t("map.market")}`}
                   </span>
                   <span className="text-xs text-ink/60">★ {l.host_rating.toFixed(2)}</span>
                 </div>
@@ -50,7 +52,7 @@ export default function ListView({ listings }: { listings: Listing[] }) {
                   {l.price_per_unit}
                 </div>
                 <div className="text-[11px] text-ink/60 mt-1">
-                  per {isTable ? "seat" : "unit"}
+                  {isTable ? t("map.perSeat") : t("map.perUnit")}
                 </div>
               </div>
             </Link>

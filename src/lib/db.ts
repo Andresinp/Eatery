@@ -2,7 +2,30 @@ import { supabase } from "./supabase";
 import { mockListings } from "../data/mockListings";
 import { useHost } from "../store/hostListings";
 import type { Listing, MarketListing, TableListing } from "../types";
-import type { ListingRow } from "./database.types";
+import type { ListingRow, ProfileRow } from "./database.types";
+
+// =========================================================================
+// Profiles
+// =========================================================================
+
+export async function fetchProfile(userId: string): Promise<ProfileRow | null> {
+  if (!supabase) return null;
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", userId)
+    .maybeSingle();
+  if (error) return null;
+  return data;
+}
+
+// Profile rows are created by the `on_auth_user_created` trigger, so we update
+// the existing row (RLS allows "update own") rather than inserting.
+export async function updateProfile(id: string, patch: Partial<ProfileRow>) {
+  if (!supabase) return;
+  const { error } = await supabase.from("profiles").update(patch).eq("id", id);
+  if (error) throw error;
+}
 
 // =========================================================================
 // Listings

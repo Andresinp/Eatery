@@ -3,10 +3,12 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import AuthShell from "./AuthShell";
 import { sendPhoneOtp, verifyPhoneOtp } from "../../lib/auth";
 import { isSupabaseConfigured } from "../../lib/supabase";
+import { useT } from "../../i18n";
 
 export default function Verify() {
   const nav = useNavigate();
   const loc = useLocation();
+  const t = useT();
   const seededEmail = (loc.state as { email?: string } | null)?.email ?? "";
 
   const [phone, setPhone] = useState("");
@@ -22,7 +24,7 @@ export default function Verify() {
       await sendPhoneOtp(phone);
       setSent(true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn't send code");
+      setError(e instanceof Error ? e.message : t("auth.couldntSendCode"));
     } finally {
       setSubmitting(false);
     }
@@ -35,7 +37,7 @@ export default function Verify() {
       await verifyPhoneOtp(phone, code);
       nav("/", { replace: true });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Invalid code");
+      setError(e instanceof Error ? e.message : t("auth.invalidCode"));
     } finally {
       setSubmitting(false);
     }
@@ -43,21 +45,17 @@ export default function Verify() {
 
   return (
     <AuthShell
-      title="Verify your phone"
-      subtitle={
-        seededEmail
-          ? `Almost there, ${seededEmail}. Add a phone so hosts can reach you.`
-          : "We send a one-time code by SMS."
-      }
+      title={t("auth.verifyTitle")}
+      subtitle={seededEmail ? `${seededEmail} · ${t("auth.verifySubtitle")}` : t("auth.verifySubtitle")}
     >
       {!isSupabaseConfigured && (
         <div className="rounded-xl border border-amber/60 bg-amber/10 text-amber-ink text-sm px-3 py-2">
-          Supabase isn't configured. SMS verification needs the project's auth provider enabled.
+          {t("auth.verifyNotConfigured")}
         </div>
       )}
 
       <label className="block">
-        <div className="text-xs uppercase tracking-wider text-ink/60 font-semibold mb-1">Phone</div>
+        <div className="text-xs uppercase tracking-wider text-ink/60 font-semibold mb-1">{t("auth.phone")}</div>
         <input
           type="tel"
           autoComplete="tel"
@@ -70,12 +68,12 @@ export default function Verify() {
 
       {sent && (
         <label className="block">
-          <div className="text-xs uppercase tracking-wider text-ink/60 font-semibold mb-1">Code</div>
+          <div className="text-xs uppercase tracking-wider text-ink/60 font-semibold mb-1">{t("auth.code")}</div>
           <input
             inputMode="numeric"
             value={code}
             onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-            placeholder="6-digit code"
+            placeholder={t("auth.sixDigitCode")}
             className="w-full px-3 py-2.5 rounded-xl border border-ink/20 bg-cream-50 focus:outline-none focus:border-ink tracking-widest text-center font-mono text-lg"
           />
         </label>
@@ -93,7 +91,7 @@ export default function Verify() {
           disabled={code.length < 6 || submitting}
           className="w-full py-3 rounded-2xl border-2 border-ink bg-ink text-cream-50 font-semibold disabled:opacity-40"
         >
-          {submitting ? "Verifying…" : "Verify code"}
+          {submitting ? t("auth.verifying") : t("auth.verifyCode")}
         </button>
       ) : (
         <button
@@ -101,13 +99,13 @@ export default function Verify() {
           disabled={phone.length < 6 || submitting || !isSupabaseConfigured}
           className="w-full py-3 rounded-2xl border-2 border-ink bg-ink text-cream-50 font-semibold disabled:opacity-40"
         >
-          {submitting ? "Sending…" : "Send code"}
+          {submitting ? t("auth.sending") : t("auth.sendCode")}
         </button>
       )}
 
       <div className="text-center">
         <Link to="/" className="text-sm text-ink/60 hover:text-ink underline-offset-4 hover:underline">
-          Skip for now
+          {t("auth.skipForNow")}
         </Link>
       </div>
     </AuthShell>
