@@ -82,6 +82,16 @@ export default function HostNew() {
     step === 4 ? true :
     true;
 
+  const formatDate = (isoDate: string, fallback = "Soon") => {
+    if (!isoDate) return fallback;
+    try {
+      const dt = new Date(isoDate + "T00:00:00");
+      return dt.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+    } catch {
+      return isoDate;
+    }
+  };
+
   const publish = () => {
     const id = `mine_${Math.random().toString(36).slice(2, 9)}`;
     const isTable = d.listing_type === "table";
@@ -108,7 +118,7 @@ export default function HostNew() {
           ...base,
           listing_type: "table",
           cuisine_tags: d.category_tags,
-          meal_time: `${d.meal_date || "Soon"}, ${d.meal_time}`,
+          meal_time: `${formatDate(d.meal_date)}, ${d.meal_time}`,
           seats_total: d.seats_total,
           seats_available: d.seats_total,
           dining_setting: d.dining_setting,
@@ -120,8 +130,8 @@ export default function HostNew() {
           product_type_tags: d.category_tags,
           quantity_total: d.quantity_total,
           quantity_available: d.quantity_total,
-          pickup_window_start: `${d.pickup_date || "Sat"} ${d.pickup_start}`,
-          pickup_window_end: `${d.pickup_date || "Sat"} ${d.pickup_end}`,
+          pickup_window_start: `${formatDate(d.pickup_date, "Sat")} ${d.pickup_start}`,
+          pickup_window_end: `${formatDate(d.pickup_date, "Sat")} ${d.pickup_end}`,
         };
     add(listing);
     nav(`/host/listing/${id}`);
@@ -516,9 +526,9 @@ function Step3Logistics({ d, setD }: { d: Draft; setD: (n: Draft) => void }) {
           <div className="grid grid-cols-2 gap-3">
             <Field label="Date">
               <input
+                type="date"
                 value={d.meal_date}
                 onChange={(e) => setD({ ...d, meal_date: e.target.value })}
-                placeholder="Sat"
                 className="w-full px-3 py-2.5 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink"
               />
             </Field>
@@ -570,9 +580,9 @@ function Step3Logistics({ d, setD }: { d: Draft; setD: (n: Draft) => void }) {
           </Field>
           <Field label="Pickup day">
             <input
+              type="date"
               value={d.pickup_date}
               onChange={(e) => setD({ ...d, pickup_date: e.target.value })}
-              placeholder="Sat"
               className="w-full px-3 py-2.5 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink"
             />
           </Field>
@@ -604,6 +614,18 @@ function Step4Location({ d, setD }: { d: Draft; setD: (n: Draft) => void }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MLMap | null>(null);
   const markerRef = useRef<Marker | null>(null);
+  const dRef = useRef(d);
+  dRef.current = d;
+
+  const locateMe = () => {
+    if (!navigator.geolocation || !mapRef.current || !markerRef.current) return;
+    navigator.geolocation.getCurrentPosition((pos) => {
+      const { longitude: lng, latitude: lat } = pos.coords;
+      mapRef.current!.flyTo({ center: [lng, lat], zoom: 14 });
+      markerRef.current!.setLngLat([lng, lat]);
+      setD({ ...dRef.current, lat, lng });
+    });
+  };
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -622,9 +644,20 @@ function Step4Location({ d, setD }: { d: Draft; setD: (n: Draft) => void }) {
       .addTo(map);
     marker.on("dragend", () => {
       const ll = marker.getLngLat();
-      setD({ ...d, lng: ll.lng, lat: ll.lat });
+      setD({ ...dRef.current, lng: ll.lng, lat: ll.lat });
     });
     markerRef.current = marker;
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { longitude: lng, latitude: lat } = pos.coords;
+          map.flyTo({ center: [lng, lat], zoom: 14 });
+          marker.setLngLat([lng, lat]);
+          setD({ ...dRef.current, lat, lng });
+        },
+        () => {},
+      );
+    }
     return () => {
       map.remove();
       mapRef.current = null;
@@ -639,8 +672,15 @@ function Step4Location({ d, setD }: { d: Draft; setD: (n: Draft) => void }) {
         hint="Drag the pin to your spot. Guests see only the neighborhood until they book."
       />
 
-      <div className="rounded-3xl overflow-hidden border-2 border-ink/90 h-72">
+      <div className="rounded-3xl overflow-hidden border-2 border-ink/90 h-72 relative">
         <div ref={containerRef} className="w-full h-full" />
+        <button
+          type="button"
+          onClick={locateMe}
+          className="absolute top-2 right-2 z-10 px-3 py-1.5 rounded-full bg-white border-2 border-ink text-sm font-semibold shadow-float"
+        >
+          📍 My location
+        </button>
       </div>
 
       <Field label="Neighborhood (shown publicly)">

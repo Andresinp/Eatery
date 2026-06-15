@@ -28,7 +28,7 @@ export default function HostDashboard() {
 
   return (
     <div className="min-h-full bg-cream-50 pb-10">
-      <TopBar title="Host" />
+      <TopBar title="Host" mapLink />
 
       <div className="max-w-[760px] mx-auto px-4 pt-2 space-y-5">
         <div className="rounded-3xl border-2 border-ink/90 bg-amber p-5 sm:p-6 shadow-float">

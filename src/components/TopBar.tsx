@@ -8,10 +8,12 @@ export default function TopBar({
   back,
   title,
   transparent,
+  mapLink,
 }: {
   back?: boolean;
   title?: string;
   transparent?: boolean;
+  mapLink?: boolean;
 }) {
   const nav = useNavigate();
   const unread = useNotifications((s) => s.items.filter((n) => !n.read).length);
@@ -41,6 +43,15 @@ export default function TopBar({
         )}
         {title && (
           <div className="font-display font-extrabold text-lg truncate">{title}</div>
+        )}
+        {mapLink && !back && (
+          <Link
+            to="/"
+            aria-label="View map"
+            className="w-9 h-9 rounded-full bg-cream-50 border-2 border-ink grid place-items-center shadow-float flex-none text-base"
+          >
+            🗺
+          </Link>
         )}
       </div>
       <div className="flex items-center gap-2">
