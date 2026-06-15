@@ -17,13 +17,15 @@ export default function OnboardingGate() {
     if (loading) return;
     if (PUBLIC_PATHS.includes(loc.pathname)) return;
 
-    // With Supabase configured, require auth before letting anyone in.
+    // With Supabase configured, anyone without a session needs to authenticate.
+    // First-time users (not yet onboarded) start at the welcome screen, which
+    // offers both "Get started" (new account) and "Login" (existing account).
     if (isSupabaseConfigured && !user) {
-      nav("/auth/login", { replace: true });
+      nav(me.onboarded ? "/auth/login" : "/onboarding", { replace: true });
       return;
     }
 
-    // Either way, run onboarding once.
+    // No Supabase (local mock mode): just run onboarding once.
     if (!me.onboarded) {
       nav("/onboarding", { replace: true });
     }

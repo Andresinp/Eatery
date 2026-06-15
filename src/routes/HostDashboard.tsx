@@ -3,12 +3,14 @@ import { Link } from "react-router-dom";
 import TopBar from "../components/TopBar";
 import { useHost, ME } from "../store/hostListings";
 import { useOrders } from "../store/orders";
+import { useT } from "../i18n";
 import type { MarketListing, TableListing } from "../types";
 
 export default function HostDashboard() {
   const myListings = useHost((s) => s.myListings);
   const orders = useOrders((s) => s.orders);
   const [tab, setTab] = useState<"table" | "market">("table");
+  const t = useT();
 
   const stats = useMemo(() => {
     const myIds = new Set(myListings.map((l) => l.id));
@@ -28,20 +30,20 @@ export default function HostDashboard() {
 
   return (
     <div className="min-h-full bg-cream-50 pb-10">
-      <TopBar title="Host" mapLink />
+      <TopBar toggle="host" />
 
       <div className="max-w-[760px] mx-auto px-4 pt-2 space-y-5">
         <div className="rounded-3xl border-2 border-ink/90 bg-amber p-5 sm:p-6 shadow-float">
           <div className="flex items-start justify-between gap-4">
             <div>
               <div className="text-xs uppercase tracking-wider text-amber-ink/70">
-                Welcome back
+                {t("host.welcomeBack")}
               </div>
               <h1 className="font-display font-extrabold text-3xl sm:text-4xl text-amber-ink leading-tight">
-                Hey, {ME.name}.
+                {t("host.greeting")}, {ME.name}.
               </h1>
               <p className="text-amber-ink/80 text-sm mt-1">
-                Open a table or sell something you made today.
+                {t("host.intro")}
               </p>
             </div>
             <img
@@ -54,48 +56,46 @@ export default function HostDashboard() {
             to="/host/new"
             className="mt-5 inline-flex items-center gap-2 px-5 py-3 rounded-2xl border-2 border-ink bg-ink text-cream-50 font-semibold"
           >
-            + Post a new listing
+            {t("host.postNew")}
           </Link>
         </div>
 
         <div className="grid grid-cols-3 gap-3">
-          <StatCard label="Active listings" value={stats.active} />
-          <StatCard label="Upcoming orders" value={stats.upcoming} />
-          <StatCard label="Est. earnings" value={`€${stats.revenue.toFixed(0)}`} />
+          <StatCard label={t("host.activeListings")} value={stats.active} />
+          <StatCard label={t("host.upcomingOrders")} value={stats.upcoming} />
+          <StatCard label={t("host.earnings")} value={`€${stats.revenue.toFixed(0)}`} />
         </div>
 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1 p-1 rounded-full bg-white border-2 border-ink shadow-float">
             <Tab active={tab === "table"} onClick={() => setTab("table")}>
-              🍽 Tables
+              {t("host.tables")}
             </Tab>
             <Tab active={tab === "market"} onClick={() => setTab("market")}>
-              🛍 Market
+              {t("host.market")}
             </Tab>
           </div>
           <Link
             to="/host/earnings"
             className="text-sm font-semibold text-ink/70 hover:text-ink underline-offset-4 hover:underline"
           >
-            Earnings →
+            {t("host.earningsLink")}
           </Link>
         </div>
 
         {filtered.length === 0 ? (
           <div className="rounded-3xl border-2 border-dashed border-ink/30 p-10 text-center">
             <div className="font-display font-extrabold text-2xl mb-2">
-              {tab === "table" ? "No tables yet" : "Nothing in your market"}
+              {tab === "table" ? t("host.noTablesTitle") : t("host.noMarketTitle")}
             </div>
             <p className="text-ink/60 mb-5">
-              {tab === "table"
-                ? "Open seats at your table for a shared meal."
-                : "Sell a homemade product — cakes, jars, bread, frozen meals."}
+              {tab === "table" ? t("host.noTablesBody") : t("host.noMarketBody")}
             </p>
             <Link
               to="/host/new"
               className="inline-block px-5 py-3 rounded-2xl border-2 border-ink bg-amber text-amber-ink font-semibold"
             >
-              + Post a {tab === "table" ? "table" : "product"}
+              {tab === "table" ? t("host.postTable") : t("host.postProduct")}
             </Link>
           </div>
         ) : (
@@ -125,7 +125,7 @@ export default function HostDashboard() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
                       <span className={"chip " + (isTable ? "chip-amber" : "chip-leaf")}>
-                        {isTable ? "🍽 Table" : "🛍 Market"}
+                        {isTable ? `🍽 ${t("map.table")}` : `🛍 ${t("map.market")}`}
                       </span>
                     </div>
                     <div className="font-display font-bold text-lg leading-tight truncate">
@@ -133,7 +133,7 @@ export default function HostDashboard() {
                     </div>
                     <div className="text-xs text-ink/60">{when}</div>
                     <div className="text-xs text-ink/60">
-                      {left} / {total} {isTable ? "seats" : "units"} left
+                      {left} / {total} {isTable ? t("host.seats") : t("host.units")} {t("host.leftSuffix")}
                     </div>
                   </div>
                   <div className="text-right flex-none">
@@ -142,7 +142,7 @@ export default function HostDashboard() {
                       {l.price_per_unit}
                     </div>
                     <div className="text-[11px] text-ink/60 mt-1">
-                      per {isTable ? "seat" : "unit"}
+                      {isTable ? t("host.perSeat") : t("host.perUnit")}
                     </div>
                   </div>
                 </Link>

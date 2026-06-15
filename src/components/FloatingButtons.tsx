@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useT } from "../i18n";
 
 function FAB({
   onClick,
@@ -38,15 +39,16 @@ export default function FloatingButtons({
   onLocate: () => void;
   listActive: boolean;
 }) {
+  const t = useT();
   return (
     <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-20">
-      <FAB onClick={onFilter} label="Filter">
+      <FAB onClick={onFilter} label={t("fab.filter")}>
         <SlidersIcon />
       </FAB>
-      <FAB onClick={onToggleList} label="List view" active={listActive}>
+      <FAB onClick={onToggleList} label={t("fab.listView")} active={listActive}>
         <ListIcon />
       </FAB>
-      <FAB onClick={onLocate} label="Re-center map">
+      <FAB onClick={onLocate} label={t("fab.recenter")}>
         <LocateIcon />
       </FAB>
     </div>

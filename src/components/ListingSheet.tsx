@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import type { Listing } from "../types";
 import { Chip } from "./Chip";
+import { useT } from "../i18n";
 
 export default function ListingSheet({
   listing,
@@ -10,6 +11,7 @@ export default function ListingSheet({
   onClose: () => void;
 }) {
   const nav = useNavigate();
+  const t = useT();
   const isTable = listing.listing_type === "table";
   const openDetail = () => nav(`/listing/${listing.id}`);
   return (
@@ -24,7 +26,7 @@ export default function ListingSheet({
             />
             <button
               onClick={onClose}
-              aria-label="Close"
+              aria-label={t("common.close")}
               className="absolute top-3 right-3 w-9 h-9 rounded-full bg-cream-50 border-2 border-ink/90 grid place-items-center shadow-float"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -34,7 +36,7 @@ export default function ListingSheet({
             </button>
             <div className="absolute left-3 top-3">
               <span className={"chip " + (isTable ? "chip-amber" : "chip-leaf")}>
-                {isTable ? "🍽 Table" : "🛍 Market"}
+                {isTable ? `🍽 ${t("map.table")}` : `🛍 ${t("map.market")}`}
               </span>
             </div>
             <div className="absolute left-3 bottom-3 right-3 flex items-end justify-between gap-3">
@@ -66,7 +68,7 @@ export default function ListingSheet({
                 <div className="text-xs text-ink/60 flex items-center gap-1">
                   <span>★ {listing.host_rating.toFixed(2)}</span>
                   <span>·</span>
-                  <span>{isTable ? "Host" : "Maker"}</span>
+                  <span>{isTable ? t("map.host") : t("map.maker")}</span>
                 </div>
               </div>
               <div className="text-right">
@@ -75,7 +77,7 @@ export default function ListingSheet({
                   {listing.price_per_unit}
                 </div>
                 <div className="text-[11px] text-ink/60 mt-0.5">
-                  per {isTable ? "seat" : "unit"}
+                  {isTable ? t("map.perSeat") : t("map.perUnit")}
                 </div>
               </div>
             </div>
@@ -90,7 +92,7 @@ export default function ListingSheet({
               )}
               {isTable && (
                 <Chip variant="amber">
-                  {(listing as { seats_available: number }).seats_available} seats left
+                  {(listing as { seats_available: number }).seats_available} {t("map.seatsLeft")}
                 </Chip>
               )}
               {!isTable && (
@@ -101,7 +103,7 @@ export default function ListingSheet({
               )}
               {!isTable && (
                 <Chip variant="leaf">
-                  {(listing as { quantity_available: number }).quantity_available} left
+                  {(listing as { quantity_available: number }).quantity_available} {t("map.left")}
                 </Chip>
               )}
               {isTable &&
@@ -119,7 +121,7 @@ export default function ListingSheet({
 
             {listing.allergen_flags.length > 0 && (
               <div className="rounded-2xl border border-amber/60 bg-amber/10 px-3 py-2 text-xs text-amber-ink">
-                <span className="font-semibold">⚠ Contains:</span>{" "}
+                <span className="font-semibold">⚠ {t("map.contains")}</span>{" "}
                 {listing.allergen_flags.join(", ")}
               </div>
             )}
@@ -133,7 +135,7 @@ export default function ListingSheet({
                   : "bg-leaf text-leaf-ink hover:bg-leaf-deep hover:text-cream-50")
               }
             >
-              {isTable ? "Book a Seat" : "Order Now"}
+              {isTable ? t("map.bookSeat") : t("map.orderNow")}
             </button>
           </div>
         </div>

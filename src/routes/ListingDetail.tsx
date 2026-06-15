@@ -1,20 +1,22 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import TopBar from "../components/TopBar";
 import PhotoCarousel from "../components/PhotoCarousel";
 import QuantityStepper from "../components/QuantityStepper";
 import { Chip } from "../components/Chip";
-import { findListing } from "../lib/listings";
+import { useListing } from "../lib/listings";
 import { depositFor } from "../store/orders";
 import { useProfile } from "../store/profile";
-import type { Listing, MarketListing, TableListing } from "../types";
+import { useT } from "../i18n";
+import type { MarketListing, TableListing } from "../types";
 
 export default function ListingDetail() {
   const { id = "" } = useParams();
   const nav = useNavigate();
-  const listing = useMemo<Listing | undefined>(() => findListing(id), [id]);
+  const { listing, loading } = useListing(id);
   const myExclusions = useProfile((s) => s.me.allergen_exclusions);
   const [qty, setQty] = useState(1);
+  const t = useT();
 
   const conflicts = listing
     ? listing.allergen_flags.filter((a) => myExclusions.includes(a))
@@ -23,8 +25,10 @@ export default function ListingDetail() {
   if (!listing) {
     return (
       <div className="min-h-full">
-        <TopBar back title="Listing not found" />
-        <div className="p-6 text-ink/70">This listing no longer exists.</div>
+        <TopBar back title={loading ? "Loading…" : "Listing not found"} />
+        <div className="p-6 text-ink/70">
+          {loading ? "Loading…" : "This listing no longer exists."}
+        </div>
       </div>
     );
   }
@@ -46,7 +50,7 @@ export default function ListingDetail() {
         <div className="rounded-3xl bg-cream-50 border-2 border-ink/90 shadow-sheet p-5 sm:p-6 space-y-5">
           <div className="flex items-center gap-2">
             <span className={"chip " + (isTable ? "chip-amber" : "chip-leaf")}>
-              {isTable ? "🍽 Table" : "🛍 Market"}
+              {isTable ? `🍽 ${t("map.table")}` : `🛍 ${t("map.market")}`}
             </span>
             <span className="text-xs text-ink/60">{listing.location_display}</span>
           </div>
@@ -72,7 +76,7 @@ export default function ListingDetail() {
                 )}
               </div>
               <div className="text-xs text-ink/60">
-                ★ {listing.host_rating.toFixed(2)} · {isTable ? "Host" : "Maker"}
+                ★ {listing.host_rating.toFixed(2)} · {isTable ? t("map.host") : t("map.maker")}
               </div>
             </div>
             <span className="text-ink/40 text-lg">›</span>
@@ -86,7 +90,7 @@ export default function ListingDetail() {
             )}
             {isTable && (
               <Chip variant="amber">
-                {(listing as TableListing).seats_available} / {(listing as TableListing).seats_total} seats
+                {(listing as TableListing).seats_available} / {(listing as TableListing).seats_total} {t("host.seats")}
               </Chip>
             )}
             {isTable && (
@@ -100,7 +104,7 @@ export default function ListingDetail() {
             )}
             {!isTable && (
               <Chip variant="leaf">
-                {(listing as MarketListing).quantity_available} units left
+                {(listing as MarketListing).quantity_available} {t("host.units")} {t("host.leftSuffix")}
               </Chip>
             )}
             {(isTable
@@ -175,7 +179,7 @@ export default function ListingDetail() {
                 : "bg-leaf text-leaf-ink hover:bg-leaf-deep hover:text-cream-50")
             }
           >
-            {max < 1 ? "Sold out" : isTable ? "Book a Seat" : "Order Now"}
+            {max < 1 ? t("map.soldOut") : isTable ? t("map.bookSeat") : t("map.orderNow")}
           </button>
         </div>
       </div>

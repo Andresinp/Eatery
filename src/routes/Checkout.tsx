@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useParams, useSearchParams, Link } from "react-router-dom";
 import TopBar from "../components/TopBar";
-import { findListing } from "../lib/listings";
+import { useListing } from "../lib/listings";
 import { depositFor, useOrders, MOCK_EXACT_ADDRESSES } from "../store/orders";
 import { useNotifications } from "../store/notifications";
 import StripeCheckout from "../components/StripeCheckout";
@@ -14,7 +14,7 @@ export default function Checkout() {
   const addOrder = useOrders((s) => s.addOrder);
   const pushNotif = useNotifications((s) => s.push);
 
-  const listing = useMemo(() => findListing(id), [id]);
+  const { listing, loading } = useListing(id);
   const qty = Math.max(1, parseInt(search.get("qty") || "1", 10));
 
   const [card, setCard] = useState({ number: "", exp: "", cvc: "" });
@@ -25,7 +25,7 @@ export default function Checkout() {
     return (
       <div className="min-h-full">
         <TopBar back title="Checkout" />
-        <div className="p-6 text-ink/70">Listing not found.</div>
+        <div className="p-6 text-ink/70">{loading ? "Loading…" : "Listing not found."}</div>
       </div>
     );
   }
