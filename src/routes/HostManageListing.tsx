@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import TopBar from "../components/TopBar";
 import { Chip } from "../components/Chip";
 import { useHost } from "../store/hostListings";
@@ -9,6 +9,7 @@ import type { MarketListing, TableListing } from "../types";
 
 export default function HostManageListing() {
   const { id = "" } = useParams();
+  const nav = useNavigate();
   const listing = useHost((s) => s.getById(id));
   const remove = useHost((s) => s.remove);
   const orders = useOrders((s) => s.orders);
@@ -103,7 +104,10 @@ export default function HostManageListing() {
         <div className="rounded-2xl border-2 border-ink/90 bg-white p-4">
           <div className="font-display font-bold text-lg mb-2">Actions</div>
           <div className="flex gap-3">
-            <button className="flex-1 py-2.5 rounded-2xl border-2 border-ink font-semibold">
+            <button
+              onClick={() => nav(`/host/listing/${id}/edit`)}
+              className="flex-1 py-2.5 rounded-2xl border-2 border-ink font-semibold"
+            >
               Edit
             </button>
             {confirmDelete ? (
@@ -125,6 +129,21 @@ export default function HostManageListing() {
               </button>
             )}
           </div>
+        </div>
+
+        <div className="flex gap-3">
+          <Link
+            to="/"
+            className="flex-1 py-2.5 rounded-2xl border-2 border-ink font-semibold text-center text-sm"
+          >
+            🗺 View on map
+          </Link>
+          <Link
+            to="/host"
+            className="flex-1 py-2.5 rounded-2xl border-2 border-ink bg-ink text-cream-50 font-semibold text-center text-sm"
+          >
+            Host dashboard
+          </Link>
         </div>
       </div>
     </div>

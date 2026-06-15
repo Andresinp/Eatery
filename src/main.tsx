@@ -9,6 +9,7 @@ import OrderDetail from "./routes/OrderDetail";
 import HostDashboard from "./routes/HostDashboard";
 import HostNew from "./routes/HostNew";
 import HostManageListing from "./routes/HostManageListing";
+import HostEditListing from "./routes/HostEditListing";
 import HostEarnings from "./routes/HostEarnings";
 import Profile from "./routes/Profile";
 import PublicProfile from "./routes/PublicProfile";
@@ -47,6 +48,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <Route path="/host" element={<HostDashboard />} />
         <Route path="/host/new" element={<HostNew />} />
         <Route path="/host/listing/:id" element={<HostManageListing />} />
+        <Route path="/host/listing/:id/edit" element={<HostEditListing />} />
         <Route path="/host/earnings" element={<HostEarnings />} />
       </Routes>
     </BrowserRouter>
