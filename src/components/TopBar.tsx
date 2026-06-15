@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import Logo from "./Logo";
 import { useNotifications } from "../store/notifications";
 import { useProfile } from "../store/profile";
+import { useT } from "../i18n";
 
 export default function TopBar({
   back,
@@ -15,6 +16,7 @@ export default function TopBar({
   const nav = useNavigate();
   const unread = useNotifications((s) => s.items.filter((n) => !n.read).length);
   const avatar = useProfile((s) => s.me.avatar);
+  const t = useT();
 
   return (
     <header
@@ -27,7 +29,7 @@ export default function TopBar({
         {back ? (
           <button
             onClick={() => nav(-1)}
-            aria-label="Back"
+            aria-label={t("common.back")}
             className="w-10 h-10 rounded-full bg-cream-50 border-2 border-ink grid place-items-center shadow-float flex-none"
           >
             ‹
@@ -46,11 +48,11 @@ export default function TopBar({
           to="/orders"
           className="px-3 h-10 rounded-full bg-cream-50 border-2 border-ink grid place-items-center text-sm font-semibold shadow-float"
         >
-          Orders
+          {t("nav.orders")}
         </Link>
         <Link
           to="/notifications"
-          aria-label="Notifications"
+          aria-label={t("nav.notifications")}
           className="relative w-10 h-10 rounded-full bg-cream-50 border-2 border-ink grid place-items-center shadow-float"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -67,7 +69,7 @@ export default function TopBar({
           to="/profile"
           className="w-10 h-10 rounded-full overflow-hidden border-2 border-ink shadow-float flex-none"
         >
-          <img src={avatar} alt="Profile" className="w-full h-full object-cover" />
+          <img src={avatar} alt={t("nav.profile")} className="w-full h-full object-cover" />
         </Link>
       </div>
     </header>
