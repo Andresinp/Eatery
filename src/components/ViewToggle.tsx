@@ -23,14 +23,14 @@ export default function ViewToggle({ mode }: { mode: "guest" | "host" }) {
       role="switch"
       aria-checked={isHost}
       aria-label={`${leftLabel} / ${rightLabel}`}
-      className="flex items-center gap-1 p-1 rounded-full bg-cream-50 border-2 border-ink shadow-float"
+      className="flex items-center gap-0.5 p-0.5 rounded-full bg-cream-50 border-2 border-ink shadow-float"
     >
-      <span className="px-4 py-1.5 rounded-full bg-ink text-cream-50 text-sm font-semibold">
+      <span className="px-2.5 py-1 rounded-full bg-ink text-cream-50 text-xs font-semibold leading-none">
         {leftLabel}
       </span>
       <button
         onClick={onRight}
-        className="px-4 py-1.5 rounded-full text-ink/70 text-sm font-semibold hover:text-ink transition"
+        className="px-2.5 py-1 rounded-full text-ink/60 text-xs font-semibold leading-none hover:text-ink transition"
       >
         {rightLabel}
       </button>

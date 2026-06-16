@@ -92,42 +92,67 @@ html, body, #root {
   background: rgba(245, 165, 36, 0.14);
 }
 
-/* Custom map pin */
+/* Custom map pin
+   Two layers, on purpose:
+   - `.pin-marker` is the element MapLibre owns; it rewrites `transform` on this
+     node on every map frame. It MUST NOT carry a CSS transition or the marker
+     visibly lags/swings while panning.
+   - `.pin` is the visual marker inside it. Hover/active animation lives here so
+     it never fights MapLibre's positioning transform. */
+.pin-marker {
+  display: block;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  line-height: 0;
+}
 .pin {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 10px 6px 6px;
+  gap: 0;
+  padding: 2px;
   border-radius: 9999px;
   background: white;
-  border: 1.5px solid #161413;
-  box-shadow: 0 6px 14px -6px rgba(20, 16, 8, 0.35);
+  border: 1px solid #161413;
+  box-shadow: 0 3px 8px -3px rgba(20, 16, 8, 0.4);
   font-weight: 700;
-  font-size: 13px;
+  font-size: 12px;
   color: #161413;
-  cursor: pointer;
   transform: translateY(0);
-  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 160ms;
+  transition: transform 140ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 140ms;
 }
-.pin:hover {
+.pin-marker:hover .pin {
   transform: translateY(-2px);
-  box-shadow: 0 10px 20px -8px rgba(20, 16, 8, 0.4);
+  box-shadow: 0 8px 16px -6px rgba(20, 16, 8, 0.45);
 }
 .pin .dot {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   border-radius: 9999px;
   display: grid;
   place-items: center;
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1;
+  flex: none;
 }
 .pin-amber .dot { background: #F5A524; color: #3A2A05; }
 .pin-leaf  .dot { background: #6FB95B; color: #1F3A12; }
-.pin.active {
+/* Price is hidden by default to keep the map clean; it reveals when the marker
+   is active (tapped). The expanded pill then shows the icon + price. */
+.pin .price {
+  display: none;
+  padding: 0 7px 0 4px;
+  white-space: nowrap;
+}
+.pin-marker.active .pin {
   background: #161413;
   color: #FFFDF7;
   border-color: #161413;
+}
+.pin-marker.active .price {
+  display: inline;
 }
 
 /* WhatsApp-style centre pin for precise location picking.
