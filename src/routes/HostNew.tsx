@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import maplibregl, { Map as MLMap, Marker } from "maplibre-gl";
+import maplibregl, { Map as MLMap } from "maplibre-gl";
 import TopBar from "../components/TopBar";
 import { Chip } from "../components/Chip";
 import { useHost, ME } from "../store/hostListings";
 import { detectAllergensAI, generateDescriptionAI } from "../lib/ai";
-import { MAP_STYLE_URL } from "../lib/map";
+import { MAP_STYLE_URL, reverseGeocode } from "../lib/map";
 import { MAP_CENTER } from "../data/mockListings";
 import type { Listing, ListingType } from "../types";
 
@@ -613,17 +613,48 @@ function Step3Logistics({ d, setD }: { d: Draft; setD: (n: Draft) => void }) {
 function Step4Location({ d, setD }: { d: Draft; setD: (n: Draft) => void }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MLMap | null>(null);
-  const markerRef = useRef<Marker | null>(null);
   const dRef = useRef(d);
   dRef.current = d;
 
+  // True while the map is panning/zooming under the fixed centre pin.
+  const [moving, setMoving] = useState(false);
+  // True while a reverse-geocode lookup for the current point is in flight.
+  const [geoLoading, setGeoLoading] = useState(false);
+  const geoAbort = useRef<AbortController | null>(null);
+  const geoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Debounced reverse geocode: cancels any in-flight lookup, waits for the
+  // pin to settle, then fills the neighborhood from the dropped point.
+  const runGeocode = (lat: number, lng: number) => {
+    if (geoTimer.current) clearTimeout(geoTimer.current);
+    geoTimer.current = setTimeout(async () => {
+      geoAbort.current?.abort();
+      const ctrl = new AbortController();
+      geoAbort.current = ctrl;
+      setGeoLoading(true);
+      const res = await reverseGeocode(lat, lng, ctrl.signal);
+      if (ctrl.signal.aborted) return;
+      setGeoLoading(false);
+      if (res?.neighborhood) {
+        setD({ ...dRef.current, neighborhood: res.neighborhood });
+      }
+    }, 450);
+  };
+
+  // Lock the selected location to wherever the map centre now sits.
+  const commitCenter = () => {
+    const map = mapRef.current;
+    if (!map) return;
+    const c = map.getCenter();
+    setD({ ...dRef.current, lat: c.lat, lng: c.lng });
+    runGeocode(c.lat, c.lng);
+  };
+
   const locateMe = () => {
-    if (!navigator.geolocation || !mapRef.current || !markerRef.current) return;
+    if (!navigator.geolocation || !mapRef.current) return;
     navigator.geolocation.getCurrentPosition((pos) => {
       const { longitude: lng, latitude: lat } = pos.coords;
-      mapRef.current!.flyTo({ center: [lng, lat], zoom: 14 });
-      markerRef.current!.setLngLat([lng, lat]);
-      setD({ ...dRef.current, lat, lng });
+      mapRef.current!.flyTo({ center: [lng, lat], zoom: 15 });
     });
   };
 
@@ -633,32 +664,29 @@ function Step4Location({ d, setD }: { d: Draft; setD: (n: Draft) => void }) {
       container: containerRef.current,
       style: MAP_STYLE_URL,
       center: [d.lng, d.lat],
-      zoom: 13.5,
+      zoom: 14,
     });
     mapRef.current = map;
-    const el = document.createElement("div");
-    el.className = "pin pin-amber";
-    el.innerHTML = `<span class="dot">📍</span><span>Drag me</span>`;
-    const marker = new maplibregl.Marker({ element: el, draggable: true, anchor: "bottom" })
-      .setLngLat([d.lng, d.lat])
-      .addTo(map);
-    marker.on("dragend", () => {
-      const ll = marker.getLngLat();
-      setD({ ...dRef.current, lng: ll.lng, lat: ll.lat });
+    // The pin stays centred; users move the MAP underneath it. We mirror that
+    // motion with the lift/shadow animation and commit on settle.
+    map.on("movestart", () => setMoving(true));
+    map.on("moveend", () => {
+      setMoving(false);
+      commitCenter();
     });
-    markerRef.current = marker;
+    map.on("load", () => commitCenter());
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const { longitude: lng, latitude: lat } = pos.coords;
-          map.flyTo({ center: [lng, lat], zoom: 14 });
-          marker.setLngLat([lng, lat]);
-          setD({ ...dRef.current, lat, lng });
+          map.flyTo({ center: [lng, lat], zoom: 15 });
         },
         () => {},
       );
     }
     return () => {
+      geoAbort.current?.abort();
+      if (geoTimer.current) clearTimeout(geoTimer.current);
       map.remove();
       mapRef.current = null;
     };
@@ -669,11 +697,42 @@ function Step4Location({ d, setD }: { d: Draft; setD: (n: Draft) => void }) {
     <div className="space-y-5">
       <Section
         title="Where are you?"
-        hint="Drag the pin to your spot. Guests see only the neighborhood until they book."
+        hint="Drag the map so the pin sits on your spot. Guests see only the neighborhood until they book."
       />
 
       <div className="rounded-3xl overflow-hidden border-2 border-ink/90 h-72 relative">
         <div ref={containerRef} className="w-full h-full" />
+
+        {/* Dim the surroundings while moving to focus on the selected point */}
+        <div className={"map-dim" + (moving ? " is-moving" : "")} />
+
+        {/* WhatsApp-style fixed centre pin: floats above, anchors to a precise
+            ground point + shadow that marks the exact coordinate. */}
+        <div className={"center-pin" + (moving ? " is-moving" : "")}>
+          <div className="center-pin-marker">
+            <svg width="34" height="46" viewBox="0 0 34 46" aria-hidden="true">
+              <path
+                d="M17 1C8.7 1 2 7.7 2 16c0 10.5 13.4 26.4 14 27.1.5.6 1.5.6 2 0C18.6 42.4 32 26.5 32 16 32 7.7 25.3 1 17 1z"
+                fill="#F5A524"
+                stroke="#161413"
+                strokeWidth="2"
+              />
+              <circle cx="17" cy="16" r="6" fill="#fff" stroke="#161413" strokeWidth="1.5" />
+            </svg>
+          </div>
+          <div className="center-pin-shadow" />
+          <div className="center-pin-dot" />
+        </div>
+
+        <div className="map-zoom">
+          <button type="button" aria-label="Zoom in" onClick={() => mapRef.current?.zoomIn()}>
+            +
+          </button>
+          <button type="button" aria-label="Zoom out" onClick={() => mapRef.current?.zoomOut()}>
+            −
+          </button>
+        </div>
+
         <button
           type="button"
           onClick={locateMe}
@@ -684,11 +743,16 @@ function Step4Location({ d, setD }: { d: Draft; setD: (n: Draft) => void }) {
       </div>
 
       <Field label="Neighborhood (shown publicly)">
-        <input
-          value={d.neighborhood}
-          onChange={(e) => setD({ ...d, neighborhood: e.target.value })}
-          className="w-full px-3 py-2.5 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink"
-        />
+        <div className="relative">
+          <input
+            value={d.neighborhood}
+            onChange={(e) => setD({ ...d, neighborhood: e.target.value })}
+            className="w-full px-3 py-2.5 pr-24 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink"
+          />
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-ink/50">
+            {moving ? "Moving…" : geoLoading ? "Locating…" : ""}
+          </span>
+        </div>
       </Field>
 
       <Field label="Exact address (revealed after confirmed orders)">
