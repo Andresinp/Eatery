@@ -95,9 +95,12 @@ function rowToListing(row: ListingWithHost): Listing {
       listing_type: "table",
       cuisine_tags: row.cuisine_tags,
       meal_time: row.meal_time ?? "",
+      meal_end_time: row.meal_end_time ?? undefined,
       seats_total: row.seats_total ?? 0,
       seats_available: row.seats_available ?? 0,
       dining_setting: prettyDining(row.dining_setting),
+      drinks_included: row.drinks_included ?? false,
+      drinks: row.drinks ?? [],
     } satisfies TableListing;
   }
   return {

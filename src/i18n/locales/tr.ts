@@ -112,6 +112,9 @@ const tr: Translations = {
     maker: "Üretici",
     table: "Sofra",
     market: "Market",
+    drinks: "İçecekler dahil:",
+    drinksIncluded: "İçecekler dahil",
+    drinksNotIncluded: "İçecek dahil değil",
   },
   orders: {
     title: "Yaklaşan Rezervasyonlar",

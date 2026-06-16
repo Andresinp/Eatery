@@ -31,6 +31,8 @@ export const mockListings: Listing[] = [
     seats_total: 6,
     seats_available: 3,
     dining_setting: "Indoor Table",
+    drinks_included: true,
+    drinks: ["Water", "Tea"],
   },
   {
     id: "t2",
@@ -57,6 +59,8 @@ export const mockListings: Listing[] = [
     seats_total: 8,
     seats_available: 2,
     dining_setting: "Garden",
+    drinks_included: true,
+    drinks: ["Water", "Wine"],
   },
   {
     id: "t3",
@@ -83,6 +87,7 @@ export const mockListings: Listing[] = [
     seats_total: 5,
     seats_available: 4,
     dining_setting: "Open Kitchen",
+    drinks_included: false,
   },
   {
     id: "t4",
@@ -109,6 +114,8 @@ export const mockListings: Listing[] = [
     seats_total: 10,
     seats_available: 6,
     dining_setting: "Rooftop",
+    drinks_included: true,
+    drinks: ["Water", "Wine", "Tea"],
   },
   {
     id: "m1",

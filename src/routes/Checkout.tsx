@@ -6,6 +6,8 @@ import { depositFor, useOrders, MOCK_EXACT_ADDRESSES } from "../store/orders";
 import { useNotifications } from "../store/notifications";
 import StripeCheckout from "../components/StripeCheckout";
 import { isStripeConfigured } from "../lib/stripe";
+import { useLanguage } from "../i18n";
+import { formatMealTime, formatPickupWindow } from "../lib/datetime";
 import type { MarketListing, TableListing } from "../types";
 
 export default function Checkout() {
@@ -15,6 +17,7 @@ export default function Checkout() {
   const pushNotif = useNotifications((s) => s.push);
 
   const { listing, loading } = useListing(id);
+  const { code: lang } = useLanguage();
   const qty = Math.max(1, parseInt(search.get("qty") || "1", 10));
 
   const [card, setCard] = useState({ number: "", exp: "", cvc: "" });
@@ -32,9 +35,19 @@ export default function Checkout() {
 
   const isTable = listing.listing_type === "table";
   const { total, deposit, balance } = depositFor(listing.price_per_unit, qty);
+  // Capture a human-readable time on the order snapshot so the order detail,
+  // chat and confirmation screens never surface a raw database timestamp.
   const when = isTable
-    ? (listing as TableListing).meal_time
-    : `${(listing as MarketListing).pickup_window_start}–${(listing as MarketListing).pickup_window_end}`;
+    ? formatMealTime(
+        (listing as TableListing).meal_time,
+        lang,
+        (listing as TableListing).meal_end_time,
+      )
+    : formatPickupWindow(
+        (listing as MarketListing).pickup_window_start,
+        (listing as MarketListing).pickup_window_end,
+        lang,
+      );
 
   const canPay =
     card.number.replace(/\s/g, "").length >= 12 &&
@@ -60,6 +73,9 @@ export default function Checkout() {
         currency: listing!.currency,
         location_display: listing!.location_display,
         when,
+        starts_at: isTable
+          ? (listing as TableListing).meal_time
+          : (listing as MarketListing).pickup_window_start,
       },
       exact_address: MOCK_EXACT_ADDRESSES[listing!.id] ?? listing!.location_display,
       quantity: qty,

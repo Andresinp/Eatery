@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import TopBar from "../components/TopBar";
 import { useOrders, type Order } from "../store/orders";
-import { useT } from "../i18n";
+import { useLanguage, useT } from "../i18n";
+import { formatWhen } from "../lib/datetime";
 
 export default function MyOrders() {
   const orders = useOrders((s) => s.orders);
@@ -74,6 +75,7 @@ function Tab({
 function OrderCard({ order }: { order: Order }) {
   const isTable = order.listing_type === "table";
   const t = useT();
+  const { code: lang } = useLanguage();
   return (
     <Link
       to={`/orders/${order.id}`}
@@ -95,7 +97,7 @@ function OrderCard({ order }: { order: Order }) {
           {order.listing_snapshot.title}
         </div>
         <div className="text-xs text-ink/60">
-          {order.listing_snapshot.host_name} · {order.listing_snapshot.when}
+          {order.listing_snapshot.host_name} · {formatWhen(order.listing_snapshot.when, lang)}
         </div>
         <div className="text-xs text-ink/60">
           {order.quantity} × {order.listing_snapshot.currency}

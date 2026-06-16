@@ -3,12 +3,15 @@ import { Link, useParams } from "react-router-dom";
 import TopBar from "../components/TopBar";
 import CancelOrderDialog from "../components/CancelOrderDialog";
 import { useOrders } from "../store/orders";
+import { useLanguage } from "../i18n";
+import { formatWhen } from "../lib/datetime";
 import type { CancellationReason } from "../lib/cancellation";
 
 export default function OrderDetail() {
   const { id = "" } = useParams();
   const order = useOrders((s) => s.getById(id));
   const updateOrder = useOrders((s) => s.updateOrder);
+  const { code: lang } = useLanguage();
 
   const [confirming, setConfirming] = useState(false);
   const [review, setReview] = useState<{ rating: number; comment: string } | null>(null);
@@ -30,6 +33,7 @@ export default function OrderDetail() {
 
   const isTable = order.listing_type === "table";
   const snap = order.listing_snapshot;
+  const when = formatWhen(snap.when, lang);
   const showConfirmPrompt = order.status === "confirmed" && !order.guest_confirmed;
 
   const onAttended = (attended: boolean) => {
@@ -71,7 +75,7 @@ export default function OrderDetail() {
               />
               <div className="text-sm">
                 <div className="font-semibold">{snap.host_name}</div>
-                <div className="text-xs text-ink/60">{snap.when}</div>
+                <div className="text-xs text-ink/60">{when}</div>
               </div>
             </div>
           </div>
@@ -80,7 +84,7 @@ export default function OrderDetail() {
         <div className="rounded-2xl border-2 border-ink/90 bg-white p-4">
           <div className="text-xs uppercase tracking-wider text-ink/60 mb-1">Exact address</div>
           <div className="font-display font-bold text-lg">{order.exact_address}</div>
-          <div className="text-xs text-ink/60 mt-1">{snap.when}</div>
+          <div className="text-xs text-ink/60 mt-1">{when}</div>
         </div>
 
         <div className="rounded-2xl border-2 border-ink/90 bg-white p-4 space-y-1.5 text-sm">
@@ -178,7 +182,7 @@ export default function OrderDetail() {
         <CancelOrderDialog
           orderId={order.id}
           reason={cancelReason}
-          eventStartIso={iso(order.listing_snapshot.when)}
+          eventStartIso={order.listing_snapshot.starts_at ?? iso(order.listing_snapshot.when)}
           depositAmount={order.deposit_paid}
           currency={order.listing_snapshot.currency}
           onClose={() => setCancelReason(null)}

@@ -62,6 +62,27 @@ export function formatMealTime(value: string, lang: string, endTime?: string): s
 }
 
 /**
+ * Format an order snapshot's stored `when` string for display.
+ *
+ * Orders persist a single `when` string captured at booking time. Newer orders
+ * store an already-formatted value, but older persisted orders may hold a raw
+ * ISO timestamp (e.g. "2026-06-28T10:35:34.979365+00:00") or a raw
+ * "<iso>–<iso>" pickup range. This turns any of those into a friendly string
+ * and passes already-human values through untouched.
+ */
+export function formatWhen(value: string, lang: string): string {
+  if (!value) return "";
+  if (!isIso(value)) return value;
+  // A stored pickup range looks like "<iso>–<iso>" (en-dash separator). ISO
+  // timestamps themselves never contain an en-dash, so the split is safe.
+  const dash = value.indexOf("–");
+  if (dash > 0) {
+    return formatPickupWindow(value.slice(0, dash), value.slice(dash + 1), lang);
+  }
+  return formatMealTime(value, lang);
+}
+
+/**
  * Format a market pickup window. Either bound may be ISO or already human.
  *
  * Example: "28 Jun · 10:00–13:00"
