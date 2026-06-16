@@ -19,7 +19,7 @@ const en = {
     close: "Close",
   },
   nav: {
-    orders: "Upcoming Places",
+    orders: "Bookings",
     notifications: "Notifications",
     profile: "Profile",
     settings: "Settings",
@@ -112,12 +112,12 @@ const en = {
     market: "Market",
   },
   orders: {
-    title: "Upcoming Places",
+    title: "Upcoming Bookings",
     upcoming: "Upcoming",
     past: "Past",
     balance: "Balance",
-    emptyUpcomingTitle: "No upcoming places yet",
-    emptyPastTitle: "No past places yet",
+    emptyUpcomingTitle: "No upcoming bookings yet",
+    emptyPastTitle: "No past bookings yet",
     emptyUpcomingBody: "When you book a seat or order a product, it'll show up here.",
     emptyPastBody: "Past meals and pickups will land here once they're done.",
     browseMap: "Browse the map",
@@ -170,6 +170,7 @@ const en = {
     filter: "Filter",
     listView: "List view",
     recenter: "Re-center map",
+    locateDenied: "We couldn't access your location. Check that location access is enabled for this site.",
   },
   settings: {
     title: "Settings",

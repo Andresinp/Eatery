@@ -1,6 +1,8 @@
 import type { Listing } from "../types";
 
-// Centered on Madrid — Malasaña reference point
+// Last-resort fallback center (Madrid — Malasaña) used only when neither GPS
+// nor IP-based location is available. The map detects the user's real location
+// on launch and won't default here unless everything else fails.
 export const MAP_CENTER: [number, number] = [-3.7038, 40.4168];
 
 export const mockListings: Listing[] = [

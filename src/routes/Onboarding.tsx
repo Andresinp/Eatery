@@ -155,14 +155,14 @@ export default function Onboarding() {
               </button>
             )}
           </div>
-          {isLast && (
-            <button
-              onClick={() => nav("/auth/login")}
-              className="w-full text-sm font-semibold text-ink/60 hover:text-ink"
-            >
-              {t("auth.haveAccount")} {t("welcome.login")}
-            </button>
-          )}
+          {/* Always offer a bottom login path — some users look here after
+              reading the onboarding, in addition to the top-right button. */}
+          <button
+            onClick={() => nav("/auth/login")}
+            className="w-full text-sm font-semibold text-ink/60 hover:text-ink"
+          >
+            {t("auth.haveAccount")} {t("welcome.login")}
+          </button>
         </footer>
       </div>
     );
