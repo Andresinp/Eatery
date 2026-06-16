@@ -23,9 +23,13 @@ export interface BaseListing {
 export interface TableListing extends BaseListing {
   listing_type: "table";
   meal_time: string;
+  meal_end_time?: string;
   seats_total: number;
   seats_available: number;
   dining_setting: string;
+  dining_setting_photos?: string[];
+  drinks_included?: boolean;
+  drinks?: string[];
 }
 
 export interface MarketListing extends BaseListing {
