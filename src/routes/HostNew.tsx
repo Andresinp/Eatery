@@ -14,6 +14,15 @@ const PRODUCT_TYPES = ["Baked Goods", "Bread", "Cake", "Frozen Meals", "Jam & Pr
 const DIETARY = ["Vegan", "Vegetarian", "Halal", "Kosher", "Gluten-Free", "Nut-Free", "Dairy-Free"];
 const ALLERGEN_CATEGORIES = ["Gluten", "Dairy", "Eggs", "Nuts", "Peanuts", "Shellfish", "Fish", "Soy", "Sesame", "Mustard", "Celery", "Sulphites", "Molluscs"];
 const DINING_SETTINGS = ["Indoor Table", "Garden", "Terrace", "Rooftop", "Open Kitchen"];
+const DRINK_OPTIONS = ["Water", "Tea", "Coffee", "Juice", "Soda / Coca-Cola", "Beer", "Wine", "Cocktail"];
+const CURRENCIES = [
+  { value: "€", label: "€ EUR" },
+  { value: "$", label: "$ USD" },
+  { value: "£", label: "£ GBP" },
+  { value: "₺", label: "₺ TRY" },
+  { value: "MAD", label: "MAD" },
+  { value: "AED", label: "AED" },
+];
 
 const DEFAULT_PHOTO =
   "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=900&q=80";
@@ -27,11 +36,16 @@ interface Draft {
   dietary_tags: string[];
   allergen_flags: string[];
   price_per_unit: number;
+  currency: string;
   // Table-only
   meal_date: string;
   meal_time: string;
+  meal_end: string;
   seats_total: number;
   dining_setting: string;
+  dining_setting_photos: string[];
+  drinks_included: boolean;
+  drinks: string[];
   // Market-only
   quantity_total: number;
   pickup_date: string;
@@ -53,10 +67,15 @@ const empty: Draft = {
   dietary_tags: [],
   allergen_flags: [],
   price_per_unit: 20,
+  currency: "€",
   meal_date: "",
   meal_time: "20:30",
+  meal_end: "23:00",
   seats_total: 6,
   dining_setting: "Indoor Table",
+  dining_setting_photos: [],
+  drinks_included: false,
+  drinks: [],
   quantity_total: 12,
   pickup_date: "",
   pickup_start: "10:00",
@@ -66,6 +85,19 @@ const empty: Draft = {
   neighborhood: "Malasaña, Madrid",
   exact_address: "",
 };
+
+// "20:30" + "23:00" -> "2h 30m". Handles events that run past midnight.
+function durationLabel(start: string, end: string): string {
+  if (!start || !end) return "";
+  const [sh, sm] = start.split(":").map(Number);
+  const [eh, em] = end.split(":").map(Number);
+  if ([sh, sm, eh, em].some((n) => Number.isNaN(n))) return "";
+  let mins = eh * 60 + em - (sh * 60 + sm);
+  if (mins <= 0) mins += 24 * 60;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return [h ? `${h}h` : "", m ? `${m}m` : ""].filter(Boolean).join(" ") || "0m";
+}
 
 export default function HostNew() {
   const nav = useNavigate();
@@ -108,7 +140,7 @@ export default function HostNew() {
       dietary_tags: d.dietary_tags,
       allergen_flags: d.allergen_flags,
       price_per_unit: d.price_per_unit,
-      currency: "€",
+      currency: d.currency,
       location_lat: d.lat,
       location_lng: d.lng,
       location_display: d.neighborhood || "Madrid",
@@ -118,10 +150,14 @@ export default function HostNew() {
           ...base,
           listing_type: "table",
           cuisine_tags: d.category_tags,
-          meal_time: `${formatDate(d.meal_date)}, ${d.meal_time}`,
+          meal_time: `${formatDate(d.meal_date)}, ${d.meal_time}–${d.meal_end}`,
+          meal_end_time: d.meal_end,
           seats_total: d.seats_total,
           seats_available: d.seats_total,
           dining_setting: d.dining_setting,
+          dining_setting_photos: d.dining_setting_photos,
+          drinks_included: d.drinks_included,
+          drinks: d.drinks_included ? d.drinks : [],
         }
       : {
           ...base,
@@ -248,6 +284,162 @@ function ChipToggle({ tags, value, onChange, variant }: { tags: string[]; value:
   );
 }
 
+function readImageFile(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+function CoverPhotoInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [error, setError] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const fileRef = useRef<HTMLInputElement | null>(null);
+
+  const handleFile = async (file: File | undefined | null) => {
+    if (!file || !file.type.startsWith("image/")) return;
+    setError(false);
+    onChange(await readImageFile(file));
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="relative">
+        <input
+          value={value.startsWith("data:") ? "" : value}
+          onChange={(e) => {
+            setError(false);
+            onChange(e.target.value);
+          }}
+          placeholder={value.startsWith("data:") ? "Uploaded image" : "https://example.com/photo.jpg"}
+          className="w-full px-3 py-2.5 pr-10 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink"
+        />
+        {value && (
+          <button
+            type="button"
+            onClick={() => {
+              setError(false);
+              onChange("");
+            }}
+            aria-label="Clear image"
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-ink/10 hover:bg-ink/20 flex items-center justify-center text-ink/70 text-sm leading-none"
+          >
+            ✕
+          </button>
+        )}
+      </div>
+
+      <div
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragOver(true);
+        }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragOver(false);
+          handleFile(e.dataTransfer.files?.[0]);
+        }}
+        className={
+          "rounded-xl border-2 border-dashed p-3 text-center transition " +
+          (dragOver ? "border-ink bg-amber/10" : "border-ink/20")
+        }
+      >
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => handleFile(e.target.files?.[0])}
+        />
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 border-ink bg-cream-50 text-sm font-semibold hover:bg-amber/20"
+        >
+          ⬆ Upload Image
+        </button>
+        <div className="mt-1 text-[11px] text-ink/50">
+          From your phone or computer — or drag &amp; drop here
+        </div>
+      </div>
+
+      {value && !error && (
+        <img
+          src={value}
+          alt="Preview"
+          onError={() => setError(true)}
+          className="w-full h-40 object-cover rounded-xl border border-ink/15"
+        />
+      )}
+      {value && error && (
+        <div className="rounded-xl border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
+          Couldn’t load image. Please check the URL.
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DiningPhotos({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
+  const MAX = 3;
+  const fileRef = useRef<HTMLInputElement | null>(null);
+
+  const addFiles = async (files: FileList | null) => {
+    if (!files) return;
+    const room = MAX - value.length;
+    const picked = Array.from(files)
+      .filter((f) => f.type.startsWith("image/"))
+      .slice(0, room);
+    if (!picked.length) return;
+    const urls = await Promise.all(picked.map(readImageFile));
+    onChange([...value, ...urls]);
+  };
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {value.map((src, i) => (
+        <div key={i} className="relative w-24 h-24">
+          <img src={src} alt={`Setting ${i + 1}`} className="w-full h-full object-cover rounded-xl border border-ink/15" />
+          <button
+            type="button"
+            onClick={() => onChange(value.filter((_, j) => j !== i))}
+            aria-label="Remove photo"
+            className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-ink text-cream-50 flex items-center justify-center text-xs"
+          >
+            ✕
+          </button>
+        </div>
+      ))}
+      {value.length < MAX && (
+        <>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={(e) => {
+              addFiles(e.target.files);
+              e.target.value = "";
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            className="w-24 h-24 rounded-xl border-2 border-dashed border-ink/30 hover:border-ink text-ink/60 flex flex-col items-center justify-center text-sm"
+          >
+            <span className="text-xl leading-none">＋</span>
+            <span className="text-[11px] mt-0.5">Add photo</span>
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
 function Step0Type({ d, setD }: { d: Draft; setD: (n: Draft) => void }) {
   return (
     <div className="space-y-5">
@@ -357,15 +549,16 @@ function Step1Food({ d, setD }: { d: Draft; setD: (n: Draft) => void }) {
           </div>
         </Field>
 
-        <Field label="Cover photo URL" hint="Image upload coming with Supabase Storage">
-          <input
-            value={d.photo}
-            onChange={(e) => setD({ ...d, photo: e.target.value })}
-            className="w-full px-3 py-2.5 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink"
+        <Field label="Cover photo" hint="Paste an image URL or upload one">
+          <CoverPhotoInput value={d.photo} onChange={(photo) => setD({ ...d, photo })} />
+        </Field>
+
+        <Field label="Dietary tags" hint="Most important for booking decisions">
+          <ChipToggle
+            tags={DIETARY}
+            value={d.dietary_tags}
+            onChange={(next) => setD({ ...d, dietary_tags: next })}
           />
-          {d.photo && (
-            <img src={d.photo} alt="Preview" className="mt-2 w-full h-40 object-cover rounded-xl border border-ink/15" />
-          )}
         </Field>
 
         <Field label={isTable ? "Cuisine" : "Product type"}>
@@ -377,15 +570,71 @@ function Step1Food({ d, setD }: { d: Draft; setD: (n: Draft) => void }) {
           />
         </Field>
 
-        <Field label="Dietary tags">
-          <ChipToggle
-            tags={DIETARY}
-            value={d.dietary_tags}
-            onChange={(next) => setD({ ...d, dietary_tags: next })}
-          />
-        </Field>
+        {isTable && <DrinksSection d={d} setD={setD} />}
       </div>
     </div>
+  );
+}
+
+function DrinksSection({ d, setD }: { d: Draft; setD: (n: Draft) => void }) {
+  const [custom, setCustom] = useState("");
+  const addCustom = () => {
+    const v = custom.trim();
+    if (!v || d.drinks.includes(v)) return setCustom("");
+    setD({ ...d, drinks: [...d.drinks, v] });
+    setCustom("");
+  };
+
+  return (
+    <Field label="Drinks">
+      <div className="flex flex-wrap gap-2">
+        <button type="button" onClick={() => setD({ ...d, drinks_included: true })}>
+          <span className={"chip " + (d.drinks_included ? "chip-amber" : "")}>
+            {d.drinks_included && "✓ "}Drinks included
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setD({ ...d, drinks_included: false, drinks: [] })}
+        >
+          <span className={"chip " + (!d.drinks_included ? "chip-amber" : "")}>
+            {!d.drinks_included && "✓ "}No drinks included
+          </span>
+        </button>
+      </div>
+
+      {d.drinks_included && (
+        <div className="mt-3 space-y-3 rounded-2xl border border-ink/15 bg-white p-3">
+          <ChipToggle
+            tags={Array.from(new Set([...DRINK_OPTIONS, ...d.drinks]))}
+            value={d.drinks}
+            onChange={(next) => setD({ ...d, drinks: next })}
+          />
+          <div className="flex items-center gap-2">
+            <input
+              value={custom}
+              onChange={(e) => setCustom(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  addCustom();
+                }
+              }}
+              placeholder="Add a custom drink (e.g. Ayran)"
+              className="flex-1 px-3 py-2 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink text-sm"
+            />
+            <button
+              type="button"
+              onClick={addCustom}
+              disabled={!custom.trim()}
+              className="px-3 py-2 rounded-xl border-2 border-ink bg-cream-50 text-sm font-semibold disabled:opacity-40"
+            >
+              Add
+            </button>
+          </div>
+        </div>
+      )}
+    </Field>
   );
 }
 
@@ -511,28 +760,42 @@ function Step3Logistics({ d, setD }: { d: Draft; setD: (n: Draft) => void }) {
         hint={isTable ? "When, how many, and where you'll seat them." : "How many you're making, and when guests can come pick up."}
       />
 
-      <Field label={isTable ? "Price per seat (€)" : "Price per unit (€)"}>
-        <input
-          type="number"
-          min={1}
-          value={d.price_per_unit}
-          onChange={(e) => setD({ ...d, price_per_unit: Math.max(0, Number(e.target.value)) })}
-          className="w-full px-3 py-2.5 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink"
-        />
+      <Field label={isTable ? "Price per seat" : "Price per unit"}>
+        <div className="flex gap-2">
+          <input
+            type="number"
+            min={1}
+            value={d.price_per_unit}
+            onChange={(e) => setD({ ...d, price_per_unit: Math.max(0, Number(e.target.value)) })}
+            className="flex-1 px-3 py-2.5 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink"
+          />
+          <select
+            value={d.currency}
+            onChange={(e) => setD({ ...d, currency: e.target.value })}
+            aria-label="Currency"
+            className="px-3 py-2.5 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink font-semibold"
+          >
+            {CURRENCIES.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.label}
+              </option>
+            ))}
+          </select>
+        </div>
       </Field>
 
       {isTable ? (
         <>
+          <Field label="Date">
+            <input
+              type="date"
+              value={d.meal_date}
+              onChange={(e) => setD({ ...d, meal_date: e.target.value })}
+              className="w-full px-3 py-2.5 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink"
+            />
+          </Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Date">
-              <input
-                type="date"
-                value={d.meal_date}
-                onChange={(e) => setD({ ...d, meal_date: e.target.value })}
-                className="w-full px-3 py-2.5 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink"
-              />
-            </Field>
-            <Field label="Arrival time">
+            <Field label="Start time">
               <input
                 type="time"
                 value={d.meal_time}
@@ -540,7 +803,20 @@ function Step3Logistics({ d, setD }: { d: Draft; setD: (n: Draft) => void }) {
                 className="w-full px-3 py-2.5 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink"
               />
             </Field>
+            <Field label="End time">
+              <input
+                type="time"
+                value={d.meal_end}
+                onChange={(e) => setD({ ...d, meal_end: e.target.value })}
+                className="w-full px-3 py-2.5 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink"
+              />
+            </Field>
           </div>
+          {durationLabel(d.meal_time, d.meal_end) && (
+            <p className="text-sm text-ink/60 -mt-2">
+              Duration: <span className="font-semibold text-ink/80">{durationLabel(d.meal_time, d.meal_end)}</span>
+            </p>
+          )}
           <Field label="Seats available">
             <input
               type="number"
@@ -565,6 +841,12 @@ function Step3Logistics({ d, setD }: { d: Draft; setD: (n: Draft) => void }) {
                 </button>
               ))}
             </div>
+          </Field>
+          <Field label="Dining setting photos" hint="Up to 3 — show off the atmosphere">
+            <DiningPhotos
+              value={d.dining_setting_photos}
+              onChange={(next) => setD({ ...d, dining_setting_photos: next })}
+            />
           </Field>
         </>
       ) : (
@@ -790,9 +1072,22 @@ function Step5Preview({ d }: { d: Draft }) {
           </div>
           <p className="text-sm text-ink/80 leading-relaxed">{d.description}</p>
           <div className="flex flex-wrap gap-1.5">
-            {d.category_tags.map((t) => <Chip key={t}>{t}</Chip>)}
             {d.dietary_tags.map((t) => <Chip key={t}>{t}</Chip>)}
+            {d.category_tags.map((t) => <Chip key={t}>{t}</Chip>)}
           </div>
+          {isTable && d.drinks_included && (
+            <div className="text-sm text-ink/80">
+              <span className="font-semibold">🥤 Drinks included</span>
+              {d.drinks.length > 0 && <>: {d.drinks.join(", ")}</>}
+            </div>
+          )}
+          {isTable && d.dining_setting_photos.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {d.dining_setting_photos.map((src, i) => (
+                <img key={i} src={src} alt={`Setting ${i + 1}`} className="w-16 h-16 object-cover rounded-lg border border-ink/15" />
+              ))}
+            </div>
+          )}
           {d.allergen_flags.length > 0 && (
             <div className="rounded-2xl border border-amber/60 bg-amber/10 px-3 py-2 text-xs text-amber-ink">
               <span className="font-semibold">⚠ Contains:</span>{" "}
@@ -805,15 +1100,15 @@ function Step5Preview({ d }: { d: Draft }) {
       <div className="rounded-2xl border-2 border-ink/90 bg-amber/15 p-4 space-y-1 text-sm">
         <div className="flex justify-between">
           <span className="text-ink/80">Per {isTable ? "seat" : "unit"}</span>
-          <span className="font-display font-extrabold text-lg">€{d.price_per_unit}</span>
+          <span className="font-display font-extrabold text-lg">{d.currency}{d.price_per_unit}</span>
         </div>
         <div className="flex justify-between text-ink/70">
           <span>Guest deposit (we collect)</span>
-          <span>€{deposit.toFixed(2)}</span>
+          <span>{d.currency}{deposit.toFixed(2)}</span>
         </div>
         <div className="flex justify-between text-ink/70">
           <span>Balance — paid to you in person</span>
-          <span>€{(d.price_per_unit - deposit).toFixed(2)}</span>
+          <span>{d.currency}{(d.price_per_unit - deposit).toFixed(2)}</span>
         </div>
       </div>
     </div>

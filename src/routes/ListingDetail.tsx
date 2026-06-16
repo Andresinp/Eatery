@@ -40,11 +40,17 @@ export default function ListingDetail() {
   const unit = isTable ? "seat" : "unit";
   const { total, deposit, balance } = depositFor(listing.price_per_unit, qty);
 
+  const diningPhotos = isTable ? (listing as TableListing).dining_setting_photos ?? [] : [];
+  const galleryPhotos =
+    diningPhotos.length > 0
+      ? [listing.photo, ...diningPhotos]
+      : [listing.photo, listing.photo, listing.photo];
+
   return (
     <div className="min-h-full bg-cream-50 pb-32">
       <TopBar back />
 
-      <PhotoCarousel photos={[listing.photo, listing.photo, listing.photo]} alt={listing.title} />
+      <PhotoCarousel photos={galleryPhotos} alt={listing.title} />
 
       <div className="max-w-[760px] mx-auto px-4 sm:px-6 -mt-6 relative">
         <div className="rounded-3xl bg-cream-50 border-2 border-ink/90 shadow-sheet p-5 sm:p-6 space-y-5">
@@ -95,6 +101,13 @@ export default function ListingDetail() {
             )}
             {isTable && (
               <Chip variant="amber">{(listing as TableListing).dining_setting}</Chip>
+            )}
+            {isTable && (listing as TableListing).drinks_included && (
+              <Chip variant="leaf">
+                🥤 {((listing as TableListing).drinks ?? []).length > 0
+                  ? `Drinks: ${((listing as TableListing).drinks ?? []).join(", ")}`
+                  : "Drinks included"}
+              </Chip>
             )}
             {!isTable && (
               <Chip variant="leaf">

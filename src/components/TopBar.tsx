@@ -52,12 +52,6 @@ export default function TopBar({
       </div>
       <div className="flex items-center gap-2">
         <Link
-          to="/orders"
-          className="px-3 h-10 rounded-full bg-cream-50 border-2 border-ink grid place-items-center text-sm font-semibold shadow-float"
-        >
-          {t("nav.orders")}
-        </Link>
-        <Link
           to="/notifications"
           aria-label={t("nav.notifications")}
           className="relative w-10 h-10 rounded-full bg-cream-50 border-2 border-ink grid place-items-center shadow-float"

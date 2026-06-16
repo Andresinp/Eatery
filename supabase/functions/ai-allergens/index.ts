@@ -31,7 +31,19 @@ Given a dish title and description, identify:
   1. Allergens present (only from this fixed list: ${ALLERGEN_CATEGORIES.join(", ")})
   2. Dietary tags that almost certainly apply (only from: ${DIETARY_CATEGORIES.join(", ")})
 
-Be conservative: only flag an allergen if the dish clearly contains it.
+Be thorough about hidden and implied allergens — reason about the whole recipe, not just words you can see:
+  - Ingredient synonyms and brand names (e.g. "Coca-Cola" → none, "Nutella" → Nuts + Dairy).
+  - Compound sauces and prepared items that hide several allergens:
+    "soy sauce" → Soy + Gluten; "béchamel" → Dairy + Gluten; "pesto" → Nuts + Dairy;
+    "tempura" → Gluten; "fish sauce" → Fish; "sesame oil"/"tahini" → Sesame;
+    "teriyaki" → Soy + Gluten; "mayonnaise"/"aioli" → Eggs.
+  - Cuisine-based assumptions when an ingredient is strongly implied by a classic dish
+    (e.g. paella usually contains shellfish; risotto usually contains dairy).
+  - The description may be written in any language — English, Spanish, Turkish, Arabic, etc.
+    Recognise allergen keywords across languages (e.g. "leche"/"süt" → Dairy, "trigo"/"buğday" → Gluten,
+    "huevo"/"yumurta" → Eggs, "pescado"/"balık" → Fish).
+
+Still avoid clear false positives: only flag an allergen when the dish realistically contains it.
 Only suggest a dietary tag if you're confident it applies based on the description.
 
 Return ONLY JSON with this exact shape — no prose, no markdown fences:
