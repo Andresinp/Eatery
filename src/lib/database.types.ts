@@ -106,9 +106,12 @@ export type ListingRow = {
   status: "active" | "full" | "cancelled" | "completed";
   created_at: string;
   meal_time: string | null;
+  meal_end_time: string | null;
   seats_total: number | null;
   seats_available: number | null;
   dining_setting: "indoor_table" | "garden" | "terrace" | "rooftop" | "open_kitchen" | null;
+  drinks_included: boolean | null;
+  drinks: string[] | null;
   product_type_tags: string[];
   quantity_total: number | null;
   quantity_available: number | null;

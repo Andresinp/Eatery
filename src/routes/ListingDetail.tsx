@@ -119,9 +119,9 @@ export default function ListingDetail() {
             )}
             {isTable && (listing as TableListing).drinks_included && (
               <Chip variant="leaf">
-                🥤 {((listing as TableListing).drinks ?? []).length > 0
-                  ? `Drinks: ${((listing as TableListing).drinks ?? []).join(", ")}`
-                  : "Drinks included"}
+                🍷 {((listing as TableListing).drinks ?? []).length > 0
+                  ? `${t("map.drinks")} ${((listing as TableListing).drinks ?? []).join(", ")}`
+                  : t("map.drinksIncluded")}
               </Chip>
             )}
             {!isTable && (

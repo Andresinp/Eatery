@@ -112,6 +112,9 @@ const it: Translations = {
     maker: "Produttore",
     table: "Tavola",
     market: "Mercato",
+    drinks: "Bevande incluse:",
+    drinksIncluded: "Bevande incluse",
+    drinksNotIncluded: "Bevande non incluse",
   },
   orders: {
     title: "Prossime prenotazioni",

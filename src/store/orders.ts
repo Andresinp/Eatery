@@ -18,7 +18,11 @@ export interface Order {
     Listing,
     "title" | "photo" | "host_name" | "host_avatar" | "currency" | "location_display"
   > & {
+    // Human-readable time shown in the UI (e.g. "28 June 2026 · 20:30–23:00").
     when: string;
+    // Machine-readable ISO start, kept for cancellation-policy timing. Optional
+    // so orders persisted before this field still load.
+    starts_at?: string;
   };
   exact_address: string;
   quantity: number;

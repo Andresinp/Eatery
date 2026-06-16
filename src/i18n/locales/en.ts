@@ -110,6 +110,9 @@ const en = {
     maker: "Maker",
     table: "Table",
     market: "Market",
+    drinks: "Drinks included:",
+    drinksIncluded: "Drinks included",
+    drinksNotIncluded: "No drinks included",
   },
   orders: {
     title: "Upcoming Bookings",

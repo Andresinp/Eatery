@@ -1,8 +1,12 @@
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Listing, MarketListing, TableListing } from "../types";
 import { Chip } from "./Chip";
 import { useLanguage, useT } from "../i18n";
 import { formatMealTime, formatPickupWindow } from "../lib/datetime";
+
+// Drag past this many px (downward) to dismiss the sheet on touch release.
+const SWIPE_CLOSE_THRESHOLD = 90;
 
 export default function ListingSheet({
   listing,
@@ -16,12 +20,57 @@ export default function ListingSheet({
   const { code: lang } = useLanguage();
   const isTable = listing.listing_type === "table";
   const seatsLeft = isTable ? (listing as TableListing).seats_available : (listing as MarketListing).quantity_available;
+  const table = isTable ? (listing as TableListing) : null;
+  const drinks = table?.drinks ?? [];
   const openDetail = () => nav(`/listing/${listing.id}`);
+
+  // Swipe-down-to-close. We only follow downward drags and snap back if the
+  // release falls short of the threshold, so the sheet feels like a native
+  // bottom sheet without hijacking normal taps/scrolls.
+  const [dragY, setDragY] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const startY = useRef(0);
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    startY.current = e.touches[0].clientY;
+    setDragging(true);
+  };
+  const onTouchMove = (e: React.TouchEvent) => {
+    const delta = e.touches[0].clientY - startY.current;
+    setDragY(Math.max(0, delta));
+  };
+  const onTouchEnd = () => {
+    setDragging(false);
+    if (dragY > SWIPE_CLOSE_THRESHOLD) onClose();
+    else setDragY(0);
+  };
+
   return (
-    <div className="absolute left-0 right-0 bottom-0 z-30 px-3 pb-3 pointer-events-none">
-      <div className="mx-auto max-w-[680px] pointer-events-auto animate-slide-up">
-        <div className="rounded-3xl bg-cream-50 border-2 border-ink/90 shadow-sheet overflow-hidden">
-          <div className="relative w-full aspect-[16/10] sm:aspect-[2/1] overflow-hidden bg-ink/5">
+    <div
+      className="absolute left-0 right-0 bottom-0 z-30 px-3 pointer-events-none"
+      style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
+    >
+      <div
+        className={
+          "mx-auto max-w-[680px] pointer-events-auto " +
+          (dragY === 0 && !dragging ? "animate-slide-up" : "")
+        }
+        style={{
+          transform: dragY ? `translateY(${dragY}px)` : undefined,
+          transition: dragging ? "none" : "transform 240ms cubic-bezier(0.22, 1, 0.36, 1)",
+        }}
+      >
+        {/* The card is a flex column capped to the viewport (minus safe areas)
+            so it never overflows the top of the screen. The photo header and
+            the booking button stay pinned while the middle scrolls — users
+            always see the start and end of the sheet. */}
+        <div className="flex flex-col max-h-[calc(100dvh_-_env(safe-area-inset-top)_-_env(safe-area-inset-bottom)_-_1.5rem)] rounded-3xl bg-cream-50 border-2 border-ink/90 shadow-sheet overflow-hidden">
+          <div
+            className="relative flex-none w-full aspect-[16/10] sm:aspect-[2/1] overflow-hidden bg-ink/5"
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+          >
             <img
               src={listing.photo}
               alt={listing.title}
@@ -29,6 +78,8 @@ export default function ListingSheet({
             />
             {/* Gradient keeps the overlaid title legible over any photo. */}
             <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/65 via-black/20 to-transparent pointer-events-none" />
+            {/* Grab handle — signals the sheet can be swiped down to dismiss. */}
+            <div className="absolute top-2 left-1/2 -translate-x-1/2 w-10 h-1.5 rounded-full bg-cream-50/80 shadow pointer-events-none" />
             <button
               onClick={onClose}
               aria-label={t("common.close")}
@@ -54,7 +105,7 @@ export default function ListingSheet({
             </div>
           </div>
 
-          <div className="p-4 sm:p-5 space-y-4">
+          <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-5 space-y-4">
             <div className="flex items-center gap-3">
               <img
                 src={listing.host_avatar}
@@ -125,13 +176,39 @@ export default function ListingSheet({
               ))}
             </div>
 
+            {/* Whether drinks come with the table — a booking-relevant fact, so
+                it gets a clear included/not-included badge of its own. */}
+            {table && (
+              <div
+                className={
+                  "rounded-2xl border px-3 py-2 text-xs flex items-start gap-1.5 " +
+                  (table.drinks_included
+                    ? "border-leaf/60 bg-leaf/10 text-leaf-ink"
+                    : "border-ink/15 bg-ink/5 text-ink/60")
+                }
+              >
+                {table.drinks_included ? (
+                  <span>
+                    <span className="font-semibold">🍷 {t("map.drinks")}</span>{" "}
+                    {drinks.length > 0 ? drinks.join(", ") : t("map.drinksIncluded")}
+                  </span>
+                ) : (
+                  <span className="font-semibold">🚫 {t("map.drinksNotIncluded")}</span>
+                )}
+              </div>
+            )}
+
             {listing.allergen_flags.length > 0 && (
               <div className="rounded-2xl border border-amber/60 bg-amber/10 px-3 py-2 text-xs text-amber-ink">
                 <span className="font-semibold">⚠ {t("map.contains")}</span>{" "}
                 {listing.allergen_flags.join(", ")}
               </div>
             )}
+          </div>
 
+          {/* Pinned footer keeps the primary action in view even when the body
+              scrolls, so the end of the sheet is always reachable. */}
+          <div className="flex-none p-4 sm:p-5 pt-3 border-t border-ink/10 bg-cream-50">
             <button
               onClick={openDetail}
               className={

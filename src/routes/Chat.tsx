@@ -3,6 +3,8 @@ import { Link, useParams } from "react-router-dom";
 import TopBar from "../components/TopBar";
 import { useOrders } from "../store/orders";
 import { useMessages } from "../store/messages";
+import { useLanguage } from "../i18n";
+import { formatWhen } from "../lib/datetime";
 
 const ME_ID = "me";
 
@@ -12,6 +14,7 @@ export default function Chat() {
   const messages = useMessages((s) => s.byOrder[order_id] ?? []);
   const send = useMessages((s) => s.send);
   const seedFromHost = useMessages((s) => s.seedFromHost);
+  const { code: lang } = useLanguage();
 
   const [text, setText] = useState("");
   const endRef = useRef<HTMLDivElement | null>(null);
@@ -69,7 +72,7 @@ export default function Chat() {
               {order.listing_snapshot.host_name}
             </div>
             <div className="text-xs text-ink/60 truncate">
-              {order.listing_snapshot.title} · {order.listing_snapshot.when}
+              {order.listing_snapshot.title} · {formatWhen(order.listing_snapshot.when, lang)}
             </div>
           </div>
           <Link
