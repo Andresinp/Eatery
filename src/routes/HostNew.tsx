@@ -3,10 +3,12 @@ import { Link, useNavigate } from "react-router-dom";
 import maplibregl, { Map as MLMap } from "maplibre-gl";
 import TopBar from "../components/TopBar";
 import { Chip } from "../components/Chip";
+import CurrencyPicker from "../components/CurrencyPicker";
 import { useHost, ME } from "../store/hostListings";
 import { detectAllergensAI, generateDescriptionAI } from "../lib/ai";
 import { MAP_STYLE_URL, reverseGeocode } from "../lib/map";
 import { MAP_CENTER } from "../data/mockListings";
+import { useT } from "../i18n";
 import type { Listing, ListingType } from "../types";
 
 const CUISINES = ["Moroccan", "Italian", "Japanese", "Spanish", "Lebanese", "Mexican", "Indian", "Turkish", "French", "Greek", "Chinese", "Fusion"];
@@ -15,14 +17,6 @@ const DIETARY = ["Vegan", "Vegetarian", "Halal", "Kosher", "Gluten-Free", "Nut-F
 const ALLERGEN_CATEGORIES = ["Gluten", "Dairy", "Eggs", "Nuts", "Peanuts", "Shellfish", "Fish", "Soy", "Sesame", "Mustard", "Celery", "Sulphites", "Molluscs"];
 const DINING_SETTINGS = ["Indoor Table", "Garden", "Terrace", "Rooftop", "Open Kitchen"];
 const DRINK_OPTIONS = ["Water", "Tea", "Coffee", "Juice", "Soda / Coca-Cola", "Beer", "Wine", "Cocktail"];
-const CURRENCIES = [
-  { value: "€", label: "€ EUR" },
-  { value: "$", label: "$ USD" },
-  { value: "£", label: "£ GBP" },
-  { value: "₺", label: "₺ TRY" },
-  { value: "MAD", label: "MAD" },
-  { value: "AED", label: "AED" },
-];
 
 const DEFAULT_PHOTO =
   "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=900&q=80";
@@ -753,6 +747,7 @@ function Step2AI({ d, setD }: { d: Draft; setD: (n: Draft) => void }) {
 
 function Step3Logistics({ d, setD }: { d: Draft; setD: (n: Draft) => void }) {
   const isTable = d.listing_type === "table";
+  const t = useT();
   return (
     <div className="space-y-5">
       <Section
@@ -760,71 +755,63 @@ function Step3Logistics({ d, setD }: { d: Draft; setD: (n: Draft) => void }) {
         hint={isTable ? "When, how many, and where you'll seat them." : "How many you're making, and when guests can come pick up."}
       />
 
-      <Field label={isTable ? "Price per seat" : "Price per unit"}>
+      <Field label={isTable ? t("hostNew.pricePerSeat") : t("hostNew.pricePerUnit")}>
         <div className="flex gap-2">
           <input
             type="number"
             min={1}
             value={d.price_per_unit}
             onChange={(e) => setD({ ...d, price_per_unit: Math.max(0, Number(e.target.value)) })}
-            className="flex-1 px-3 py-2.5 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink"
+            className="flex-1 min-w-0 box-border appearance-none px-3 py-2.5 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink"
           />
-          <select
+          <CurrencyPicker
             value={d.currency}
-            onChange={(e) => setD({ ...d, currency: e.target.value })}
-            aria-label="Currency"
-            className="px-3 py-2.5 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink font-semibold"
-          >
-            {CURRENCIES.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label}
-              </option>
-            ))}
-          </select>
+            onChange={(currency) => setD({ ...d, currency })}
+          />
         </div>
       </Field>
 
       {isTable ? (
         <>
-          <Field label="Date">
+          <Field label={t("hostNew.date")}>
             <input
               type="date"
               value={d.meal_date}
               onChange={(e) => setD({ ...d, meal_date: e.target.value })}
-              className="w-full px-3 py-2.5 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink"
+              className="w-full min-w-0 box-border appearance-none px-3 py-2.5 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink"
             />
           </Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Start time">
+            <Field label={t("hostNew.startTime")}>
               <input
                 type="time"
                 value={d.meal_time}
                 onChange={(e) => setD({ ...d, meal_time: e.target.value })}
-                className="w-full px-3 py-2.5 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink"
+                className="w-full min-w-0 box-border appearance-none px-3 py-2.5 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink"
               />
             </Field>
-            <Field label="End time">
+            <Field label={t("hostNew.endTime")}>
               <input
                 type="time"
                 value={d.meal_end}
                 onChange={(e) => setD({ ...d, meal_end: e.target.value })}
-                className="w-full px-3 py-2.5 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink"
+                className="w-full min-w-0 box-border appearance-none px-3 py-2.5 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink"
               />
             </Field>
           </div>
           {durationLabel(d.meal_time, d.meal_end) && (
             <p className="text-sm text-ink/60 -mt-2">
-              Duration: <span className="font-semibold text-ink/80">{durationLabel(d.meal_time, d.meal_end)}</span>
+              {t("hostNew.duration")}: <span className="font-semibold text-ink/80">{durationLabel(d.meal_time, d.meal_end)}</span>
             </p>
           )}
-          <Field label="Seats available">
+          <Field label={t("hostNew.seatsAvailable")}>
             <input
               type="number"
               min={1}
               max={20}
               value={d.seats_total}
               onChange={(e) => setD({ ...d, seats_total: Math.max(1, Number(e.target.value)) })}
-              className="w-full px-3 py-2.5 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink"
+              className="w-full min-w-0 box-border appearance-none px-3 py-2.5 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink"
             />
           </Field>
           <Field label="Dining setting">
@@ -865,7 +852,7 @@ function Step3Logistics({ d, setD }: { d: Draft; setD: (n: Draft) => void }) {
               type="date"
               value={d.pickup_date}
               onChange={(e) => setD({ ...d, pickup_date: e.target.value })}
-              className="w-full px-3 py-2.5 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink"
+              className="w-full min-w-0 box-border appearance-none px-3 py-2.5 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink"
             />
           </Field>
           <div className="grid grid-cols-2 gap-3">
@@ -874,7 +861,7 @@ function Step3Logistics({ d, setD }: { d: Draft; setD: (n: Draft) => void }) {
                 type="time"
                 value={d.pickup_start}
                 onChange={(e) => setD({ ...d, pickup_start: e.target.value })}
-                className="w-full px-3 py-2.5 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink"
+                className="w-full min-w-0 box-border appearance-none px-3 py-2.5 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink"
               />
             </Field>
             <Field label="Pickup until">
@@ -882,7 +869,7 @@ function Step3Logistics({ d, setD }: { d: Draft; setD: (n: Draft) => void }) {
                 type="time"
                 value={d.pickup_end}
                 onChange={(e) => setD({ ...d, pickup_end: e.target.value })}
-                className="w-full px-3 py-2.5 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink"
+                className="w-full min-w-0 box-border appearance-none px-3 py-2.5 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink"
               />
             </Field>
           </div>
@@ -1117,7 +1104,7 @@ function Step5Preview({ d }: { d: Draft }) {
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
-    <label className="block">
+    <label className="block min-w-0">
       <div className="flex items-baseline justify-between mb-1">
         <span className="text-xs uppercase tracking-wider text-ink/60 font-semibold">{label}</span>
         {hint && <span className="text-[11px] text-ink/50">{hint}</span>}

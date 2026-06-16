@@ -239,6 +239,24 @@ const en = {
     sesame: "Sesame",
     peanuts: "Peanuts",
   },
+  currency: {
+    select: "Select currency",
+    eurozone: "Eurozone",
+    unitedStates: "United States",
+    unitedKingdom: "United Kingdom",
+    turkey: "Turkey",
+    morocco: "Morocco",
+    uae: "UAE",
+  },
+  hostNew: {
+    pricePerSeat: "Price per seat",
+    pricePerUnit: "Price per unit",
+    date: "Date",
+    startTime: "Start time",
+    endTime: "End time",
+    duration: "Duration",
+    seatsAvailable: "Seats available",
+  },
 };
 
 export default en;

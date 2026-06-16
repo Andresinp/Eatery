@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import type { Listing } from "../types";
+import type { Listing, MarketListing, TableListing } from "../types";
 import { Chip } from "./Chip";
-import { useT } from "../i18n";
+import { useLanguage, useT } from "../i18n";
+import { formatMealTime, formatPickupWindow } from "../lib/datetime";
 
 export default function ListingSheet({
   listing,
@@ -12,18 +13,22 @@ export default function ListingSheet({
 }) {
   const nav = useNavigate();
   const t = useT();
+  const { code: lang } = useLanguage();
   const isTable = listing.listing_type === "table";
+  const seatsLeft = isTable ? (listing as TableListing).seats_available : (listing as MarketListing).quantity_available;
   const openDetail = () => nav(`/listing/${listing.id}`);
   return (
     <div className="absolute left-0 right-0 bottom-0 z-30 px-3 pb-3 pointer-events-none">
       <div className="mx-auto max-w-[680px] pointer-events-auto animate-slide-up">
         <div className="rounded-3xl bg-cream-50 border-2 border-ink/90 shadow-sheet overflow-hidden">
-          <div className="relative h-56 sm:h-64">
+          <div className="relative w-full aspect-[16/10] sm:aspect-[2/1] overflow-hidden bg-ink/5">
             <img
               src={listing.photo}
               alt={listing.title}
               className="absolute inset-0 w-full h-full object-cover"
             />
+            {/* Gradient keeps the overlaid title legible over any photo. */}
+            <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/65 via-black/20 to-transparent pointer-events-none" />
             <button
               onClick={onClose}
               aria-label={t("common.close")}
@@ -71,14 +76,20 @@ export default function ListingSheet({
                   <span>{isTable ? t("map.host") : t("map.maker")}</span>
                 </div>
               </div>
-              <div className="text-right">
-                <div className="font-display font-extrabold text-2xl leading-none">
-                  {listing.currency}
-                  {listing.price_per_unit}
+              <div className="flex flex-col items-end gap-1.5 flex-none">
+                <div className="text-right">
+                  <div className="font-display font-extrabold text-2xl leading-none">
+                    {listing.currency}
+                    {listing.price_per_unit}
+                  </div>
+                  <div className="text-[11px] text-ink/60 mt-0.5">
+                    {isTable ? t("map.perSeat") : t("map.perUnit")}
+                  </div>
                 </div>
-                <div className="text-[11px] text-ink/60 mt-0.5">
-                  {isTable ? t("map.perSeat") : t("map.perUnit")}
-                </div>
+                <SeatsLeftBadge
+                  count={seatsLeft}
+                  label={isTable ? t("map.seatsLeft") : t("map.left")}
+                />
               </div>
             </div>
 
@@ -88,22 +99,17 @@ export default function ListingSheet({
 
             <div className="flex flex-wrap gap-1.5">
               {isTable && (
-                <Chip variant="amber">⏱ {(listing as { meal_time: string }).meal_time}</Chip>
-              )}
-              {isTable && (
                 <Chip variant="amber">
-                  {(listing as { seats_available: number }).seats_available} {t("map.seatsLeft")}
+                  ⏱ {formatMealTime((listing as TableListing).meal_time, lang, (listing as TableListing).meal_end_time)}
                 </Chip>
               )}
               {!isTable && (
                 <Chip variant="leaf">
-                  ⏱ {(listing as { pickup_window_start: string }).pickup_window_start}–
-                  {(listing as { pickup_window_end: string }).pickup_window_end}
-                </Chip>
-              )}
-              {!isTable && (
-                <Chip variant="leaf">
-                  {(listing as { quantity_available: number }).quantity_available} {t("map.left")}
+                  ⏱ {formatPickupWindow(
+                    (listing as MarketListing).pickup_window_start,
+                    (listing as MarketListing).pickup_window_end,
+                    lang,
+                  )}
                 </Chip>
               )}
               {isTable &&
@@ -141,5 +147,27 @@ export default function ListingSheet({
         </div>
       </div>
     </div>
+  );
+}
+
+// Availability is key booking info, so it gets its own badge rather than being
+// buried among the cuisine/dietary tags. Low stock turns red to draw the eye.
+export function SeatsLeftBadge({ count, label }: { count: number; label: string }) {
+  const soldOut = count <= 0;
+  const low = count > 0 && count <= 2;
+  return (
+    <span
+      className={
+        "inline-flex items-center gap-1 px-2.5 py-1 rounded-full border-2 font-bold text-sm leading-none whitespace-nowrap " +
+        (soldOut
+          ? "border-ink/30 bg-ink/5 text-ink/50"
+          : low
+            ? "border-red-600 bg-red-50 text-red-700"
+            : "border-amber-deep bg-amber/25 text-amber-ink")
+      }
+    >
+      <span className="text-base">{Math.max(0, count)}</span>
+      <span className="font-semibold">{label}</span>
+    </span>
   );
 }

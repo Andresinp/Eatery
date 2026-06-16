@@ -7,6 +7,7 @@ import ListingSheet from "../components/ListingSheet";
 import ListView from "../components/ListView";
 import FilterPanel from "../components/FilterPanel";
 import ViewToggle from "../components/ViewToggle";
+import LanguageSwitcher from "../components/LanguageSwitcher";
 import { MAP_CENTER } from "../data/mockListings";
 import {
   MAP_STYLE_URL,
@@ -168,6 +169,7 @@ export default function MapHome() {
           <Logo />
         </div>
         <div className="flex items-center gap-2 pointer-events-auto">
+          <LanguageSwitcher />
           <Link
             to="/notifications"
             aria-label="Notifications"

@@ -241,6 +241,24 @@ const tr: Translations = {
     sesame: "Susam",
     peanuts: "Yer fıstığı",
   },
+  currency: {
+    select: "Para birimi seç",
+    eurozone: "Euro Bölgesi",
+    unitedStates: "Amerika Birleşik Devletleri",
+    unitedKingdom: "Birleşik Krallık",
+    turkey: "Türkiye",
+    morocco: "Fas",
+    uae: "BAE",
+  },
+  hostNew: {
+    pricePerSeat: "Koltuk başına fiyat",
+    pricePerUnit: "Adet başına fiyat",
+    date: "Tarih",
+    startTime: "Başlangıç saati",
+    endTime: "Bitiş saati",
+    duration: "Süre",
+    seatsAvailable: "Müsait koltuk",
+  },
 };
 
 export default tr;
