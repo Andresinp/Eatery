@@ -7,7 +7,6 @@ import ListingSheet from "../components/ListingSheet";
 import ListView from "../components/ListView";
 import FilterPanel from "../components/FilterPanel";
 import ViewToggle from "../components/ViewToggle";
-import LanguageSwitcher from "../components/LanguageSwitcher";
 import { MAP_CENTER } from "../data/mockListings";
 import {
   MAP_STYLE_URL,
@@ -104,10 +103,17 @@ export default function MapHome() {
       markersRef.current = {};
 
       listings.forEach((l) => {
-        const el = document.createElement("button");
         const isTable = l.listing_type === "table";
-        el.className = "pin " + (isTable ? "pin-amber" : "pin-leaf");
-        el.innerHTML = `<span class="dot">${isTable ? "🍽" : "🛍"}</span><span>${l.currency}${l.price_per_unit}</span>`;
+        // Outer element: MapLibre writes its positioning transform here every
+        // frame, so it must have NO CSS transition — otherwise markers lag and
+        // "swing" as the map pans. The inner `.pin` owns all visual styling and
+        // hover/active animation, which MapLibre never touches.
+        const el = document.createElement("button");
+        el.className = "pin-marker";
+        el.innerHTML = `
+          <span class="pin ${isTable ? "pin-amber" : "pin-leaf"}">
+            <span class="dot">${isTable ? "🍽" : "🛍"}</span><span class="price">${l.currency}${l.price_per_unit}</span>
+          </span>`;
         el.addEventListener("click", (e) => {
           e.stopPropagation();
           setSelected(l);
@@ -118,7 +124,7 @@ export default function MapHome() {
             duration: 600,
           });
         });
-        const marker = new maplibregl.Marker({ element: el, anchor: "bottom" })
+        const marker = new maplibregl.Marker({ element: el, anchor: "center" })
           .setLngLat([l.location_lng, l.location_lat])
           .addTo(map);
         markersRef.current[l.id] = marker;
@@ -161,15 +167,16 @@ export default function MapHome() {
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-cream-50">
-      {/* Top bar — notifications + profile only. "Upcoming Places" moved into
-          the profile area; the Guest/Host switch sits on its own row below so
-          nothing crowds or overlaps on small screens. */}
-      <header className="absolute top-0 left-0 right-0 z-30 px-4 pt-4 pb-3 flex items-center justify-between pointer-events-none">
-        <div className="pointer-events-auto">
+      {/* Top bar — a single clean row holds the logo, the Guest/Host switch,
+          notifications and the profile avatar. The language selector now lives
+          in Profile → Settings → Language to keep the map uncluttered. */}
+      <header className="absolute top-0 left-0 right-0 z-30 px-3 pt-4 pb-3 flex items-center gap-2 pointer-events-none">
+        <div className="pointer-events-auto flex-none">
           <Logo />
         </div>
-        <div className="flex items-center gap-2 pointer-events-auto">
-          <LanguageSwitcher />
+        <div className="flex-1" />
+        <div className="flex items-center gap-2 pointer-events-auto flex-none">
+          <ViewToggle mode="guest" />
           <Link
             to="/notifications"
             aria-label="Notifications"
@@ -194,17 +201,12 @@ export default function MapHome() {
         </div>
       </header>
 
-      {/* Guest / Host toggle — own row, centered, never overlapping the header */}
-      <div className="absolute top-[68px] left-1/2 -translate-x-1/2 z-30">
-        <ViewToggle mode="guest" />
-      </div>
-
       {/* Map */}
       <div ref={containerRef} className="absolute inset-0" />
 
       {/* Loading indicator while listings load from the database */}
       {loading && (
-        <div className="absolute top-[124px] left-1/2 -translate-x-1/2 z-30 px-4 py-1.5 rounded-full bg-cream-50 border-2 border-ink shadow-float text-sm font-semibold">
+        <div className="absolute top-[72px] left-1/2 -translate-x-1/2 z-30 px-4 py-1.5 rounded-full bg-cream-50 border-2 border-ink shadow-float text-sm font-semibold">
           {t("common.loading")}
         </div>
       )}
