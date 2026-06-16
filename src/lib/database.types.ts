@@ -99,6 +99,7 @@ export type ListingRow = {
   allergen_flags: string[];
   price_per_unit: number;
   booking_fee_rate: number;
+  currency: string;
   location_lat: number;
   location_lng: number;
   location_display: string;
@@ -106,9 +107,13 @@ export type ListingRow = {
   status: "active" | "full" | "cancelled" | "completed";
   created_at: string;
   meal_time: string | null;
+  meal_end_time: string | null;
   seats_total: number | null;
   seats_available: number | null;
   dining_setting: "indoor_table" | "garden" | "terrace" | "rooftop" | "open_kitchen" | null;
+  dining_setting_photos: string[];
+  drinks_included: boolean;
+  drinks: string[];
   product_type_tags: string[];
   quantity_total: number | null;
   quantity_available: number | null;
