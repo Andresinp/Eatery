@@ -21,7 +21,7 @@ const tr: Translations = {
     close: "Kapat",
   },
   nav: {
-    orders: "Yaklaşan Yerler",
+    orders: "Rezervasyonlar",
     notifications: "Bildirimler",
     profile: "Profil",
     settings: "Ayarlar",
@@ -114,12 +114,12 @@ const tr: Translations = {
     market: "Market",
   },
   orders: {
-    title: "Yaklaşan Yerler",
+    title: "Yaklaşan Rezervasyonlar",
     upcoming: "Yaklaşan",
     past: "Geçmiş",
     balance: "Bakiye",
-    emptyUpcomingTitle: "Henüz yaklaşan yer yok",
-    emptyPastTitle: "Henüz geçmiş yer yok",
+    emptyUpcomingTitle: "Henüz yaklaşan rezervasyon yok",
+    emptyPastTitle: "Henüz geçmiş rezervasyon yok",
     emptyUpcomingBody: "Bir yer ayırttığında veya bir ürün sipariş ettiğinde burada görünecek.",
     emptyPastBody: "Geçmiş yemekler ve teslim alımlar tamamlandığında burada görünecek.",
     browseMap: "Haritaya göz at",
@@ -172,6 +172,7 @@ const tr: Translations = {
     filter: "Filtrele",
     listView: "Liste görünümü",
     recenter: "Haritayı ortala",
+    locateDenied: "Konumuna erişemedik. Bu site için konum erişiminin açık olduğundan emin ol.",
   },
   settings: {
     title: "Ayarlar",

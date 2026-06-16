@@ -21,7 +21,7 @@ const it: Translations = {
     close: "Chiudi",
   },
   nav: {
-    orders: "Prossimi luoghi",
+    orders: "Prenotazioni",
     notifications: "Notifiche",
     profile: "Profilo",
     settings: "Impostazioni",
@@ -114,12 +114,12 @@ const it: Translations = {
     market: "Mercato",
   },
   orders: {
-    title: "Prossimi luoghi",
+    title: "Prossime prenotazioni",
     upcoming: "Prossimi",
     past: "Passati",
     balance: "Saldo",
-    emptyUpcomingTitle: "Ancora nessun luogo in arrivo",
-    emptyPastTitle: "Ancora nessun luogo passato",
+    emptyUpcomingTitle: "Ancora nessuna prenotazione in arrivo",
+    emptyPastTitle: "Ancora nessuna prenotazione passata",
     emptyUpcomingBody: "Quando prenoti un posto o ordini un prodotto, apparirà qui.",
     emptyPastBody: "Pasti e ritiri passati appariranno qui una volta completati.",
     browseMap: "Esplora la mappa",
@@ -172,6 +172,7 @@ const it: Translations = {
     filter: "Filtra",
     listView: "Vista elenco",
     recenter: "Ricentra la mappa",
+    locateDenied: "Non siamo riusciti ad accedere alla tua posizione. Verifica che l'accesso alla posizione sia attivo per questo sito.",
   },
   settings: {
     title: "Impostazioni",

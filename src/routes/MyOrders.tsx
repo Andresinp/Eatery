@@ -23,7 +23,7 @@ export default function MyOrders() {
 
   return (
     <div className="min-h-full bg-cream-50">
-      <TopBar title={t("orders.title")} />
+      <TopBar back title={t("orders.title")} />
 
       <div className="max-w-[760px] mx-auto px-4 pt-2 pb-10">
         <div className="flex items-center gap-1 p-1 rounded-full bg-white border-2 border-ink w-fit mx-auto shadow-float mb-6">

@@ -12,6 +12,7 @@ export default function Profile() {
   const hosted = useHost((s) => s.myListings).length;
   const orders = useOrders((s) => s.orders);
   const attended = orders.filter((o) => o.status === "completed").length;
+  const upcoming = orders.filter((o) => o.status === "confirmed").length;
 
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState({ name: me.name, bio: me.bio });
@@ -73,6 +74,24 @@ export default function Profile() {
             me.bio && <p className="mt-4 text-sm text-ink/80 leading-relaxed">{me.bio}</p>
           )}
         </div>
+
+        <Link
+          to="/orders"
+          className="flex items-center justify-between gap-3 rounded-2xl border-2 border-ink/90 bg-white p-4 hover:bg-amber/10 transition"
+        >
+          <div className="min-w-0">
+            <div className="font-display font-bold text-lg leading-tight">Upcoming bookings</div>
+            <div className="text-sm text-ink/60">Tables, pickups & events you've booked</div>
+          </div>
+          <div className="flex items-center gap-2 flex-none">
+            {upcoming > 0 && (
+              <span className="min-w-[24px] h-6 px-1.5 rounded-full bg-amber border-2 border-ink text-xs font-bold text-amber-ink grid place-items-center">
+                {upcoming}
+              </span>
+            )}
+            <span aria-hidden className="text-ink/40 text-xl">›</span>
+          </div>
+        </Link>
 
         <div className="grid grid-cols-2 gap-3">
           <Stat label="Meals hosted" value={hosted} />
