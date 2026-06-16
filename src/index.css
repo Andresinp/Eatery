@@ -43,6 +43,55 @@ html, body, #root {
   color: #1F3A12;
 }
 
+/* Currency picker — a bottom-sheet wheel that snaps like a native picker. */
+.currency-dialog {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  width: 100%;
+  max-width: 100%;
+  max-height: 100dvh;
+}
+.currency-dialog[open] {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.currency-dialog::backdrop {
+  background: rgba(20, 16, 8, 0.45);
+}
+@media (min-width: 640px) {
+  .currency-dialog[open] {
+    align-items: center;
+  }
+}
+.currency-wheel {
+  max-height: 50vh;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding: 8px;
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+.currency-row {
+  scroll-snap-align: center;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  padding: 14px 12px;
+  border-radius: 16px;
+  transition: background 120ms ease;
+}
+.currency-row:active {
+  transform: scale(0.99);
+}
+.currency-row.is-active {
+  background: rgba(245, 165, 36, 0.14);
+}
+
 /* Custom map pin */
 .pin {
   display: flex;

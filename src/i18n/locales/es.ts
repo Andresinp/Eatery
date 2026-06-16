@@ -241,6 +241,24 @@ const es: Translations = {
     sesame: "Sésamo",
     peanuts: "Cacahuetes",
   },
+  currency: {
+    select: "Seleccionar moneda",
+    eurozone: "Eurozona",
+    unitedStates: "Estados Unidos",
+    unitedKingdom: "Reino Unido",
+    turkey: "Turquía",
+    morocco: "Marruecos",
+    uae: "EAU",
+  },
+  hostNew: {
+    pricePerSeat: "Precio por asiento",
+    pricePerUnit: "Precio por unidad",
+    date: "Fecha",
+    startTime: "Hora de inicio",
+    endTime: "Hora de fin",
+    duration: "Duración",
+    seatsAvailable: "Asientos disponibles",
+  },
 };
 
 export default es;

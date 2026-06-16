@@ -4,10 +4,12 @@ import TopBar from "../components/TopBar";
 import PhotoCarousel from "../components/PhotoCarousel";
 import QuantityStepper from "../components/QuantityStepper";
 import { Chip } from "../components/Chip";
+import { SeatsLeftBadge } from "../components/ListingSheet";
 import { useListing } from "../lib/listings";
 import { depositFor } from "../store/orders";
 import { useProfile } from "../store/profile";
-import { useT } from "../i18n";
+import { useLanguage, useT } from "../i18n";
+import { formatMealTime, formatPickupWindow } from "../lib/datetime";
 import type { MarketListing, TableListing } from "../types";
 
 export default function ListingDetail() {
@@ -17,6 +19,7 @@ export default function ListingDetail() {
   const myExclusions = useProfile((s) => s.me.allergen_exclusions);
   const [qty, setQty] = useState(1);
   const t = useT();
+  const { code: lang } = useLanguage();
 
   const conflicts = listing
     ? listing.allergen_flags.filter((a) => myExclusions.includes(a))
@@ -88,15 +91,27 @@ export default function ListingDetail() {
             <span className="text-ink/40 text-lg">›</span>
           </Link>
 
+          {/* Price + availability — the two facts that drive a booking, given
+              their own prominent row instead of being mixed into the tags. */}
+          <div className="flex items-center justify-between gap-3 rounded-2xl border-2 border-ink/90 bg-amber/10 px-4 py-3">
+            <div>
+              <span className="font-display font-extrabold text-2xl leading-none">
+                {listing.currency}
+                {listing.price_per_unit}
+              </span>
+              <span className="text-sm text-ink/60 ml-1">
+                {isTable ? t("map.perSeat") : t("map.perUnit")}
+              </span>
+            </div>
+            <SeatsLeftBadge count={max} label={isTable ? t("map.seatsLeft") : t("map.left")} />
+          </div>
+
           <p className="text-[15px] text-ink/85 leading-relaxed">{listing.description}</p>
 
           <div className="flex flex-wrap gap-1.5">
             {isTable && (
-              <Chip variant="amber">⏱ {(listing as TableListing).meal_time}</Chip>
-            )}
-            {isTable && (
               <Chip variant="amber">
-                {(listing as TableListing).seats_available} / {(listing as TableListing).seats_total} {t("host.seats")}
+                ⏱ {formatMealTime((listing as TableListing).meal_time, lang, (listing as TableListing).meal_end_time)}
               </Chip>
             )}
             {isTable && (
@@ -111,13 +126,11 @@ export default function ListingDetail() {
             )}
             {!isTable && (
               <Chip variant="leaf">
-                ⏱ {(listing as MarketListing).pickup_window_start}–
-                {(listing as MarketListing).pickup_window_end}
-              </Chip>
-            )}
-            {!isTable && (
-              <Chip variant="leaf">
-                {(listing as MarketListing).quantity_available} {t("host.units")} {t("host.leftSuffix")}
+                ⏱ {formatPickupWindow(
+                  (listing as MarketListing).pickup_window_start,
+                  (listing as MarketListing).pickup_window_end,
+                  lang,
+                )}
               </Chip>
             )}
             {(isTable
