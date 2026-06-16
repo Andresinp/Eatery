@@ -10,6 +10,98 @@ export const MAP_STYLE_URL = token
 
 export const usingMapbox = !!token;
 
+/** A map coordinate as a [longitude, latitude] tuple (MapLibre's LngLatLike). */
+export type LngLat = [number, number];
+
+const LAST_CENTER_KEY = "eatery.lastCenter";
+
+/** Read the last saved map center from localStorage, or null if unavailable. */
+export function readLastCenter(): LngLat | null {
+  try {
+    const raw = localStorage.getItem(LAST_CENTER_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (
+      Array.isArray(parsed) &&
+      parsed.length === 2 &&
+      typeof parsed[0] === "number" &&
+      typeof parsed[1] === "number"
+    ) {
+      return [parsed[0], parsed[1]];
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/** Persist the last map center so the map opens where the user left off. */
+export function saveLastCenter(center: LngLat): void {
+  try {
+    localStorage.setItem(LAST_CENTER_KEY, JSON.stringify(center));
+  } catch {
+    // Private mode / storage full — non-fatal, just skip persistence.
+  }
+}
+
+/**
+ * Resolve the device's current location via the browser Geolocation API.
+ * Resolves to a [lng, lat] tuple, or rejects if permission is denied or the
+ * fix times out.
+ */
+export function getBrowserLocation(): Promise<LngLat> {
+  return new Promise((resolve, reject) => {
+    if (!("geolocation" in navigator)) {
+      reject(new Error("Geolocation unavailable"));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve([pos.coords.longitude, pos.coords.latitude]),
+      (err) => reject(err),
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 },
+    );
+  });
+}
+
+/**
+ * Coarse IP-based geolocation as a fallback when GPS is unavailable. Uses the
+ * free, keyless ipapi.co service. Resolves to null on any failure.
+ */
+async function getIpLocation(): Promise<LngLat | null> {
+  try {
+    const res = await fetch("https://ipapi.co/json/");
+    if (!res.ok) return null;
+    const data = await res.json();
+    const lng = Number(data?.longitude);
+    const lat = Number(data?.latitude);
+    if (Number.isFinite(lng) && Number.isFinite(lat)) return [lng, lat];
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/** Where an initial map center came from. */
+export type CenterSource = "gps" | "ip" | "fallback";
+
+/**
+ * Resolve the best initial map center: GPS first, IP geolocation next, and the
+ * provided fallback last. The caller can use `source` to decide how much to
+ * trust the result (e.g. only drop a "you are here" marker for a GPS fix).
+ */
+export async function resolveInitialCenter(
+  fallback: LngLat,
+): Promise<{ center: LngLat; source: CenterSource }> {
+  try {
+    const center = await getBrowserLocation();
+    return { center, source: "gps" };
+  } catch {
+    const ip = await getIpLocation();
+    if (ip) return { center: ip, source: "ip" };
+    return { center: fallback, source: "fallback" };
+  }
+}
+
 export interface ReverseGeocodeResult {
   /** Best-guess public neighborhood label (suburb / quarter / district). */
   neighborhood: string;
