@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { detectDeviceLanguage } from "../i18n";
 
 export interface Profile {
   id: string;
@@ -32,7 +33,7 @@ const DEFAULT: Profile = {
   identity_verified: false,
   dietary_prefs: [],
   allergen_exclusions: [],
-  language: "en",
+  language: detectDeviceLanguage(),
   notif: {
     bookings: true,
     reminders: true,

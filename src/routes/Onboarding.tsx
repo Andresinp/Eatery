@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Logo from "../components/Logo";
+import LanguagePicker from "../components/LanguagePicker";
 import { useProfile } from "../store/profile";
-import { useT } from "../i18n";
+import { useT, useLanguage } from "../i18n";
 import { signUpWithEmail } from "../lib/auth";
 import { updateProfile } from "../lib/db";
 import { isSupabaseConfigured } from "../lib/supabase";
@@ -23,6 +24,9 @@ export default function Onboarding() {
     { emoji: "🛍", title: t("welcome.slide2Title"), body: t("welcome.slide2Body"), art: "bg-leaf" },
     { emoji: "👨‍🍳", title: t("welcome.slide3Title"), body: t("welcome.slide3Body"), art: "bg-cream-100" },
   ];
+
+  const { flag, label } = useLanguage();
+  const [showLangPicker, setShowLangPicker] = useState(false);
 
   const [stage, setStage] = useState<Stage>("slides");
   const [slide, setSlide] = useState(0);
@@ -106,14 +110,24 @@ export default function Onboarding() {
     const isLast = slide === SLIDES.length - 1;
     return (
       <div className="min-h-full flex flex-col bg-cream-50">
-        <header className="px-4 pt-5 flex items-center justify-between">
+        <header className="px-4 pt-5 flex items-center justify-between gap-2">
           <Logo />
-          <button
-            onClick={() => nav("/auth/login")}
-            className="px-4 py-2 rounded-full border-2 border-ink text-sm font-semibold hover:bg-ink/5"
-          >
-            {t("welcome.login")}
-          </button>
+          <div className="flex items-center gap-2 flex-none">
+            <button
+              onClick={() => setShowLangPicker(true)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-full border-2 border-ink/20 text-sm font-semibold hover:border-ink hover:bg-ink/5 transition-colors"
+              aria-label="Change language"
+            >
+              <span className="text-base leading-none">{flag}</span>
+              <span className="hidden xs:inline">{label}</span>
+            </button>
+            <button
+              onClick={() => nav("/auth/login")}
+              className="px-4 py-2 rounded-full border-2 border-ink text-sm font-semibold hover:bg-ink/5"
+            >
+              {t("welcome.login")}
+            </button>
+          </div>
         </header>
 
         <main className="flex-1 flex flex-col items-center justify-center px-6">
@@ -164,6 +178,7 @@ export default function Onboarding() {
             {t("auth.haveAccount")} {t("welcome.login")}
           </button>
         </footer>
+        {showLangPicker && <LanguagePicker onClose={() => setShowLangPicker(false)} />}
       </div>
     );
   }
