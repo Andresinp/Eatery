@@ -2,10 +2,11 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import TopBar from "../components/TopBar";
 import { Chip } from "../components/Chip";
+import LanguagePicker from "../components/LanguagePicker";
 import { useProfile } from "../store/profile";
 import { useSession } from "../store/session";
 import { isSupabaseConfigured } from "../lib/supabase";
-import { SUPPORTED_LANGUAGES, useT, type LanguageCode } from "../i18n";
+import { useT, useLanguage } from "../i18n";
 
 const DIETARY = ["Vegan", "Vegetarian", "Halal", "Kosher", "Gluten-Free", "Nut-Free", "Dairy-Free"];
 const ALLERGENS = ["Gluten", "Dairy", "Eggs", "Nuts", "Peanuts", "Shellfish", "Fish", "Soy", "Sesame"];
@@ -19,6 +20,8 @@ export default function Settings() {
   const nav = useNavigate();
   const t = useT();
 
+  const { flag, label } = useLanguage();
+  const [showLangPicker, setShowLangPicker] = useState(false);
   const [email, setEmail] = useState(me.email);
   const [phoneCode, setPhoneCode] = useState("");
   const [phoneSent, setPhoneSent] = useState(false);
@@ -148,16 +151,16 @@ export default function Settings() {
         </Card>
 
         <Card title={t("settings.language")}>
-          <select
-            value={me.language}
-            onChange={(e) => update({ language: e.target.value as LanguageCode })}
-            className="w-full px-3 py-2.5 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink"
+          <button
+            onClick={() => setShowLangPicker(true)}
+            className="flex items-center gap-3 w-full px-4 py-3 rounded-2xl border-2 border-ink/20 bg-white hover:border-ink transition-colors text-left"
           >
-            {SUPPORTED_LANGUAGES.map((l) => (
-              <option key={l.code} value={l.code}>{l.label}</option>
-            ))}
-          </select>
+            <span className="text-2xl leading-none">{flag}</span>
+            <span className="flex-1 font-semibold">{label}</span>
+            <span className="text-ink/40 text-sm">▾</span>
+          </button>
         </Card>
+        {showLangPicker && <LanguagePicker onClose={() => setShowLangPicker(false)} />}
 
         <Card title={t("settings.dangerZone")}>
           <div className="flex flex-wrap gap-2">
