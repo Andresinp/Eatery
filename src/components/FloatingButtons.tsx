@@ -17,10 +17,10 @@ function FAB({
       onClick={onClick}
       aria-label={label}
       className={
-        "w-12 h-12 rounded-full grid place-items-center border-2 transition shadow-float " +
+        "w-11 h-11 rounded-full grid place-items-center border transition shadow-pill " +
         (active
           ? "bg-ink text-cream-50 border-ink"
-          : "bg-cream-50 text-ink border-ink/90 hover:bg-amber/20")
+          : "bg-cream-50 text-ink border-ink/40 hover:bg-amber/20")
       }
     >
       {children}
