@@ -1,10 +1,25 @@
 import { useMemo } from "react";
 import { Chip } from "./Chip";
-import { useFilters, applyFilters, getMealTimeCategory, MAX_BUDGET } from "../store/filters";
+import {
+  useFilters,
+  applyFilters,
+  countWithOption,
+  getMealTimeCategory,
+  MAX_BUDGET,
+  type FilterCriteria,
+} from "../store/filters";
 import { useT } from "../i18n";
 import type { Listing } from "../types";
 
 const ALL_MEAL_TIMES = ["Breakfast", "Brunch", "Lunch", "Dinner", "Late Night"];
+
+/** Local date as YYYY-MM-DD, for <input type="date"> and the "custom" mode. */
+function todayISO(): string {
+  const d = new Date();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${m}-${day}`;
+}
 
 export default function FilterPanel({
   open,
@@ -17,10 +32,16 @@ export default function FilterPanel({
 }) {
   const t = useT();
   const {
-    listingType, dietary, cuisines, productTypes, mealTimes, maxBudget,
+    listingType, dietary, cuisines, productTypes, mealTimes, maxBudget, dateMode, customDate,
     setListingType, toggleDietary, toggleCuisine, toggleProductType, toggleMealTime,
-    setMaxBudget, clearAll,
+    setMaxBudget, setDate, clearAll,
   } = useFilters();
+
+  // The exact criteria the map/list use — counts below are derived from this so
+  // a chip's badge always equals the result count after selecting it.
+  const criteria: FilterCriteria = {
+    listingType, dietary, cuisines, productTypes, mealTimes, maxBudget, dateMode, customDate,
+  };
 
   // Derive available options + counts from the full listing set (context-aware)
   const available = useMemo(() => {
@@ -44,8 +65,9 @@ export default function FilterPanel({
   }, [listings]);
 
   const resultCount = useMemo(
-    () => applyFilters(listings, { listingType, dietary, cuisines, productTypes, mealTimes, maxBudget }).length,
-    [listings, listingType, dietary, cuisines, productTypes, mealTimes, maxBudget],
+    () => applyFilters(listings, criteria).length,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [listings, listingType, dietary, cuisines, productTypes, mealTimes, maxBudget, dateMode, customDate],
   );
 
   const hasActiveFilters =
@@ -54,7 +76,14 @@ export default function FilterPanel({
     cuisines.length > 0 ||
     productTypes.length > 0 ||
     mealTimes.length > 0 ||
-    maxBudget < MAX_BUDGET;
+    maxBudget < MAX_BUDGET ||
+    dateMode !== "any";
+
+  const dateOptions: { mode: "today" | "week" | "custom"; label: string }[] = [
+    { mode: "today", label: t("filters.dateToday") },
+    { mode: "week", label: t("filters.dateWeek") },
+    { mode: "custom", label: t("filters.dateChoose") },
+  ];
 
   const budgetLabel = maxBudget >= MAX_BUDGET ? `€3 — €${MAX_BUDGET}+` : `€3 — €${maxBudget}`;
 
@@ -94,6 +123,32 @@ export default function FilterPanel({
         </div>
 
         <div className="overflow-y-auto h-[calc(100%-72px-72px)] px-5 py-5 space-y-6">
+          <Section title={t("filters.date")}>
+            <div className="flex gap-2 flex-wrap">
+              {dateOptions.map(({ mode, label }) => (
+                <Chip
+                  key={mode}
+                  active={dateMode === mode}
+                  onClick={() =>
+                    dateMode === mode
+                      ? setDate("any")
+                      : setDate(mode, mode === "custom" ? (customDate ?? todayISO()) : null)
+                  }
+                >
+                  {label}
+                </Chip>
+              ))}
+            </div>
+            {dateMode === "custom" && (
+              <input
+                type="date"
+                value={customDate ?? todayISO()}
+                onChange={(e) => setDate("custom", e.target.value)}
+                className="mt-3 w-full rounded-2xl border-2 border-ink bg-cream-50 px-3 py-2 font-semibold"
+              />
+            )}
+          </Section>
+
           <Section title={t("filters.listingType")}>
             <div className="flex gap-2 flex-wrap">
               {typeOptions.map(({ value, label }) => (
@@ -111,12 +166,12 @@ export default function FilterPanel({
           {available.dietaryMap.size > 0 && (
             <Section title={t("filters.dietary")}>
               <div className="flex flex-wrap gap-1.5">
-                {Array.from(available.dietaryMap.entries()).map(([tag, n]) => (
+                {Array.from(available.dietaryMap.keys()).map((tag) => (
                   <Chip
                     key={tag}
                     active={dietary.includes(tag)}
                     onClick={() => toggleDietary(tag)}
-                    count={n}
+                    count={countWithOption(listings, criteria, "dietary", tag)}
                   >
                     {tag}
                   </Chip>
@@ -139,12 +194,12 @@ export default function FilterPanel({
           {available.cuisineMap.size > 0 && (
             <Section title={t("filters.cuisine")}>
               <div className="flex flex-wrap gap-1.5">
-                {Array.from(available.cuisineMap.entries()).map(([tag, n]) => (
+                {Array.from(available.cuisineMap.keys()).map((tag) => (
                   <Chip
                     key={tag}
                     active={cuisines.includes(tag)}
                     onClick={() => toggleCuisine(tag)}
-                    count={n}
+                    count={countWithOption(listings, criteria, "cuisines", tag)}
                   >
                     {tag}
                   </Chip>
@@ -156,12 +211,12 @@ export default function FilterPanel({
           {available.productMap.size > 0 && (
             <Section title={t("filters.productType")}>
               <div className="flex flex-wrap gap-1.5">
-                {Array.from(available.productMap.entries()).map(([tag, n]) => (
+                {Array.from(available.productMap.keys()).map((tag) => (
                   <Chip
                     key={tag}
                     active={productTypes.includes(tag)}
                     onClick={() => toggleProductType(tag)}
-                    count={n}
+                    count={countWithOption(listings, criteria, "productTypes", tag)}
                   >
                     {tag}
                   </Chip>
@@ -178,7 +233,7 @@ export default function FilterPanel({
                     key={tm}
                     active={mealTimes.includes(tm)}
                     onClick={() => toggleMealTime(tm)}
-                    count={available.timeMap.get(tm)}
+                    count={countWithOption(listings, criteria, "mealTimes", tm)}
                   >
                     {tm}
                   </Chip>
