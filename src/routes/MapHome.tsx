@@ -43,6 +43,7 @@ export default function MapHome() {
   const [showList, setShowList] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
   const [locating, setLocating] = useState(false);
+  const [userLocation, setUserLocation] = useState<LngLat | null>(null);
 
   const { listings, loading } = useAllListings();
   const unread = useNotifications((s) => s.items.filter((n) => !n.read).length);
@@ -92,7 +93,10 @@ export default function MapHome() {
       if (cancelled || source === "fallback" || userInteracted) return;
       saveLastCenter(center);
       map.flyTo({ center, zoom: source === "gps" ? 14 : 12, duration: 800 });
-      if (source === "gps") setMeMarker(center);
+      if (source === "gps") {
+        setMeMarker(center);
+        setUserLocation(center);
+      }
     });
 
     return () => {
@@ -166,6 +170,7 @@ export default function MapHome() {
       const center = await getBrowserLocation();
       saveLastCenter(center);
       setMeMarker(center);
+      setUserLocation(center);
       map.flyTo({ center, zoom: 15, duration: 700 });
     } catch {
       const fallback = readLastCenter();
@@ -223,8 +228,17 @@ export default function MapHome() {
         </div>
       )}
 
-      {/* List view overlay */}
-      {showList && <ListView listings={listings} />}
+      {/* List view overlay — sorted by distance from GPS or current map center */}
+      {showList && (
+        <ListView
+          listings={listings}
+          userLocation={
+            userLocation ?? (mapRef.current
+              ? [mapRef.current.getCenter().lng, mapRef.current.getCenter().lat]
+              : null)
+          }
+        />
+      )}
 
       {/* Floating actions */}
       <FloatingButtons
