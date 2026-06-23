@@ -22,6 +22,18 @@ import { useProfile } from "../store/profile";
 import { useT } from "../i18n";
 import type { Listing } from "../types";
 
+// Inline SVG for the product/market map marker: bordeaux dot bg (via CSS) +
+// beige placemat circle + kraft delivery bag with handles and food-dome stamp.
+const PRODUCT_ICON =
+  `<svg viewBox="0 0 20 20" width="20" height="20" xmlns="http://www.w3.org/2000/svg" style="display:block">` +
+  `<circle cx="10" cy="10" r="7" fill="#EDD9B5"/>` +
+  `<rect x="6.5" y="9.5" width="7" height="6" rx="0.6" fill="#C4924A"/>` +
+  `<rect x="6" y="8" width="8" height="2" rx="0.5" fill="#A97838"/>` +
+  `<path d="M7.5 8 Q7.5 6 10 6 Q12.5 6 12.5 8" fill="none" stroke="#7A5020" stroke-width="1.2" stroke-linecap="round"/>` +
+  `<path d="M7.5 13.8 Q10 12 12.5 13.8" fill="#A97838"/>` +
+  `<rect x="7.5" y="13.8" width="5" height="0.7" rx="0.3" fill="#8B6030"/>` +
+  `</svg>`;
+
 export default function MapHome() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MLMap | null>(null);
@@ -111,8 +123,8 @@ export default function MapHome() {
         const el = document.createElement("button");
         el.className = "pin-marker";
         el.innerHTML = `
-          <span class="pin ${isTable ? "pin-amber" : "pin-leaf"}">
-            <span class="dot">${isTable ? "🍽" : "🛍"}</span><span class="price">${l.currency}${l.price_per_unit}</span>
+          <span class="pin ${isTable ? "pin-amber" : "pin-bordeaux"}">
+            <span class="dot">${isTable ? "🍽" : PRODUCT_ICON}</span><span class="price">${l.currency}${l.price_per_unit}</span>
           </span>`;
         el.addEventListener("click", (e) => {
           e.stopPropagation();
