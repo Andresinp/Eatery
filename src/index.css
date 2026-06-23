@@ -151,8 +151,8 @@ html, body, #root {
   line-height: 1;
   flex: none;
 }
-.pin-amber .dot { background: #F5A524; color: #3A2A05; }
-.pin-leaf  .dot { background: #6FB95B; color: #1F3A12; }
+.pin-amber    .dot { background: #F5A524; color: #3A2A05; }
+.pin-bordeaux .dot { background: #7D1D2E; color: #EDD9B5; }
 /* Price is hidden by default to keep the map clean; it reveals when the marker
    is active (tapped). The expanded pill then shows the icon + price. */
 .pin .price {
