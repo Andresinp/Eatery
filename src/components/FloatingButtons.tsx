@@ -33,18 +33,27 @@ export default function FloatingButtons({
   onToggleList,
   onLocate,
   listActive,
+  filterCount = 0,
 }: {
   onFilter: () => void;
   onToggleList: () => void;
   onLocate: () => void;
   listActive: boolean;
+  filterCount?: number;
 }) {
   const t = useT();
   return (
     <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-20">
-      <FAB onClick={onFilter} label={t("fab.filter")}>
-        <SlidersIcon />
-      </FAB>
+      <div className="relative">
+        <FAB onClick={onFilter} label={t("fab.filter")} active={filterCount > 0}>
+          <SlidersIcon />
+        </FAB>
+        {filterCount > 0 && (
+          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-amber border-2 border-ink text-[10px] font-bold text-amber-ink grid place-items-center">
+            {filterCount}
+          </span>
+        )}
+      </div>
       <FAB onClick={onToggleList} label={t("fab.listView")} active={listActive}>
         <ListIcon />
       </FAB>

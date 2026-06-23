@@ -14,10 +14,37 @@ function formatPrice(amount: number, currency: string): string {
 export default function ListView({
   listings,
   userLocation,
+  hasFilters = false,
+  onClearFilters,
 }: {
   listings: Listing[];
   userLocation?: LngLat | null;
+  hasFilters?: boolean;
+  onClearFilters?: () => void;
 }) {
+  if (listings.length === 0) {
+    return (
+      <div className="absolute inset-0 z-10 bg-cream-50 overflow-y-auto animate-fade-in">
+        <div className="max-w-[640px] mx-auto px-6 pt-32 text-center">
+          <p className="font-display font-bold text-lg mb-1">No listings match</p>
+          <p className="text-sm text-ink/50">
+            {hasFilters
+              ? "Try clearing or loosening your filters to see more nearby."
+              : "Nothing available nearby right now — check back soon."}
+          </p>
+          {hasFilters && onClearFilters && (
+            <button
+              onClick={onClearFilters}
+              className="mt-4 px-4 py-2 rounded-full border-2 border-ink font-semibold text-sm"
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   const sorted = userLocation
     ? [...listings].sort((a, b) => {
         const da = haversineDistance(userLocation[1], userLocation[0], a.location_lat, a.location_lng);
