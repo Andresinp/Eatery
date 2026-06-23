@@ -42,6 +42,13 @@ html, body, #root {
   background: rgba(111, 185, 91, 0.12);
   color: #1F3A12;
 }
+.chip-active {
+  border-color: #161413;
+  border-style: solid;
+  background: #161413;
+  color: #FFFDF7;
+  font-weight: 600;
+}
 
 /* Smaller, lighter chip for list-view tags */
 .chip-sm {
