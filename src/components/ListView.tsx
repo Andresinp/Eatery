@@ -1,8 +1,13 @@
 import { Link } from "react-router-dom";
-import type { Listing } from "../types";
+import type { Listing, TableListing, MarketListing } from "../types";
 
 function formatTag(tag: string): string {
   return tag.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function formatPrice(amount: number, currency: string): string {
+  const symbols: Record<string, string> = { EUR: "€", USD: "$", GBP: "£", TRY: "₺" };
+  return `${symbols[currency] ?? currency}${amount.toLocaleString()}`;
 }
 
 export default function ListView({ listings }: { listings: Listing[] }) {
@@ -12,9 +17,15 @@ export default function ListView({ listings }: { listings: Listing[] }) {
         {listings.map((l) => {
           const isTable = l.listing_type === "table";
           const primaryTags = isTable
-            ? (l as { cuisine_tags: string[] }).cuisine_tags.slice(0, 2)
-            : (l as { product_type_tags: string[] }).product_type_tags.slice(0, 2);
+            ? (l as TableListing).cuisine_tags.slice(0, 2)
+            : (l as MarketListing).product_type_tags.slice(0, 2);
           const tags = [...primaryTags, ...l.dietary_tags.slice(0, 1)];
+          const availability = isTable
+            ? (l as TableListing).seats_available
+            : (l as MarketListing).quantity_available;
+          const unitLabel = isTable ? "seats" : "items";
+          const priceLabel = isTable ? "per seat" : "per item";
+          const isLow = availability > 0 && availability <= 3;
 
           return (
             <Link
@@ -28,10 +39,43 @@ export default function ListView({ listings }: { listings: Listing[] }) {
                 className="w-16 h-16 rounded-xl object-cover flex-none"
               />
               <div className="flex-1 min-w-0 pt-0.5">
-                <div className="font-display font-bold text-[15px] leading-snug mb-0.5 truncate">
-                  {l.title}
+                {/* Title row with price */}
+                <div className="flex items-start justify-between gap-2 mb-0.5">
+                  <p className="font-display font-bold text-[15px] leading-snug truncate flex-1 min-w-0">
+                    {l.title}
+                  </p>
+                  <div className="flex-none text-right shrink-0">
+                    <p className="text-[13px] font-semibold text-ink leading-tight">
+                      {formatPrice(l.price_per_unit, l.currency)}
+                    </p>
+                    <p className="text-[10px] text-ink/35 leading-tight">{priceLabel}</p>
+                  </div>
                 </div>
-                <div className="text-xs text-ink/50 mb-2 truncate">{l.location_display}</div>
+
+                {/* Location */}
+                <p className="text-xs text-ink/50 mb-1.5 truncate">{l.location_display}</p>
+
+                {/* Secondary metadata: rating · seats left */}
+                {(l.host_rating > 0 || availability > 0) && (
+                  <div className="flex items-center gap-1.5 mb-2">
+                    {l.host_rating > 0 && (
+                      <span className="text-[11px] text-ink/50 flex items-center gap-0.5">
+                        <span className="text-amber-400 text-[10px]">★</span>
+                        {l.host_rating.toFixed(1)}
+                      </span>
+                    )}
+                    {l.host_rating > 0 && availability > 0 && (
+                      <span className="text-[10px] text-ink/20">·</span>
+                    )}
+                    {availability > 0 && (
+                      <span className={`text-[11px] ${isLow ? "text-amber-600/70" : "text-ink/40"}`}>
+                        {availability} {unitLabel} left
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* Tags */}
                 {tags.length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     {tags.map((tag) => (
