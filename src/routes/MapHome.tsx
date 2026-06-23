@@ -20,7 +20,7 @@ import { useAllListings } from "../lib/listings";
 import { useNotifications } from "../store/notifications";
 import { useProfile } from "../store/profile";
 import { useT } from "../i18n";
-import { useFilters, applyFilters } from "../store/filters";
+import { useFilters, applyFilters, activeFilterCount } from "../store/filters";
 import type { Listing } from "../types";
 
 // Inline SVG for the product/market map marker: bordeaux dot bg (via CSS) +
@@ -49,6 +49,7 @@ export default function MapHome() {
   const { listings, loading } = useAllListings();
   const filters = useFilters();
   const filteredListings = useMemo(() => applyFilters(listings, filters), [listings, filters]);
+  const filterCount = activeFilterCount(filters);
   const unread = useNotifications((s) => s.items.filter((n) => !n.read).length);
   const avatar = useProfile((s) => s.me.avatar);
   const t = useT();
@@ -235,6 +236,8 @@ export default function MapHome() {
       {showList && (
         <ListView
           listings={filteredListings}
+          hasFilters={filterCount > 0}
+          onClearFilters={() => useFilters.getState().clearAll()}
           userLocation={
             userLocation ?? (mapRef.current
               ? [mapRef.current.getCenter().lng, mapRef.current.getCenter().lat]
@@ -249,6 +252,7 @@ export default function MapHome() {
         onToggleList={() => setShowList((v) => !v)}
         onLocate={handleLocate}
         listActive={showList}
+        filterCount={filterCount}
       />
 
       {/* Bottom sheet */}

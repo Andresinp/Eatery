@@ -67,6 +67,20 @@ export const useFilters = create<FiltersState>((set) => ({
     }),
 }));
 
+/** Number of distinct active filter constraints — drives the filter-button badge. */
+export function activeFilterCount(
+  state: Pick<FiltersState, "listingType" | "dietary" | "cuisines" | "productTypes" | "mealTimes" | "maxBudget">,
+): number {
+  return (
+    (state.listingType !== "all" ? 1 : 0) +
+    state.dietary.length +
+    state.cuisines.length +
+    state.productTypes.length +
+    state.mealTimes.length +
+    (state.maxBudget < MAX_BUDGET ? 1 : 0)
+  );
+}
+
 export function getMealTimeCategory(meal_time: string): string[] {
   const match = meal_time.match(/(\d+):(\d+)/);
   if (!match) return [];
