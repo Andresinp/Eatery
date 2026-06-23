@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import maplibregl, { Map as MLMap, Marker } from "maplibre-gl";
 import Logo from "../components/Logo";
@@ -20,6 +20,7 @@ import { useAllListings } from "../lib/listings";
 import { useNotifications } from "../store/notifications";
 import { useProfile } from "../store/profile";
 import { useT } from "../i18n";
+import { useFilters, applyFilters } from "../store/filters";
 import type { Listing } from "../types";
 
 // Inline SVG for the product/market map marker: bordeaux dot bg (via CSS) +
@@ -46,6 +47,8 @@ export default function MapHome() {
   const [userLocation, setUserLocation] = useState<LngLat | null>(null);
 
   const { listings, loading } = useAllListings();
+  const filters = useFilters();
+  const filteredListings = useMemo(() => applyFilters(listings, filters), [listings, filters]);
   const unread = useNotifications((s) => s.items.filter((n) => !n.read).length);
   const avatar = useProfile((s) => s.me.avatar);
   const t = useT();
@@ -109,7 +112,7 @@ export default function MapHome() {
     };
   }, []);
 
-  // Build markers
+  // Build markers — rebuilds whenever the filtered set changes
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -118,7 +121,7 @@ export default function MapHome() {
       Object.values(markersRef.current).forEach((m) => m.remove());
       markersRef.current = {};
 
-      listings.forEach((l) => {
+      filteredListings.forEach((l) => {
         const isTable = l.listing_type === "table";
         // Outer element: MapLibre writes its positioning transform here every
         // frame, so it must have NO CSS transition — otherwise markers lag and
@@ -149,7 +152,7 @@ export default function MapHome() {
 
     if (map.isStyleLoaded()) addAll();
     else map.once("load", addAll);
-  }, [listings]);
+  }, [filteredListings]);
 
   // Highlight active pin
   useEffect(() => {
@@ -231,7 +234,7 @@ export default function MapHome() {
       {/* List view overlay — sorted by distance from GPS or current map center */}
       {showList && (
         <ListView
-          listings={listings}
+          listings={filteredListings}
           userLocation={
             userLocation ?? (mapRef.current
               ? [mapRef.current.getCenter().lng, mapRef.current.getCenter().lat]
@@ -254,7 +257,7 @@ export default function MapHome() {
       )}
 
       {/* Filter panel */}
-      <FilterPanel open={showFilter} onClose={() => setShowFilter(false)} />
+      <FilterPanel open={showFilter} onClose={() => setShowFilter(false)} listings={listings} />
     </div>
   );
 }

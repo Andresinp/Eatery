@@ -1,13 +1,69 @@
+import { useMemo } from "react";
 import { Chip } from "./Chip";
+import { useFilters, applyFilters, getMealTimeCategory, MAX_BUDGET } from "../store/filters";
 import { useT } from "../i18n";
+import type { Listing } from "../types";
 
-const DIETARY = ["Vegan", "Vegetarian", "Halal", "Kosher", "Gluten-Free", "Nut-Free", "Dairy-Free"];
-const CUISINES = ["Moroccan", "Italian", "Japanese", "Spanish", "Lebanese", "Mexican", "Indian", "Turkish", "French", "Greek"];
-const PRODUCT_TYPES = ["Baked Goods", "Bread", "Cake", "Frozen Meals", "Jam & Preserves", "Pasta", "Desserts"];
-const TIMES = ["Breakfast", "Brunch", "Lunch", "Dinner", "Late Night"];
+const ALL_MEAL_TIMES = ["Breakfast", "Brunch", "Lunch", "Dinner", "Late Night"];
 
-export default function FilterPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
+export default function FilterPanel({
+  open,
+  onClose,
+  listings,
+}: {
+  open: boolean;
+  onClose: () => void;
+  listings: Listing[];
+}) {
   const t = useT();
+  const {
+    listingType, dietary, cuisines, productTypes, mealTimes, maxBudget,
+    setListingType, toggleDietary, toggleCuisine, toggleProductType, toggleMealTime,
+    setMaxBudget, clearAll,
+  } = useFilters();
+
+  // Derive available options + counts from the full listing set (context-aware)
+  const available = useMemo(() => {
+    const dietaryMap = new Map<string, number>();
+    const cuisineMap = new Map<string, number>();
+    const productMap = new Map<string, number>();
+    const timeMap = new Map<string, number>();
+
+    listings.forEach((l) => {
+      l.dietary_tags.forEach((d) => dietaryMap.set(d, (dietaryMap.get(d) ?? 0) + 1));
+      l.cuisine_tags.forEach((c) => cuisineMap.set(c, (cuisineMap.get(c) ?? 0) + 1));
+      if (l.listing_type === "market") {
+        l.product_type_tags.forEach((p) => productMap.set(p, (productMap.get(p) ?? 0) + 1));
+      }
+      if (l.listing_type === "table") {
+        getMealTimeCategory(l.meal_time).forEach((tm) => timeMap.set(tm, (timeMap.get(tm) ?? 0) + 1));
+      }
+    });
+
+    return { dietaryMap, cuisineMap, productMap, timeMap };
+  }, [listings]);
+
+  const resultCount = useMemo(
+    () => applyFilters(listings, { listingType, dietary, cuisines, productTypes, mealTimes, maxBudget }).length,
+    [listings, listingType, dietary, cuisines, productTypes, mealTimes, maxBudget],
+  );
+
+  const hasActiveFilters =
+    listingType !== "all" ||
+    dietary.length > 0 ||
+    cuisines.length > 0 ||
+    productTypes.length > 0 ||
+    mealTimes.length > 0 ||
+    maxBudget < MAX_BUDGET;
+
+  const budgetLabel = maxBudget >= MAX_BUDGET ? `€3 — €${MAX_BUDGET}+` : `€3 — €${maxBudget}`;
+
+  const typeOptions: { value: "all" | "table" | "market"; label: string }[] = [
+    { value: "all", label: t("filters.all") },
+    { value: "table", label: t("filters.tableOnly") },
+    { value: "market", label: t("filters.marketOnly") },
+  ];
+
   return (
     <>
       <div
@@ -39,59 +95,117 @@ export default function FilterPanel({ open, onClose }: { open: boolean; onClose:
 
         <div className="overflow-y-auto h-[calc(100%-72px-72px)] px-5 py-5 space-y-6">
           <Section title={t("filters.listingType")}>
-            <div className="flex gap-2">
-              <Chip variant="amber">{t("filters.all")}</Chip>
-              <Chip>{t("filters.tableOnly")}</Chip>
-              <Chip>{t("filters.marketOnly")}</Chip>
-            </div>
-          </Section>
-
-          <Section title={t("filters.dietary")}>
-            <div className="flex flex-wrap gap-1.5">
-              {DIETARY.map((tag) => (
-                <Chip key={tag}>{tag}</Chip>
+            <div className="flex gap-2 flex-wrap">
+              {typeOptions.map(({ value, label }) => (
+                <Chip
+                  key={value}
+                  active={listingType === value}
+                  onClick={() => setListingType(value)}
+                >
+                  {label}
+                </Chip>
               ))}
             </div>
           </Section>
 
-          <Section title={t("filters.budget")} hint="€3 — €100+">
-            <input type="range" min={3} max={100} defaultValue={30} className="w-full accent-amber" />
+          {available.dietaryMap.size > 0 && (
+            <Section title={t("filters.dietary")}>
+              <div className="flex flex-wrap gap-1.5">
+                {Array.from(available.dietaryMap.entries()).map(([tag, n]) => (
+                  <Chip
+                    key={tag}
+                    active={dietary.includes(tag)}
+                    onClick={() => toggleDietary(tag)}
+                    count={n}
+                  >
+                    {tag}
+                  </Chip>
+                ))}
+              </div>
+            </Section>
+          )}
+
+          <Section title={t("filters.budget")} hint={budgetLabel}>
+            <input
+              type="range"
+              min={3}
+              max={MAX_BUDGET}
+              value={maxBudget}
+              onChange={(e) => setMaxBudget(Number(e.target.value))}
+              className="w-full accent-amber"
+            />
           </Section>
 
-          <Section title={t("filters.cuisine")}>
-            <div className="flex flex-wrap gap-1.5">
-              {CUISINES.map((tag) => (
-                <Chip key={tag}>{tag}</Chip>
-              ))}
-            </div>
-          </Section>
+          {available.cuisineMap.size > 0 && (
+            <Section title={t("filters.cuisine")}>
+              <div className="flex flex-wrap gap-1.5">
+                {Array.from(available.cuisineMap.entries()).map(([tag, n]) => (
+                  <Chip
+                    key={tag}
+                    active={cuisines.includes(tag)}
+                    onClick={() => toggleCuisine(tag)}
+                    count={n}
+                  >
+                    {tag}
+                  </Chip>
+                ))}
+              </div>
+            </Section>
+          )}
 
-          <Section title={t("filters.productType")}>
-            <div className="flex flex-wrap gap-1.5">
-              {PRODUCT_TYPES.map((tag) => (
-                <Chip key={tag}>{tag}</Chip>
-              ))}
-            </div>
-          </Section>
+          {available.productMap.size > 0 && (
+            <Section title={t("filters.productType")}>
+              <div className="flex flex-wrap gap-1.5">
+                {Array.from(available.productMap.entries()).map(([tag, n]) => (
+                  <Chip
+                    key={tag}
+                    active={productTypes.includes(tag)}
+                    onClick={() => toggleProductType(tag)}
+                    count={n}
+                  >
+                    {tag}
+                  </Chip>
+                ))}
+              </div>
+            </Section>
+          )}
 
-          <Section title={t("filters.timeTables")}>
-            <div className="flex flex-wrap gap-1.5">
-              {TIMES.map((tag) => (
-                <Chip key={tag}>{tag}</Chip>
-              ))}
-            </div>
-          </Section>
+          {available.timeMap.size > 0 && (
+            <Section title={t("filters.timeTables")}>
+              <div className="flex flex-wrap gap-1.5">
+                {ALL_MEAL_TIMES.filter((tm) => available.timeMap.has(tm)).map((tm) => (
+                  <Chip
+                    key={tm}
+                    active={mealTimes.includes(tm)}
+                    onClick={() => toggleMealTime(tm)}
+                    count={available.timeMap.get(tm)}
+                  >
+                    {tm}
+                  </Chip>
+                ))}
+              </div>
+            </Section>
+          )}
         </div>
 
         <div className="absolute left-0 right-0 bottom-0 px-5 py-4 border-t border-ink/10 bg-cream-50 flex items-center gap-3">
-          <button className="flex-1 py-3 rounded-2xl border-2 border-ink font-semibold">
+          <button
+            onClick={clearAll}
+            disabled={!hasActiveFilters}
+            className={
+              "flex-1 py-3 rounded-2xl border-2 border-ink font-semibold transition-opacity " +
+              (hasActiveFilters ? "opacity-100 cursor-pointer" : "opacity-30 cursor-default")
+            }
+          >
             {t("filters.clear")}
           </button>
           <button
             onClick={onClose}
             className="flex-1 py-3 rounded-2xl border-2 border-ink bg-ink text-cream-50 font-semibold"
           >
-            {t("filters.showResults")}
+            {resultCount === 0
+              ? t("filters.showResults")
+              : `${t("filters.showResults")} (${resultCount})`}
           </button>
         </div>
       </aside>
