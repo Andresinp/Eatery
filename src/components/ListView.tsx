@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import type { Listing, TableListing, MarketListing } from "../types";
+import { haversineDistance, formatDistance, type LngLat } from "../lib/map";
 
 function formatTag(tag: string): string {
   return tag.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
@@ -10,11 +11,25 @@ function formatPrice(amount: number, currency: string): string {
   return `${symbols[currency] ?? currency}${amount.toLocaleString()}`;
 }
 
-export default function ListView({ listings }: { listings: Listing[] }) {
+export default function ListView({
+  listings,
+  userLocation,
+}: {
+  listings: Listing[];
+  userLocation?: LngLat | null;
+}) {
+  const sorted = userLocation
+    ? [...listings].sort((a, b) => {
+        const da = haversineDistance(userLocation[1], userLocation[0], a.location_lat, a.location_lng);
+        const db = haversineDistance(userLocation[1], userLocation[0], b.location_lat, b.location_lng);
+        return da - db;
+      })
+    : listings;
+
   return (
     <div className="absolute inset-0 z-10 bg-cream-50 overflow-y-auto animate-fade-in">
       <div className="max-w-[640px] mx-auto px-4 pt-24 pb-32 divide-y divide-ink/[0.07]">
-        {listings.map((l) => {
+        {sorted.map((l) => {
           const isTable = l.listing_type === "table";
           const primaryTags = isTable
             ? (l as TableListing).cuisine_tags.slice(0, 2)
@@ -27,6 +42,10 @@ export default function ListView({ listings }: { listings: Listing[] }) {
           const priceLabel = isTable ? "per seat" : "per item";
           const typeLabel = isTable ? "Table" : "Market";
           const isLow = availability > 0 && availability <= 5;
+
+          const distance = userLocation
+            ? haversineDistance(userLocation[1], userLocation[0], l.location_lat, l.location_lng)
+            : null;
 
           return (
             <Link
@@ -51,7 +70,7 @@ export default function ListView({ listings }: { listings: Listing[] }) {
                     </p>
                     <p className="text-[10px] text-ink/35 leading-tight">{priceLabel}</p>
                     {availability > 0 && (
-                      <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-medium leading-tight ${
+                      <span className={`inline-block mt-0.5 px-2 py-0.5 rounded-full text-[10px] font-medium leading-tight ${
                         isLow
                           ? "bg-amber/20 text-amber-ink"
                           : "bg-leaf/15 text-leaf-ink"
@@ -59,15 +78,20 @@ export default function ListView({ listings }: { listings: Listing[] }) {
                         {availability} {unitLabel} left
                       </span>
                     )}
+                    {distance !== null && (
+                      <p className="text-[10px] text-ink/40 mt-0.5 leading-tight">
+                        {formatDistance(distance)} away
+                      </p>
+                    )}
                   </div>
                 </div>
 
-                {/* Location */}
-                <p className="text-xs text-ink/50 -mt-0.5 mb-0.5 truncate">{l.location_display}</p>
+                {/* Location — pulled tight to title, aligned with availability badge */}
+                <p className="text-xs text-ink/50 -mt-1 mb-0 truncate">{l.location_display}</p>
 
-                {/* Rating next to listing type label */}
+                {/* Rating · type */}
                 {l.host_rating > 0 && (
-                  <div className="flex items-center gap-1.5 mb-0.5">
+                  <div className="flex items-center gap-1.5 mt-0.5 mb-0">
                     <span className="text-[11px] text-ink/50 flex items-center gap-0.5">
                       <span className="text-amber text-[10px]">★</span>
                       {l.host_rating.toFixed(1)}
@@ -79,7 +103,7 @@ export default function ListView({ listings }: { listings: Listing[] }) {
 
                 {/* Tags */}
                 {tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
+                  <div className="flex flex-wrap gap-1 mt-0.5">
                     {tags.map((tag) => (
                       <span key={tag} className="chip-sm">{formatTag(tag)}</span>
                     ))}
