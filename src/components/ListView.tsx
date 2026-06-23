@@ -51,47 +51,25 @@ export default function ListView({
             <Link
               key={l.id}
               to={`/listing/${l.id}`}
-              className="flex gap-3 items-start py-2.5 transition-colors active:bg-ink/[0.02]"
+              className="flex gap-3 items-start py-3 transition-colors active:bg-ink/[0.02]"
             >
+              {/* Column 1: Thumbnail */}
               <img
                 src={l.photo}
                 alt={l.title}
                 className="w-[70px] h-[70px] rounded-xl object-cover flex-none"
               />
-              <div className="flex-1 min-w-0 pt-0">
-                {/* Title row with price + availability pill */}
-                <div className="flex items-start justify-between gap-2 mb-0">
-                  <p className="font-display font-bold text-[15px] leading-tight line-clamp-2 flex-1 min-w-0">
-                    {l.title}
-                  </p>
-                  <div className="flex-none text-right shrink-0">
-                    <p className="text-[13px] font-semibold text-ink leading-tight">
-                      {formatPrice(l.price_per_unit, l.currency)}
-                    </p>
-                    <p className="text-[10px] text-ink/35 leading-tight">{priceLabel}</p>
-                    {availability > 0 && (
-                      <span className={`inline-block mt-0.5 px-2 py-0.5 rounded-full text-[10px] font-medium leading-tight ${
-                        isLow
-                          ? "bg-amber/20 text-amber-ink"
-                          : "bg-leaf/15 text-leaf-ink"
-                      }`}>
-                        {availability} {unitLabel} left
-                      </span>
-                    )}
-                    {distance !== null && (
-                      <p className="text-[10px] text-ink/40 mt-0.5 leading-tight">
-                        {formatDistance(distance)} away
-                      </p>
-                    )}
-                  </div>
-                </div>
 
-                {/* Location — pulled tight to title, aligned with availability badge */}
-                <p className="text-xs text-ink/50 -mt-1 mb-0 truncate">{l.location_display}</p>
-
-                {/* Rating · type */}
+              {/* Column 2: Main content — compact vertical stack */}
+              <div className="flex-1 min-w-0 flex flex-col gap-[4px]">
+                <p className="font-display font-bold text-[15px] leading-tight line-clamp-2">
+                  {l.title}
+                </p>
+                <p className="text-[12px] text-ink/50 leading-tight truncate">
+                  {l.location_display}
+                </p>
                 {l.host_rating > 0 && (
-                  <div className="flex items-center gap-1.5 mt-0.5 mb-0">
+                  <div className="flex items-center gap-1.5">
                     <span className="text-[11px] text-ink/50 flex items-center gap-0.5">
                       <span className="text-amber text-[10px]">★</span>
                       {l.host_rating.toFixed(1)}
@@ -100,14 +78,36 @@ export default function ListView({
                     <span className="text-[11px] text-ink/50">{typeLabel}</span>
                   </div>
                 )}
-
-                {/* Tags */}
                 {tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-0.5">
+                  <div className="flex flex-wrap gap-1">
                     {tags.map((tag) => (
                       <span key={tag} className="chip-sm">{formatTag(tag)}</span>
                     ))}
                   </div>
+                )}
+              </div>
+
+              {/* Column 3: Metadata — right-aligned compact vertical stack */}
+              <div className="flex-none text-right flex flex-col gap-[4px] items-end">
+                <div className="flex flex-col items-end">
+                  <p className="text-[13px] font-semibold text-ink leading-tight">
+                    {formatPrice(l.price_per_unit, l.currency)}
+                  </p>
+                  <p className="text-[10px] text-ink/35 leading-tight">{priceLabel}</p>
+                </div>
+                {availability > 0 && (
+                  <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-medium leading-tight ${
+                    isLow
+                      ? "bg-amber/20 text-amber-ink"
+                      : "bg-leaf/15 text-leaf-ink"
+                  }`}>
+                    {availability} {unitLabel} left
+                  </span>
+                )}
+                {distance !== null && (
+                  <p className="text-[10px] text-ink/40 leading-tight">
+                    {formatDistance(distance)} away
+                  </p>
                 )}
               </div>
             </Link>
