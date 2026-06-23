@@ -32,17 +32,17 @@ export default function ListView({ listings }: { listings: Listing[] }) {
             <Link
               key={l.id}
               to={`/listing/${l.id}`}
-              className="flex gap-3 items-start py-4 transition-colors active:bg-ink/[0.02]"
+              className="flex gap-3 items-start py-3 transition-colors active:bg-ink/[0.02]"
             >
               <img
                 src={l.photo}
                 alt={l.title}
-                className="w-16 h-16 rounded-xl object-cover flex-none"
+                className="w-[70px] h-[70px] rounded-xl object-cover flex-none"
               />
               <div className="flex-1 min-w-0 pt-0.5">
                 {/* Title row with price + availability pill */}
-                <div className="flex items-start justify-between gap-2 mb-0.5">
-                  <p className="font-display font-bold text-[15px] leading-snug truncate flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-2 mb-0">
+                  <p className="font-display font-bold text-[15px] leading-snug line-clamp-2 flex-1 min-w-0">
                     {l.title}
                   </p>
                   <div className="flex-none text-right shrink-0">
@@ -63,11 +63,11 @@ export default function ListView({ listings }: { listings: Listing[] }) {
                 </div>
 
                 {/* Location */}
-                <p className="text-xs text-ink/50 mb-1.5 truncate">{l.location_display}</p>
+                <p className="text-xs text-ink/50 mb-0.5 truncate">{l.location_display}</p>
 
                 {/* Rating next to listing type label */}
                 {l.host_rating > 0 && (
-                  <div className="flex items-center gap-1.5 mb-2">
+                  <div className="flex items-center gap-1.5 mb-1">
                     <span className="text-[11px] text-ink/50 flex items-center gap-0.5">
                       <span className="text-amber text-[10px]">★</span>
                       {l.host_rating.toFixed(1)}
