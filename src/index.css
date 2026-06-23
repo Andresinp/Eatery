@@ -43,6 +43,20 @@ html, body, #root {
   color: #1F3A12;
 }
 
+/* Smaller, lighter chip for list-view tags */
+.chip-sm {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  border: 1px dashed rgba(22, 20, 19, 0.28);
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(22, 20, 19, 0.65);
+  background: transparent;
+  white-space: nowrap;
+}
+
 /* Currency picker — a bottom-sheet wheel that snaps like a native picker. */
 .currency-dialog {
   margin: 0;
