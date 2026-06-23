@@ -47,7 +47,7 @@ export default function ListingDetail() {
   const galleryPhotos =
     diningPhotos.length > 0
       ? [listing.photo, ...diningPhotos]
-      : [listing.photo, listing.photo, listing.photo];
+      : [listing.photo];
 
   return (
     <div className="min-h-full bg-cream-50 pb-32">

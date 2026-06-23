@@ -104,7 +104,7 @@ export default function HostNew() {
     step === 0 ? true :
     step === 1 ? d.title.trim().length > 1 && d.description.trim().length > 5 && d.category_tags.length > 0 :
     step === 2 ? true :
-    step === 3 ? d.price_per_unit > 0 :
+    step === 3 ? d.price_per_unit > 0 && (d.listing_type !== "table" || d.dining_setting_photos.length > 0) :
     step === 4 ? true :
     true;
 
@@ -829,7 +829,11 @@ function Step3Logistics({ d, setD }: { d: Draft; setD: (n: Draft) => void }) {
               ))}
             </div>
           </Field>
-          <Field label="Dining setting photos" hint="Up to 3 — show off the atmosphere">
+          <Field
+            label="Dining setting photo"
+            hint="Required — guests need to see where they'll eat (table, terrace, garden…). Up to 3."
+            required
+          >
             <DiningPhotos
               value={d.dining_setting_photos}
               onChange={(next) => setD({ ...d, dining_setting_photos: next })}
@@ -1102,11 +1106,13 @@ function Step5Preview({ d }: { d: Draft }) {
   );
 }
 
-function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+function Field({ label, hint, required, children }: { label: string; hint?: string; required?: boolean; children: React.ReactNode }) {
   return (
     <label className="block min-w-0">
       <div className="flex items-baseline justify-between mb-1">
-        <span className="text-xs uppercase tracking-wider text-ink/60 font-semibold">{label}</span>
+        <span className="text-xs uppercase tracking-wider text-ink/60 font-semibold">
+          {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+        </span>
         {hint && <span className="text-[11px] text-ink/50">{hint}</span>}
       </div>
       {children}
