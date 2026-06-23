@@ -4,7 +4,7 @@ export default function PhotoCarousel({ photos, alt }: { photos: string[]; alt: 
   const [i, setI] = useState(0);
   const safe = photos.length ? photos : [];
   return (
-    <div className="relative w-full aspect-[4/3] sm:aspect-[16/10] bg-ink/5 overflow-hidden">
+    <div className="relative w-full aspect-[16/7] sm:aspect-[16/6] bg-ink/5 overflow-hidden">
       {safe.map((src, idx) => (
         <img
           key={idx}
