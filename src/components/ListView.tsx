@@ -25,7 +25,8 @@ export default function ListView({ listings }: { listings: Listing[] }) {
             : (l as MarketListing).quantity_available;
           const unitLabel = isTable ? "seats" : "items";
           const priceLabel = isTable ? "per seat" : "per item";
-          const isLow = availability > 0 && availability <= 3;
+          const typeLabel = isTable ? "Table" : "Market";
+          const isLow = availability > 0 && availability <= 5;
 
           return (
             <Link
@@ -39,7 +40,7 @@ export default function ListView({ listings }: { listings: Listing[] }) {
                 className="w-16 h-16 rounded-xl object-cover flex-none"
               />
               <div className="flex-1 min-w-0 pt-0.5">
-                {/* Title row with price */}
+                {/* Title row with price + availability pill */}
                 <div className="flex items-start justify-between gap-2 mb-0.5">
                   <p className="font-display font-bold text-[15px] leading-snug truncate flex-1 min-w-0">
                     {l.title}
@@ -49,29 +50,30 @@ export default function ListView({ listings }: { listings: Listing[] }) {
                       {formatPrice(l.price_per_unit, l.currency)}
                     </p>
                     <p className="text-[10px] text-ink/35 leading-tight">{priceLabel}</p>
+                    {availability > 0 && (
+                      <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-medium leading-tight ${
+                        isLow
+                          ? "bg-amber/20 text-amber-ink"
+                          : "bg-leaf/15 text-leaf-ink"
+                      }`}>
+                        {availability} {unitLabel} left
+                      </span>
+                    )}
                   </div>
                 </div>
 
                 {/* Location */}
                 <p className="text-xs text-ink/50 mb-1.5 truncate">{l.location_display}</p>
 
-                {/* Secondary metadata: rating · seats left */}
-                {(l.host_rating > 0 || availability > 0) && (
+                {/* Rating next to listing type label */}
+                {l.host_rating > 0 && (
                   <div className="flex items-center gap-1.5 mb-2">
-                    {l.host_rating > 0 && (
-                      <span className="text-[11px] text-ink/50 flex items-center gap-0.5">
-                        <span className="text-amber-400 text-[10px]">★</span>
-                        {l.host_rating.toFixed(1)}
-                      </span>
-                    )}
-                    {l.host_rating > 0 && availability > 0 && (
-                      <span className="text-[10px] text-ink/20">·</span>
-                    )}
-                    {availability > 0 && (
-                      <span className={`text-[11px] ${isLow ? "text-amber-600/70" : "text-ink/40"}`}>
-                        {availability} {unitLabel} left
-                      </span>
-                    )}
+                    <span className="text-[11px] text-ink/50 flex items-center gap-0.5">
+                      <span className="text-amber text-[10px]">★</span>
+                      {l.host_rating.toFixed(1)}
+                    </span>
+                    <span className="text-[10px] text-ink/20">·</span>
+                    <span className="text-[11px] text-ink/50">{typeLabel}</span>
                   </div>
                 )}
 
