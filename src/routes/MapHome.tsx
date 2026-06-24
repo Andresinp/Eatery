@@ -140,7 +140,7 @@ export default function MapHome() {
           map.flyTo({
             center: [l.location_lng, l.location_lat],
             zoom: Math.max(map.getZoom(), 14),
-            offset: [0, -120],
+            offset: [0, -80],
             duration: 600,
           });
         });
@@ -257,7 +257,11 @@ export default function MapHome() {
 
       {/* Bottom sheet */}
       {selected && !showList && (
-        <ListingSheet listing={selected} onClose={() => setSelected(null)} />
+        <ListingSheet
+          listing={selected}
+          onClose={() => setSelected(null)}
+          userLocation={userLocation}
+        />
       )}
 
       {/* Filter panel */}
