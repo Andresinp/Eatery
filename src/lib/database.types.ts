@@ -118,6 +118,7 @@ export type ListingRow = {
   pickup_window_start: string | null;
   pickup_window_end: string | null;
   allows_local_delivery: boolean;
+  idempotency_key: string | null;
 }
 
 export type OrderRow = {
