@@ -1,6 +1,6 @@
-import type { Translations } from "./en";
+import type { PartialTranslations } from "./en";
 
-const zh: Translations = {
+const zh: PartialTranslations = {
   common: {
     back: "返回",
     save: "保存",

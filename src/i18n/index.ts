@@ -1,5 +1,5 @@
 import { useProfile } from "../store/profile";
-import en, { type Translations } from "./locales/en";
+import en, { type Translations, type PartialTranslations } from "./locales/en";
 import es from "./locales/es";
 import tr from "./locales/tr";
 import it from "./locales/it";
@@ -29,7 +29,7 @@ export const SUPPORTED_LANGUAGES = [
 
 export type LanguageCode = (typeof SUPPORTED_LANGUAGES)[number]["code"];
 
-const LOCALES: Record<LanguageCode, Translations> = {
+const LOCALES: Record<LanguageCode, PartialTranslations> = {
   en, es, tr, it, fr, de, pt, ar, ru, zh, ja, sq,
 };
 
@@ -41,7 +41,7 @@ type DotPaths<T, P extends string = ""> = {
 
 export type TKey = DotPaths<Translations>;
 
-function resolve(dict: Translations, key: string): string {
+function resolve(dict: PartialTranslations, key: string): string {
   const parts = key.split(".");
   let cur: unknown = dict;
   for (const p of parts) {

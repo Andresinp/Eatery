@@ -1,6 +1,6 @@
-import type { Translations } from "./en";
+import type { PartialTranslations } from "./en";
 
-const ja: Translations = {
+const ja: PartialTranslations = {
   common: {
     back: "戻る",
     save: "保存",
