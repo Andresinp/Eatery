@@ -115,6 +115,9 @@ const ja: PartialTranslations = {
     drinks: "ドリンク込み：",
     drinksIncluded: "ドリンク込み",
     drinksNotIncluded: "ドリンクなし",
+    itemsLeft: "点残り",
+    today: "今日",
+    tomorrow: "明日",
   },
   orders: {
     title: "今後の予約",

@@ -4,7 +4,8 @@ import maplibregl, { Map as MLMap } from "maplibre-gl";
 import TopBar from "../components/TopBar";
 import { Chip } from "../components/Chip";
 import CurrencyPicker from "../components/CurrencyPicker";
-import { useHost, ME } from "../store/hostListings";
+import { useHost } from "../store/hostListings";
+import { useProfile } from "../store/profile";
 import { useSession } from "../store/session";
 import { createListing } from "../lib/db";
 import { detectAllergensAI, generateDescriptionAI } from "../lib/ai";
@@ -98,6 +99,7 @@ function durationLabel(start: string, end: string): string {
 export default function HostNew() {
   const nav = useNavigate();
   const add = useHost((s) => s.add);
+  const profile = useProfile((s) => s.me);
   const [step, setStep] = useState(0);
   const [d, setD] = useState<Draft>(empty);
 
@@ -175,11 +177,11 @@ export default function HostNew() {
 
     const base = {
       id,
-      host_id: sessionUser?.id ?? ME.id,
-      host_name: ME.name,
-      host_avatar: ME.avatar,
-      host_rating: ME.rating,
-      host_verified: ME.verified,
+      host_id: sessionUser?.id ?? profile.id,
+      host_name: profile.name || "Host",
+      host_avatar: profile.avatar,
+      host_rating: 0,
+      host_verified: profile.identity_verified,
       title: d.title.trim(),
       description: d.description.trim(),
       photo: d.photo,

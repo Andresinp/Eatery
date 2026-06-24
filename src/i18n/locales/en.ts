@@ -102,6 +102,7 @@ const en = {
     perSeat: "per seat",
     perUnit: "per unit",
     seatsLeft: "seats left",
+    itemsLeft: "items left",
     left: "left",
     contains: "Contains:",
     bookSeat: "Book a Seat",
@@ -113,6 +114,8 @@ const en = {
     drinks: "Drinks included:",
     drinksIncluded: "Drinks included",
     drinksNotIncluded: "No drinks included",
+    today: "Today",
+    tomorrow: "Tomorrow",
   },
   orders: {
     title: "Upcoming Bookings",

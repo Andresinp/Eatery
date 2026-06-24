@@ -115,6 +115,9 @@ const tr: PartialTranslations = {
     drinks: "İçecekler dahil:",
     drinksIncluded: "İçecekler dahil",
     drinksNotIncluded: "İçecek dahil değil",
+    itemsLeft: "ürün kaldı",
+    today: "Bugün",
+    tomorrow: "Yarın",
   },
   orders: {
     title: "Yaklaşan Rezervasyonlar",

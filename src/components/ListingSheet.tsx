@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import type { Listing, MarketListing, TableListing } from "../types";
 import { Chip } from "./Chip";
 import { useLanguage, useT } from "../i18n";
-import { formatMealTime, formatPickupWindow } from "../lib/datetime";
+import { formatMealTime, formatPickupWindow, isIso, localeFor } from "../lib/datetime";
 
 const SWIPE_CLOSE_THRESHOLD = 80;
 const SWIPE_EXPAND_THRESHOLD = -60;
@@ -26,6 +26,45 @@ function formatDistance(km: number): string {
   return `${km.toFixed(1)} km`;
 }
 
+function formatTag(tag: string): string {
+  return tag.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function formatListingDate(
+  value: string | undefined,
+  lang: string,
+  tToday: string,
+  tTomorrow: string,
+): string | null {
+  if (!value || !isIso(value)) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const dateDay = new Date(date);
+  dateDay.setHours(0, 0, 0, 0);
+
+  const diffDays = Math.round(
+    (dateDay.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+  );
+
+  if (diffDays === 0) return tToday;
+  if (diffDays === 1) return tTomorrow;
+
+  const locale = localeFor(lang);
+  if (diffDays >= 2 && diffDays <= 6) {
+    return new Intl.DateTimeFormat(locale, {
+      weekday: "short",
+      day: "numeric",
+    }).format(date);
+  }
+  return new Intl.DateTimeFormat(locale, {
+    day: "numeric",
+    month: "short",
+  }).format(date);
+}
+
 export default function ListingSheet({
   listing,
   onClose,
@@ -39,7 +78,7 @@ export default function ListingSheet({
   const t = useT();
   const { code: lang } = useLanguage();
   const isTable = listing.listing_type === "table";
-  const seatsLeft = isTable
+  const availability = isTable
     ? (listing as TableListing).seats_available
     : (listing as MarketListing).quantity_available;
   const table = isTable ? (listing as TableListing) : null;
@@ -88,7 +127,22 @@ export default function ListingSheet({
   const cuisineTags = isTable
     ? (listing as TableListing).cuisine_tags
     : (listing as MarketListing).product_type_tags;
-  const previewTags = [...cuisineTags, ...listing.dietary_tags].slice(0, 4);
+  const previewTags = [...cuisineTags, ...listing.dietary_tags].slice(0, 2);
+
+  const typeLabel = isTable ? t("map.table") : t("map.market");
+  const priceLabel = isTable ? t("map.perSeat") : t("map.perUnit");
+  const availLabel = isTable ? t("map.seatsLeft") : t("map.itemsLeft");
+  const isLow = availability > 0 && availability <= 5;
+
+  const dateStr = isTable
+    ? (listing as TableListing).meal_time
+    : (listing as MarketListing).pickup_window_start;
+  const listingDate = formatListingDate(
+    dateStr,
+    lang,
+    t("map.today"),
+    t("map.tomorrow"),
+  );
 
   return (
     <div
@@ -180,43 +234,105 @@ export default function ListingSheet({
             )}
           </div>
 
-          {/* Collapsed summary — essential info at a glance */}
+          {/* Collapsed summary — list-view-style two-column layout */}
           {!expanded && (
-            <div className="flex-none px-4 pt-3 pb-1">
+            <div className="flex-none px-4 pt-3 pb-2">
               <div className="flex items-start gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="font-display font-extrabold text-xl leading-tight line-clamp-1">
-                    {listing.title}
-                  </div>
-                  <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                    <SeatsLeftBadge
-                      count={seatsLeft}
-                      label={isTable ? t("map.seatsLeft") : t("map.left")}
-                    />
-                    {distance !== null && (
-                      <span className="text-xs text-ink/55 font-medium">
-                        {formatDistance(distance)}
+                {/* Left / main column */}
+                <div className="flex-1 min-w-0 flex flex-col gap-[3px]">
+                  {/* Title + date badge */}
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <p className="font-display font-bold text-[15px] leading-tight line-clamp-1 flex-1 min-w-0">
+                      {listing.title}
+                    </p>
+                    {listingDate && (
+                      <span className="flex-none text-[10px] text-ink/55 bg-ink/[0.06] px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                        {listingDate}
                       </span>
                     )}
                   </div>
+
+                  {/* Location */}
+                  <p className="text-[12px] text-ink/50 leading-tight truncate">
+                    {listing.location_display}
+                  </p>
+
+                  {/* Rating + type */}
+                  {listing.host_rating > 0 && (
+                    <div className="flex items-center gap-1">
+                      <span className="text-amber text-[10px]">★</span>
+                      <span className="text-[11px] text-ink/55">
+                        {listing.host_rating.toFixed(1)}
+                      </span>
+                      <span className="text-[10px] text-ink/20">·</span>
+                      <span className="text-[11px] text-ink/55">{typeLabel}</span>
+                    </div>
+                  )}
+
+                  {/* Description preview */}
+                  {listing.description && (
+                    <p className="text-[12px] text-ink/60 leading-tight line-clamp-1">
+                      {listing.description}
+                    </p>
+                  )}
+
+                  {/* Tags */}
+                  {previewTags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-0.5">
+                      {previewTags.map((tag) => (
+                        <span key={tag} className="chip-sm">
+                          {formatTag(tag)}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Drinks info (table only) */}
+                  {table && (
+                    <p
+                      className={
+                        "text-[11px] leading-tight mt-0.5 " +
+                        (table.drinks_included
+                          ? "text-leaf-ink"
+                          : "text-ink/40")
+                      }
+                    >
+                      {table.drinks_included
+                        ? `🍷 ${drinks.length > 0 ? drinks.join(", ") : t("map.drinksIncluded")}`
+                        : `🚫 ${t("map.drinksNotIncluded")}`}
+                    </p>
+                  )}
                 </div>
-                <div className="flex-none text-right shrink-0">
-                  <div className="font-display font-extrabold text-2xl leading-none">
-                    {listing.currency}
-                    {listing.price_per_unit}
+
+                {/* Right column — price, availability, distance */}
+                <div className="flex-none text-right flex flex-col gap-[4px] items-end">
+                  <div className="flex flex-col items-end">
+                    <p className="text-[13px] font-semibold text-ink leading-tight">
+                      {listing.currency}{listing.price_per_unit}
+                    </p>
+                    <p className="text-[10px] text-ink/35 leading-tight">
+                      {priceLabel}
+                    </p>
                   </div>
-                  <div className="text-[11px] text-ink/60 mt-0.5">
-                    {isTable ? t("map.perSeat") : t("map.perUnit")}
-                  </div>
+                  {availability > 0 && (
+                    <span
+                      className={
+                        "inline-block px-2 py-0.5 rounded-full text-[10px] font-medium leading-tight whitespace-nowrap " +
+                        (isLow
+                          ? "bg-amber/20 text-amber-ink"
+                          : "bg-leaf/15 text-leaf-ink")
+                      }
+                    >
+                      {availability} {availLabel}
+                    </span>
+                  )}
+                  {distance !== null && (
+                    <p className="text-[10px] text-ink/40 leading-tight">
+                      {formatDistance(distance)} away
+                    </p>
+                  )}
                 </div>
               </div>
-              {previewTags.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {previewTags.map((tag) => (
-                    <Chip key={tag}>{tag}</Chip>
-                  ))}
-                </div>
-              )}
             </div>
           )}
 
@@ -257,11 +373,11 @@ export default function ListingSheet({
                       {listing.price_per_unit}
                     </div>
                     <div className="text-[11px] text-ink/60 mt-0.5">
-                      {isTable ? t("map.perSeat") : t("map.perUnit")}
+                      {priceLabel}
                     </div>
                   </div>
                   <SeatsLeftBadge
-                    count={seatsLeft}
+                    count={availability}
                     label={isTable ? t("map.seatsLeft") : t("map.left")}
                   />
                 </div>

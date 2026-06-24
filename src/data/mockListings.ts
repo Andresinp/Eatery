@@ -181,7 +181,7 @@ export const mockListings: Listing[] = [
       "https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=900&q=80",
     host_name: "Giulia",
     host_avatar:
-      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80",
+      "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=200&q=80",
     host_rating: 4.95,
     host_verified: true,
     cuisine_tags: ["Italian"],
