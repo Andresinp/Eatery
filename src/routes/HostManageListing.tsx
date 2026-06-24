@@ -1,25 +1,48 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import TopBar from "../components/TopBar";
 import { Chip } from "../components/Chip";
 import { useHost } from "../store/hostListings";
 import { useOrders, type Order } from "../store/orders";
+import { fetchListing } from "../lib/db";
 import { cancelOrder as remoteCancel, isStripeConfigured } from "../lib/stripe";
-import type { MarketListing, TableListing } from "../types";
+import type { Listing, MarketListing, TableListing } from "../types";
 
 export default function HostManageListing() {
   const { id = "" } = useParams();
   const nav = useNavigate();
-  const listing = useHost((s) => s.getById(id));
+  const localListing = useHost((s) => s.getById(id));
   const remove = useHost((s) => s.remove);
   const orders = useOrders((s) => s.orders);
   const updateOrder = useOrders((s) => s.updateOrder);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [dbListing, setDbListing] = useState<Listing | null>(null);
+  const [dbLoading, setDbLoading] = useState(!localListing);
+
+  useEffect(() => {
+    if (localListing) { setDbLoading(false); return; }
+    setDbLoading(true);
+    fetchListing(id)
+      .then(setDbListing)
+      .catch(() => {})
+      .finally(() => setDbLoading(false));
+  }, [id, localListing]);
+
+  const listing = localListing ?? dbListing;
 
   const myOrders = useMemo(
     () => orders.filter((o) => o.listing_id === id),
     [orders, id],
   );
+
+  if (dbLoading) {
+    return (
+      <div className="min-h-full">
+        <TopBar back title="Listing" />
+        <div className="p-6 text-ink/70">Loading…</div>
+      </div>
+    );
+  }
 
   if (!listing) {
     return (

@@ -5,6 +5,8 @@ import TopBar from "../components/TopBar";
 import { Chip } from "../components/Chip";
 import CurrencyPicker from "../components/CurrencyPicker";
 import { useHost, ME } from "../store/hostListings";
+import { useSession } from "../store/session";
+import { createListing } from "../lib/db";
 import { detectAllergensAI, generateDescriptionAI } from "../lib/ai";
 import { MAP_STYLE_URL, reverseGeocode } from "../lib/map";
 import { MAP_CENTER } from "../data/mockListings";
@@ -118,12 +120,62 @@ export default function HostNew() {
     }
   };
 
-  const publish = () => {
-    const id = `mine_${Math.random().toString(36).slice(2, 9)}`;
+  const toDiningSetting = (s: string): "indoor_table" | "garden" | "terrace" | "rooftop" | "open_kitchen" => {
+    const map: Record<string, "indoor_table" | "garden" | "terrace" | "rooftop" | "open_kitchen"> = {
+      "Indoor Table": "indoor_table",
+      Garden: "garden",
+      Terrace: "terrace",
+      Rooftop: "rooftop",
+      "Open Kitchen": "open_kitchen",
+    };
+    return map[s] ?? "indoor_table";
+  };
+
+  const publish = async () => {
     const isTable = d.listing_type === "table";
+    let id = `mine_${Math.random().toString(36).slice(2, 9)}`;
+
+    const sessionUser = useSession.getState().user;
+    if (sessionUser) {
+      try {
+        id = await createListing({
+          host_id: sessionUser.id,
+          listing_type: d.listing_type,
+          title: d.title.trim(),
+          description: d.description.trim(),
+          photo: d.photo,
+          cuisine_tags: isTable ? d.category_tags : [],
+          product_type_tags: isTable ? [] : d.category_tags,
+          dietary_tags: d.dietary_tags,
+          allergen_flags: d.allergen_flags,
+          price_per_unit: d.price_per_unit,
+          location_lat: d.lat,
+          location_lng: d.lng,
+          location_display: d.neighborhood || "Madrid",
+          exact_address: d.exact_address || undefined,
+          ...(isTable
+            ? {
+                meal_time: d.meal_date ? `${d.meal_date}T${d.meal_time}:00` : undefined,
+                meal_end_time: d.meal_date && d.meal_end ? `${d.meal_date}T${d.meal_end}:00` : undefined,
+                seats_total: d.seats_total,
+                dining_setting: toDiningSetting(d.dining_setting),
+                drinks_included: d.drinks_included,
+                drinks: d.drinks_included ? d.drinks : [],
+              }
+            : {
+                quantity_total: d.quantity_total,
+                pickup_window_start: d.pickup_date ? `${d.pickup_date}T${d.pickup_start}:00` : undefined,
+                pickup_window_end: d.pickup_date ? `${d.pickup_date}T${d.pickup_end}:00` : undefined,
+              }),
+        });
+      } catch (err) {
+        console.error("Failed to save listing to database:", err);
+      }
+    }
+
     const base = {
       id,
-      host_id: ME.id,
+      host_id: sessionUser?.id ?? ME.id,
       host_name: ME.name,
       host_avatar: ME.avatar,
       host_rating: ME.rating,
