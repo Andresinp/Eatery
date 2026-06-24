@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import TopBar from "../components/TopBar";
 import { useHost, ME } from "../store/hostListings";
 import { useSession } from "../store/session";
-import { fetchMyListings } from "../lib/db";
+import { cancelListing, fetchMyListings } from "../lib/db";
 import { useOrders } from "../store/orders";
 import { useT } from "../i18n";
 import type { Listing, MarketListing, TableListing } from "../types";
@@ -26,10 +26,20 @@ function useMyListings(): Listing[] {
   }, [localListings, dbListings]);
 }
 
+interface UndoItem {
+  listing: Listing;
+  timeoutId: ReturnType<typeof setTimeout>;
+}
+
 export default function HostDashboard() {
   const myListings = useMyListings();
   const orders = useOrders((s) => s.orders);
+  const remove = useHost((s) => s.remove);
   const [tab, setTab] = useState<"table" | "market">("table");
+  const [bulkMode, setBulkMode] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [undoItem, setUndoItem] = useState<UndoItem | null>(null);
+  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
   const t = useT();
 
   const stats = useMemo(() => {
@@ -47,6 +57,61 @@ export default function HostDashboard() {
   }, [myListings, orders]);
 
   const filtered = myListings.filter((l) => l.listing_type === tab);
+
+  const commitDelete = async (id: string) => {
+    remove(id);
+    try {
+      await cancelListing(id);
+    } catch {
+      // local state already removed; DB error is non-fatal
+    }
+    setDeletingIds((prev) => { const next = new Set(prev); next.delete(id); return next; });
+  };
+
+  const handleDelete = (listing: Listing) => {
+    // Cancel any existing undo for a previous deletion first
+    if (undoItem) {
+      clearTimeout(undoItem.timeoutId);
+      commitDelete(undoItem.listing.id);
+    }
+
+    const timeoutId = setTimeout(() => {
+      commitDelete(listing.id);
+      setUndoItem(null);
+    }, 5000);
+
+    // Optimistically hide from list
+    setDeletingIds((prev) => new Set([...prev, listing.id]));
+    setUndoItem({ listing, timeoutId });
+    setSelected((prev) => { const next = new Set(prev); next.delete(listing.id); return next; });
+  };
+
+  const handleUndo = () => {
+    if (!undoItem) return;
+    clearTimeout(undoItem.timeoutId);
+    setDeletingIds((prev) => { const next = new Set(prev); next.delete(undoItem.listing.id); return next; });
+    setUndoItem(null);
+  };
+
+  const handleBulkDelete = () => {
+    selected.forEach((id) => {
+      const listing = myListings.find((l) => l.id === id);
+      if (listing) handleDelete(listing);
+    });
+    setSelected(new Set());
+    setBulkMode(false);
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const visibleFiltered = filtered.filter((l) => !deletingIds.has(l.id));
 
   return (
     <div className="min-h-full bg-cream-50 pb-10">
@@ -95,15 +160,46 @@ export default function HostDashboard() {
               {t("host.market")}
             </Tab>
           </div>
-          <Link
-            to="/host/earnings"
-            className="text-sm font-semibold text-ink/70 hover:text-ink underline-offset-4 hover:underline"
-          >
-            {t("host.earningsLink")}
-          </Link>
+          <div className="flex items-center gap-3">
+            {bulkMode ? (
+              <>
+                {selected.size > 0 && (
+                  <button
+                    onClick={handleBulkDelete}
+                    className="text-sm font-semibold text-red-600 hover:text-red-700"
+                  >
+                    Delete {selected.size}
+                  </button>
+                )}
+                <button
+                  onClick={() => { setBulkMode(false); setSelected(new Set()); }}
+                  className="text-sm font-semibold text-ink/70 hover:text-ink"
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <>
+                {visibleFiltered.length > 1 && (
+                  <button
+                    onClick={() => setBulkMode(true)}
+                    className="text-sm font-semibold text-ink/70 hover:text-ink"
+                  >
+                    Select
+                  </button>
+                )}
+                <Link
+                  to="/host/earnings"
+                  className="text-sm font-semibold text-ink/70 hover:text-ink underline-offset-4 hover:underline"
+                >
+                  {t("host.earningsLink")}
+                </Link>
+              </>
+            )}
+          </div>
         </div>
 
-        {filtered.length === 0 ? (
+        {visibleFiltered.length === 0 ? (
           <div className="rounded-3xl border-2 border-dashed border-ink/30 p-10 text-center">
             <div className="font-display font-extrabold text-2xl mb-2">
               {tab === "table" ? t("host.noTablesTitle") : t("host.noMarketTitle")}
@@ -120,7 +216,7 @@ export default function HostDashboard() {
           </div>
         ) : (
           <div className="space-y-3">
-            {filtered.map((l) => {
+            {visibleFiltered.map((l) => {
               const isTable = l.listing_type === "table";
               const left = isTable
                 ? (l as TableListing).seats_available
@@ -131,46 +227,188 @@ export default function HostDashboard() {
               const when = isTable
                 ? (l as TableListing).meal_time
                 : `${(l as MarketListing).pickup_window_start}–${(l as MarketListing).pickup_window_end}`;
+
+              if (bulkMode) {
+                const checked = selected.has(l.id);
+                return (
+                  <button
+                    key={l.id}
+                    type="button"
+                    onClick={() => toggleSelect(l.id)}
+                    className={
+                      "w-full flex gap-3 p-3 rounded-2xl bg-white border-2 transition text-left " +
+                      (checked ? "border-ink bg-ink/5" : "border-ink/90")
+                    }
+                  >
+                    <div className="flex items-center justify-center w-6 h-6 mt-7 flex-none">
+                      <div className={
+                        "w-5 h-5 rounded-full border-2 border-ink flex items-center justify-center " +
+                        (checked ? "bg-ink" : "")
+                      }>
+                        {checked && <span className="text-cream-50 text-xs font-bold">✓</span>}
+                      </div>
+                    </div>
+                    <ListingCardContent l={l} left={left} total={total} when={when} isTable={isTable} t={t} />
+                  </button>
+                );
+              }
+
               return (
-                <Link
+                <SwipeableCard
                   key={l.id}
-                  to={`/host/listing/${l.id}`}
-                  className="flex gap-3 p-3 rounded-2xl bg-white border-2 border-ink/90 hover:shadow-float transition"
+                  onDelete={() => handleDelete(l)}
                 >
-                  <img
-                    src={l.photo}
-                    alt={l.title}
-                    className="w-20 h-20 rounded-xl object-cover flex-none"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className={"chip " + (isTable ? "chip-amber" : "chip-leaf")}>
-                        {isTable ? `🍽 ${t("map.table")}` : `🛍 ${t("map.market")}`}
-                      </span>
-                    </div>
-                    <div className="font-display font-bold text-lg leading-tight truncate">
-                      {l.title}
-                    </div>
-                    <div className="text-xs text-ink/60">{when}</div>
-                    <div className="text-xs text-ink/60">
-                      {left} / {total} {isTable ? t("host.seats") : t("host.units")} {t("host.leftSuffix")}
-                    </div>
-                  </div>
-                  <div className="text-right flex-none">
-                    <div className="font-display font-extrabold text-xl">
-                      {l.currency}
-                      {l.price_per_unit}
-                    </div>
-                    <div className="text-[11px] text-ink/60 mt-1">
-                      {isTable ? t("host.perSeat") : t("host.perUnit")}
-                    </div>
-                  </div>
-                </Link>
+                  <Link
+                    to={`/host/listing/${l.id}`}
+                    className="flex gap-3 p-3 rounded-2xl bg-white border-2 border-ink/90 hover:shadow-float transition"
+                  >
+                    <ListingCardContent l={l} left={left} total={total} when={when} isTable={isTable} t={t} />
+                  </Link>
+                </SwipeableCard>
               );
             })}
           </div>
         )}
       </div>
+
+      {/* Undo snackbar */}
+      {undoItem && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl bg-ink text-cream-50 shadow-float text-sm font-medium">
+          <span>Listing deleted</span>
+          <button
+            onClick={handleUndo}
+            className="font-bold text-amber underline-offset-2 hover:underline"
+          >
+            Undo
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ListingCardContent({
+  l, left, total, when, isTable, t,
+}: {
+  l: Listing;
+  left: number | undefined;
+  total: number | undefined;
+  when: string | undefined;
+  isTable: boolean;
+  t: (key: string) => string;
+}) {
+  return (
+    <>
+      <img
+        src={l.photo}
+        alt={l.title}
+        className="w-20 h-20 rounded-xl object-cover flex-none"
+      />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-0.5">
+          <span className={"chip " + (isTable ? "chip-amber" : "chip-leaf")}>
+            {isTable ? `🍽 ${t("map.table")}` : `🛍 ${t("map.market")}`}
+          </span>
+        </div>
+        <div className="font-display font-bold text-lg leading-tight truncate">
+          {l.title}
+        </div>
+        <div className="text-xs text-ink/60">{when}</div>
+        <div className="text-xs text-ink/60">
+          {left} / {total} {isTable ? t("host.seats") : t("host.units")} {t("host.leftSuffix")}
+        </div>
+      </div>
+      <div className="text-right flex-none">
+        <div className="font-display font-extrabold text-xl">
+          {l.currency}
+          {l.price_per_unit}
+        </div>
+        <div className="text-[11px] text-ink/60 mt-1">
+          {isTable ? t("host.perSeat") : t("host.perUnit")}
+        </div>
+      </div>
+    </>
+  );
+}
+
+// Swipeable wrapper: swipe left to reveal delete button
+function SwipeableCard({
+  children,
+  onDelete,
+}: {
+  children: React.ReactNode;
+  onDelete: () => void;
+}) {
+  const DELETE_THRESHOLD = 80;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const startXRef = useRef<number | null>(null);
+  const [offset, setOffset] = useState(0);
+  const [revealed, setRevealed] = useState(false);
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    startXRef.current = e.clientX;
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (startXRef.current === null) return;
+    const dx = startXRef.current - e.clientX; // positive = swiping left
+    if (dx > 0) setOffset(Math.min(dx, DELETE_THRESHOLD + 20));
+  };
+
+  const handlePointerUp = () => {
+    if (startXRef.current === null) return;
+    startXRef.current = null;
+    if (offset >= DELETE_THRESHOLD) {
+      setOffset(DELETE_THRESHOLD);
+      setRevealed(true);
+    } else {
+      setOffset(0);
+      setRevealed(false);
+    }
+  };
+
+  const handleClose = () => {
+    setOffset(0);
+    setRevealed(false);
+  };
+
+  return (
+    <div ref={containerRef} className="relative overflow-hidden rounded-2xl">
+      {/* Delete action behind the card */}
+      <div
+        className="absolute inset-y-0 right-0 flex items-center justify-end pr-3 bg-red-500 rounded-2xl"
+        style={{ width: DELETE_THRESHOLD + 20 }}
+      >
+        <button
+          onClick={() => { handleClose(); onDelete(); }}
+          className="flex flex-col items-center justify-center w-14 h-14 rounded-xl bg-red-600 text-white text-xs font-bold gap-1"
+        >
+          <span className="text-lg">🗑</span>
+          Delete
+        </button>
+      </div>
+
+      {/* Swipeable card */}
+      <div
+        className="relative touch-pan-y select-none"
+        style={{ transform: `translateX(-${offset}px)`, transition: offset === 0 || offset === DELETE_THRESHOLD ? "transform 0.2s ease" : "none" }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+      >
+        {children}
+      </div>
+
+      {/* Tap outside overlay to close */}
+      {revealed && (
+        <div
+          className="absolute inset-0 z-10"
+          style={{ right: DELETE_THRESHOLD + 20 }}
+          onClick={handleClose}
+        />
+      )}
     </div>
   );
 }
