@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import type { Listing, MarketListing, TableListing } from "../types";
 import { Chip } from "./Chip";
 import { useLanguage, useT } from "../i18n";
-import { formatMealTime, formatPickupWindow, isIso, localeFor } from "../lib/datetime";
+import { formatMealTime, formatPickupWindow, formatRelativeDate } from "../lib/datetime";
 
 const SWIPE_CLOSE_THRESHOLD = 80;
 const SWIPE_EXPAND_THRESHOLD = -60;
@@ -28,41 +28,6 @@ function formatDistance(km: number): string {
 
 function formatTag(tag: string): string {
   return tag.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-function formatListingDate(
-  value: string | undefined,
-  lang: string,
-  tToday: string,
-  tTomorrow: string,
-): string | null {
-  if (!value || !isIso(value)) return null;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const dateDay = new Date(date);
-  dateDay.setHours(0, 0, 0, 0);
-
-  const diffDays = Math.round(
-    (dateDay.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
-  );
-
-  if (diffDays === 0) return tToday;
-  if (diffDays === 1) return tTomorrow;
-
-  const locale = localeFor(lang);
-  if (diffDays >= 2 && diffDays <= 6) {
-    return new Intl.DateTimeFormat(locale, {
-      weekday: "short",
-      day: "numeric",
-    }).format(date);
-  }
-  return new Intl.DateTimeFormat(locale, {
-    day: "numeric",
-    month: "short",
-  }).format(date);
 }
 
 export default function ListingSheet({
@@ -137,7 +102,7 @@ export default function ListingSheet({
   const dateStr = isTable
     ? (listing as TableListing).meal_time
     : (listing as MarketListing).pickup_window_start;
-  const listingDate = formatListingDate(
+  const listingDate = formatRelativeDate(
     dateStr,
     lang,
     t("map.today"),

@@ -3,10 +3,13 @@ import { useParams } from "react-router-dom";
 import TopBar from "../components/TopBar";
 import { mockListings } from "../data/mockListings";
 import { mockReviews } from "../data/mockReviews";
+import { formatReviewDate } from "../lib/datetime";
+import { useLanguage } from "../i18n";
 import type { Listing } from "../types";
 
 export default function PublicProfile() {
   const { id = "" } = useParams();
+  const { code: lang } = useLanguage();
 
   const ctx = useMemo(() => {
     const sample = mockListings.find((l) => l.host_name === id) ?? mockListings[0];
@@ -67,7 +70,7 @@ export default function PublicProfile() {
           </div>
 
           {tab === "host" ? (
-            <ReviewList reviews={ctx.reviews} />
+            <ReviewList reviews={ctx.reviews} lang={lang} />
           ) : (
             <div className="rounded-2xl border-2 border-dashed border-ink/25 p-8 text-center text-ink/60">
               No reviews as a guest yet.
@@ -92,7 +95,7 @@ export default function PublicProfile() {
   );
 }
 
-function ReviewList({ reviews }: { reviews: typeof mockReviews[string] }) {
+function ReviewList({ reviews, lang }: { reviews: typeof mockReviews[string]; lang: string }) {
   if (reviews.length === 0) {
     return (
       <div className="rounded-2xl border-2 border-dashed border-ink/25 p-8 text-center text-ink/60">
@@ -112,7 +115,7 @@ function ReviewList({ reviews }: { reviews: typeof mockReviews[string] }) {
             />
             <div className="flex-1">
               <div className="font-semibold leading-tight">{r.reviewer_name}</div>
-              <div className="text-xs text-ink/60">{r.created_at}</div>
+              <div className="text-xs text-ink/60">{formatReviewDate(r.created_at, lang)}</div>
             </div>
             <div className="text-amber-deep font-semibold">
               {"★".repeat(r.rating)}
