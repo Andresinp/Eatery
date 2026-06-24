@@ -44,6 +44,80 @@ export async function fetchListings(): Promise<Listing[]> {
   return (data ?? []).map(rowToListing);
 }
 
+export async function createListing(args: {
+  host_id: string;
+  listing_type: "table" | "market";
+  title: string;
+  description: string;
+  photo: string;
+  cuisine_tags: string[];
+  product_type_tags: string[];
+  dietary_tags: string[];
+  allergen_flags: string[];
+  price_per_unit: number;
+  location_lat: number;
+  location_lng: number;
+  location_display: string;
+  exact_address?: string;
+  meal_time?: string;
+  meal_end_time?: string;
+  seats_total?: number;
+  dining_setting?: ListingRow["dining_setting"];
+  drinks_included?: boolean;
+  drinks?: string[];
+  quantity_total?: number;
+  pickup_window_start?: string;
+  pickup_window_end?: string;
+}): Promise<string> {
+  if (!supabase) throw new Error("Supabase not configured");
+  const { data, error } = await supabase
+    .from("listings")
+    .insert({
+      host_id: args.host_id,
+      listing_type: args.listing_type,
+      title: args.title,
+      description: args.description,
+      photos: args.photo ? [args.photo] : [],
+      cuisine_tags: args.cuisine_tags,
+      product_type_tags: args.product_type_tags,
+      dietary_tags: args.dietary_tags,
+      allergen_flags: args.allergen_flags,
+      price_per_unit: args.price_per_unit,
+      location_lat: args.location_lat,
+      location_lng: args.location_lng,
+      location_display: args.location_display,
+      exact_address: args.exact_address ?? null,
+      status: "active" as const,
+      meal_time: args.meal_time ?? null,
+      meal_end_time: args.meal_end_time ?? null,
+      seats_total: args.seats_total ?? null,
+      seats_available: args.seats_total ?? null,
+      dining_setting: args.dining_setting ?? null,
+      drinks_included: args.drinks_included ?? false,
+      drinks: args.drinks ?? [],
+      quantity_total: args.quantity_total ?? null,
+      quantity_available: args.quantity_total ?? null,
+      pickup_window_start: args.pickup_window_start ?? null,
+      pickup_window_end: args.pickup_window_end ?? null,
+    })
+    .select("id")
+    .single();
+  if (error) throw error;
+  return data.id;
+}
+
+export async function fetchMyListings(hostId: string): Promise<Listing[]> {
+  if (!supabase) return useHost.getState().myListings;
+  const { data, error } = await supabase
+    .from("listings")
+    .select("*, host:profiles!host_id(full_name, avatar_url, host_rating, identity_verified)")
+    .eq("host_id", hostId)
+    .neq("status", "cancelled")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(rowToListing);
+}
+
 export async function fetchListing(id: string): Promise<Listing | null> {
   if (!supabase) {
     return (

@@ -1,13 +1,33 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import TopBar from "../components/TopBar";
 import { useHost, ME } from "../store/hostListings";
+import { useSession } from "../store/session";
+import { fetchMyListings } from "../lib/db";
 import { useOrders } from "../store/orders";
 import { useT } from "../i18n";
-import type { MarketListing, TableListing } from "../types";
+import type { Listing, MarketListing, TableListing } from "../types";
+
+function useMyListings(): Listing[] {
+  const localListings = useHost((s) => s.myListings);
+  const sessionUser = useSession((s) => s.user);
+  const [dbListings, setDbListings] = useState<Listing[]>([]);
+
+  useEffect(() => {
+    if (!sessionUser) return;
+    fetchMyListings(sessionUser.id)
+      .then(setDbListings)
+      .catch(() => {});
+  }, [sessionUser]);
+
+  return useMemo(() => {
+    const localIds = new Set(localListings.map((l) => l.id));
+    return [...localListings, ...dbListings.filter((l) => !localIds.has(l.id))];
+  }, [localListings, dbListings]);
+}
 
 export default function HostDashboard() {
-  const myListings = useHost((s) => s.myListings);
+  const myListings = useMyListings();
   const orders = useOrders((s) => s.orders);
   const [tab, setTab] = useState<"table" | "market">("table");
   const t = useT();

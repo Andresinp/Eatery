@@ -144,6 +144,8 @@ export default function ListingSheet({
             <div className="absolute top-2 left-1/2 -translate-x-1/2 w-10 h-1.5 rounded-full bg-cream-50/80 shadow pointer-events-none" />
             <button
               onClick={onClose}
+              onTouchStart={(e) => e.stopPropagation()}
+              onTouchEnd={(e) => { e.stopPropagation(); onClose(); }}
               aria-label={t("common.close")}
               className="absolute top-3 right-3 w-8 h-8 rounded-full bg-cream-50 border-2 border-ink/90 grid place-items-center shadow-float"
             >
