@@ -102,7 +102,7 @@ export default function HostNew() {
   const totalSteps = 6;
   const canNext =
     step === 0 ? true :
-    step === 1 ? d.title.trim().length > 1 && d.description.trim().length > 5 && d.category_tags.length > 0 :
+    step === 1 ? d.title.trim().length > 1 && d.description.trim().length > 5 :
     step === 2 ? true :
     step === 3 ? d.price_per_unit > 0 && (d.listing_type !== "table" || d.dining_setting_photos.length > 0) :
     step === 4 ? true :
@@ -169,7 +169,7 @@ export default function HostNew() {
 
   return (
     <div className="min-h-full bg-cream-50 pb-32">
-      <TopBar back title="Post a listing" />
+      <TopBar back title={d.listing_type === "table" ? "Post a Table" : "Post a listing"} />
 
       <div className="max-w-[640px] mx-auto px-4 pt-2">
         <Stepper step={step} total={totalSteps} />
@@ -556,16 +556,91 @@ function Step1Food({ d, setD }: { d: Draft; setD: (n: Draft) => void }) {
         </Field>
 
         <Field label={isTable ? "Cuisine" : "Product type"}>
-          <ChipToggle
-            tags={isTable ? CUISINES : PRODUCT_TYPES}
-            value={d.category_tags}
-            onChange={(next) => setD({ ...d, category_tags: next })}
-            variant={isTable ? "amber" : "leaf"}
-          />
+          {isTable ? (
+            <CuisineSection
+              value={d.category_tags}
+              onChange={(next) => setD({ ...d, category_tags: next })}
+            />
+          ) : (
+            <ChipToggle
+              tags={PRODUCT_TYPES}
+              value={d.category_tags}
+              onChange={(next) => setD({ ...d, category_tags: next })}
+              variant="leaf"
+            />
+          )}
         </Field>
 
         {isTable && <DrinksSection d={d} setD={setD} />}
       </div>
+    </div>
+  );
+}
+
+function CuisineSection({ value, onChange }: { value: string[]; onChange: (next: string[]) => void }) {
+  const [showInput, setShowInput] = useState(false);
+  const [custom, setCustom] = useState("");
+
+  const toggle = (t: string) =>
+    onChange(value.includes(t) ? value.filter((x) => x !== t) : [...value, t]);
+
+  const addCustom = () => {
+    const v = custom.trim();
+    if (!v) return;
+    if (!value.includes(v)) onChange([...value, v]);
+    setCustom("");
+    setShowInput(false);
+  };
+
+  const customTags = value.filter((t) => !CUISINES.includes(t));
+  const allTags = [...CUISINES, ...customTags];
+
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap gap-1.5">
+        {allTags.map((t) => {
+          const on = value.includes(t);
+          return (
+            <button key={t} type="button" onClick={() => toggle(t)}>
+              <span className={"chip " + (on ? "chip-amber" : "")}>
+                {on && <span>✓</span>}
+                {t}
+              </span>
+            </button>
+          );
+        })}
+        <button type="button" onClick={() => setShowInput((s) => !s)}>
+          <span className={"chip " + (showInput ? "chip-amber" : "")}>
+            Other
+          </span>
+        </button>
+      </div>
+      {showInput && (
+        <div className="flex items-center gap-2">
+          <input
+            // eslint-disable-next-line jsx-a11y/no-autofocus
+            autoFocus
+            value={custom}
+            onChange={(e) => setCustom(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                addCustom();
+              }
+            }}
+            placeholder="e.g. Balkan, Levantine Fusion, Home-style…"
+            className="flex-1 px-3 py-2 rounded-xl border border-ink/20 bg-white focus:outline-none focus:border-ink text-sm"
+          />
+          <button
+            type="button"
+            onClick={addCustom}
+            disabled={!custom.trim()}
+            className="px-3 py-2 rounded-xl border-2 border-ink bg-cream-50 text-sm font-semibold disabled:opacity-40"
+          >
+            Add
+          </button>
+        </div>
+      )}
     </div>
   );
 }
