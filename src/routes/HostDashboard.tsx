@@ -5,7 +5,7 @@ import { useHost, ME } from "../store/hostListings";
 import { useSession } from "../store/session";
 import { cancelListing, fetchMyListings } from "../lib/db";
 import { useOrders } from "../store/orders";
-import { useT } from "../i18n";
+import { useT, type TKey } from "../i18n";
 import type { Listing, MarketListing, TableListing } from "../types";
 
 function useMyListings(): Listing[] {
@@ -295,7 +295,7 @@ function ListingCardContent({
   total: number | undefined;
   when: string | undefined;
   isTable: boolean;
-  t: (key: string) => string;
+  t: (key: TKey, fallback?: string) => string;
 }) {
   return (
     <>
