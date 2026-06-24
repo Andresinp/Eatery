@@ -4,7 +4,7 @@ import TopBar from "../components/TopBar";
 import { Chip } from "../components/Chip";
 import { useHost } from "../store/hostListings";
 import { useOrders, type Order } from "../store/orders";
-import { fetchListing } from "../lib/db";
+import { cancelListing, fetchListing } from "../lib/db";
 import { cancelOrder as remoteCancel, isStripeConfigured } from "../lib/stripe";
 import type { Listing, MarketListing, TableListing } from "../types";
 
@@ -135,8 +135,13 @@ export default function HostManageListing() {
             </button>
             {confirmDelete ? (
               <button
-                onClick={() => {
+                onClick={async () => {
                   remove(listing.id);
+                  try {
+                    await cancelListing(listing.id);
+                  } catch {
+                    // local state already updated; DB will sync on next fetch
+                  }
                   window.location.href = "/host";
                 }}
                 className="flex-1 py-2.5 rounded-2xl border-2 border-ink bg-ink text-cream-50 font-semibold"

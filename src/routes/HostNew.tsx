@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import maplibregl, { Map as MLMap } from "maplibre-gl";
 import TopBar from "../components/TopBar";
@@ -102,6 +102,12 @@ export default function HostNew() {
   const profile = useProfile((s) => s.me);
   const [step, setStep] = useState(0);
   const [d, setD] = useState<Draft>(empty);
+  const [publishing, setPublishing] = useState(false);
+  const [publishError, setPublishError] = useState<string | null>(null);
+  // Stable idempotency key for this form session — prevents duplicate DB rows
+  // if the user taps Publish multiple times before the request completes.
+  const uid = useId();
+  const idempotencyKey = useRef(`${uid}-${Date.now()}`).current;
 
   const totalSteps = 6;
   const canNext =
@@ -134,6 +140,10 @@ export default function HostNew() {
   };
 
   const publish = async () => {
+    if (publishing) return; // guard against rapid taps
+    setPublishing(true);
+    setPublishError(null);
+
     const isTable = d.listing_type === "table";
     let id = `mine_${Math.random().toString(36).slice(2, 9)}`;
 
@@ -155,6 +165,7 @@ export default function HostNew() {
           location_lng: d.lng,
           location_display: d.neighborhood || "Madrid",
           exact_address: d.exact_address || undefined,
+          idempotency_key: idempotencyKey,
           ...(isTable
             ? {
                 meal_time: d.meal_date ? `${d.meal_date}T${d.meal_time}:00` : undefined,
@@ -172,6 +183,9 @@ export default function HostNew() {
         });
       } catch (err) {
         console.error("Failed to save listing to database:", err);
+        setPublishing(false);
+        setPublishError("Something went wrong. Please try again.");
+        return;
       }
     }
 
@@ -237,6 +251,11 @@ export default function HostNew() {
       </div>
 
       <div className="fixed left-0 right-0 bottom-0 z-30 p-3 bg-gradient-to-t from-cream-50 via-cream-50/95 to-transparent pt-8">
+        {publishError && (
+          <div className="max-w-[640px] mx-auto mb-2 px-4 py-2 rounded-xl bg-red-100 border border-red-300 text-red-700 text-sm font-medium">
+            {publishError}
+          </div>
+        )}
         <div className="max-w-[640px] mx-auto flex items-center gap-3">
           {step > 0 ? (
             <button
@@ -264,9 +283,10 @@ export default function HostNew() {
           ) : (
             <button
               onClick={publish}
-              className="flex-1 py-3.5 rounded-2xl border-2 border-ink bg-amber text-amber-ink font-semibold"
+              disabled={publishing}
+              className="flex-1 py-3.5 rounded-2xl border-2 border-ink bg-amber text-amber-ink font-semibold disabled:opacity-60"
             >
-              Publish
+              {publishing ? "Publishing…" : "Publish"}
             </button>
           )}
         </div>
