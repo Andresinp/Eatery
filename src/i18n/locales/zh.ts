@@ -115,6 +115,9 @@ const zh: PartialTranslations = {
     drinks: "含饮品：",
     drinksIncluded: "含饮品",
     drinksNotIncluded: "不含饮品",
+    itemsLeft: "件剩余",
+    today: "今天",
+    tomorrow: "明天",
   },
   orders: {
     title: "即将到来的预订",

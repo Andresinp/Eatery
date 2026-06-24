@@ -115,6 +115,9 @@ const sq: PartialTranslations = {
     drinks: "Pije të përfshira:",
     drinksIncluded: "Pije të përfshira",
     drinksNotIncluded: "Pa pije të përfshira",
+    itemsLeft: "artikuj të mbetur",
+    today: "Sot",
+    tomorrow: "Nesër",
   },
   orders: {
     title: "Rezervimet e ardhshme",

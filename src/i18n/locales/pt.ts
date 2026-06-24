@@ -115,6 +115,9 @@ const pt: PartialTranslations = {
     drinks: "Bebidas incluídas:",
     drinksIncluded: "Bebidas incluídas",
     drinksNotIncluded: "Sem bebidas incluídas",
+    itemsLeft: "itens restantes",
+    today: "Hoje",
+    tomorrow: "Amanhã",
   },
   orders: {
     title: "Próximas Reservas",

@@ -115,6 +115,9 @@ const ar: PartialTranslations = {
     drinks: "المشروبات مشمولة:",
     drinksIncluded: "المشروبات مشمولة",
     drinksNotIncluded: "لا تشمل مشروبات",
+    itemsLeft: "عناصر متبقية",
+    today: "اليوم",
+    tomorrow: "غداً",
   },
   orders: {
     title: "الحجوزات القادمة",
