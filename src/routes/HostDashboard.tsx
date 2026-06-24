@@ -1,14 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import TopBar from "../components/TopBar";
+import ConfirmDialog from "../components/ConfirmDialog";
 import { useHost, ME } from "../store/hostListings";
 import { useSession } from "../store/session";
 import { cancelListing, fetchMyListings } from "../lib/db";
 import { useOrders } from "../store/orders";
-import { useT, type TKey } from "../i18n";
+import { useT, useLanguage, type TKey } from "../i18n";
+import { formatListingWhen } from "../lib/datetime";
 import type { Listing, MarketListing, TableListing } from "../types";
 
-function useMyListings(): Listing[] {
+function useMyListings(): { listings: Listing[]; drop: (id: string) => void } {
   const localListings = useHost((s) => s.myListings);
   const sessionUser = useSession((s) => s.user);
   const [dbListings, setDbListings] = useState<Listing[]>([]);
@@ -20,27 +22,33 @@ function useMyListings(): Listing[] {
       .catch(() => {});
   }, [sessionUser]);
 
-  return useMemo(() => {
+  // Remove a fetched (DB-backed) listing from local view immediately so the
+  // card, count and tabs all update without waiting for a refetch.
+  const drop = useCallback((id: string) => {
+    setDbListings((prev) => prev.filter((l) => l.id !== id));
+  }, []);
+
+  const listings = useMemo(() => {
     const localIds = new Set(localListings.map((l) => l.id));
     return [...localListings, ...dbListings.filter((l) => !localIds.has(l.id))];
   }, [localListings, dbListings]);
-}
 
-interface UndoItem {
-  listing: Listing;
-  timeoutId: ReturnType<typeof setTimeout>;
+  return { listings, drop };
 }
 
 export default function HostDashboard() {
-  const myListings = useMyListings();
+  const { listings: myListings, drop } = useMyListings();
   const orders = useOrders((s) => s.orders);
   const remove = useHost((s) => s.remove);
   const [tab, setTab] = useState<"table" | "market">("table");
   const [bulkMode, setBulkMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [undoItem, setUndoItem] = useState<UndoItem | null>(null);
-  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+  // Pending confirmation: either a single listing or a set of ids (bulk).
+  const [confirm, setConfirm] = useState<
+    { kind: "single"; listing: Listing } | { kind: "bulk"; ids: string[] } | null
+  >(null);
   const t = useT();
+  const { code: lang } = useLanguage();
 
   const stats = useMemo(() => {
     const myIds = new Set(myListings.map((l) => l.id));
@@ -58,48 +66,34 @@ export default function HostDashboard() {
 
   const filtered = myListings.filter((l) => l.listing_type === tab);
 
-  const commitDelete = async (id: string) => {
-    remove(id);
-    try {
-      await cancelListing(id);
-    } catch {
-      // local state already removed; DB error is non-fatal
+  // Actually delete: drop from every local source immediately, then sync the DB.
+  const performDelete = useCallback(
+    (id: string) => {
+      remove(id);
+      drop(id);
+      setSelected((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      cancelListing(id).catch(() => {
+        // Local state already removed; the DB error is non-fatal and will
+        // reconcile on the next fetch.
+      });
+    },
+    [remove, drop],
+  );
+
+  const confirmDelete = () => {
+    if (!confirm) return;
+    if (confirm.kind === "single") {
+      performDelete(confirm.listing.id);
+    } else {
+      confirm.ids.forEach(performDelete);
+      setSelected(new Set());
+      setBulkMode(false);
     }
-    setDeletingIds((prev) => { const next = new Set(prev); next.delete(id); return next; });
-  };
-
-  const handleDelete = (listing: Listing) => {
-    // Cancel any existing undo for a previous deletion first
-    if (undoItem) {
-      clearTimeout(undoItem.timeoutId);
-      commitDelete(undoItem.listing.id);
-    }
-
-    const timeoutId = setTimeout(() => {
-      commitDelete(listing.id);
-      setUndoItem(null);
-    }, 5000);
-
-    // Optimistically hide from list
-    setDeletingIds((prev) => new Set([...prev, listing.id]));
-    setUndoItem({ listing, timeoutId });
-    setSelected((prev) => { const next = new Set(prev); next.delete(listing.id); return next; });
-  };
-
-  const handleUndo = () => {
-    if (!undoItem) return;
-    clearTimeout(undoItem.timeoutId);
-    setDeletingIds((prev) => { const next = new Set(prev); next.delete(undoItem.listing.id); return next; });
-    setUndoItem(null);
-  };
-
-  const handleBulkDelete = () => {
-    selected.forEach((id) => {
-      const listing = myListings.find((l) => l.id === id);
-      if (listing) handleDelete(listing);
-    });
-    setSelected(new Set());
-    setBulkMode(false);
+    setConfirm(null);
   };
 
   const toggleSelect = (id: string) => {
@@ -111,7 +105,8 @@ export default function HostDashboard() {
     });
   };
 
-  const visibleFiltered = filtered.filter((l) => !deletingIds.has(l.id));
+  const confirmCount =
+    confirm?.kind === "bulk" ? confirm.ids.length : confirm ? 1 : 0;
 
   return (
     <div className="min-h-full bg-cream-50 pb-10">
@@ -165,7 +160,7 @@ export default function HostDashboard() {
               <>
                 {selected.size > 0 && (
                   <button
-                    onClick={handleBulkDelete}
+                    onClick={() => setConfirm({ kind: "bulk", ids: [...selected] })}
                     className="text-sm font-semibold text-red-600 hover:text-red-700"
                   >
                     Delete {selected.size}
@@ -180,7 +175,7 @@ export default function HostDashboard() {
               </>
             ) : (
               <>
-                {visibleFiltered.length > 1 && (
+                {filtered.length > 1 && (
                   <button
                     onClick={() => setBulkMode(true)}
                     className="text-sm font-semibold text-ink/70 hover:text-ink"
@@ -199,7 +194,7 @@ export default function HostDashboard() {
           </div>
         </div>
 
-        {visibleFiltered.length === 0 ? (
+        {filtered.length === 0 ? (
           <div className="rounded-3xl border-2 border-dashed border-ink/30 p-10 text-center">
             <div className="font-display font-extrabold text-2xl mb-2">
               {tab === "table" ? t("host.noTablesTitle") : t("host.noMarketTitle")}
@@ -216,7 +211,7 @@ export default function HostDashboard() {
           </div>
         ) : (
           <div className="space-y-3">
-            {visibleFiltered.map((l) => {
+            {filtered.map((l) => {
               const isTable = l.listing_type === "table";
               const left = isTable
                 ? (l as TableListing).seats_available
@@ -224,9 +219,7 @@ export default function HostDashboard() {
               const total = isTable
                 ? (l as TableListing).seats_total
                 : (l as MarketListing).quantity_total;
-              const when = isTable
-                ? (l as TableListing).meal_time
-                : `${(l as MarketListing).pickup_window_start}–${(l as MarketListing).pickup_window_end}`;
+              const when = formatListingWhen(l, lang);
 
               if (bulkMode) {
                 const checked = selected.has(l.id);
@@ -254,35 +247,30 @@ export default function HostDashboard() {
               }
 
               return (
-                <SwipeableCard
+                <ListingRow
                   key={l.id}
-                  onDelete={() => handleDelete(l)}
-                >
-                  <Link
-                    to={`/host/listing/${l.id}`}
-                    className="flex gap-3 p-3 rounded-2xl bg-white border-2 border-ink/90 hover:shadow-float transition"
-                  >
-                    <ListingCardContent l={l} left={left} total={total} when={when} isTable={isTable} t={t} />
-                  </Link>
-                </SwipeableCard>
+                  listing={l}
+                  left={left}
+                  total={total}
+                  when={when}
+                  isTable={isTable}
+                  t={t}
+                  onDelete={() => setConfirm({ kind: "single", listing: l })}
+                />
               );
             })}
           </div>
         )}
       </div>
 
-      {/* Undo snackbar */}
-      {undoItem && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl bg-ink text-cream-50 shadow-float text-sm font-medium">
-          <span>Listing deleted</span>
-          <button
-            onClick={handleUndo}
-            className="font-bold text-amber underline-offset-2 hover:underline"
-          >
-            Undo
-          </button>
-        </div>
-      )}
+      <ConfirmDialog
+        open={confirm !== null}
+        title={confirmCount > 1 ? `Delete ${confirmCount} tables?` : "Delete this table?"}
+        body="This action will remove it from your profile, map, and public listings."
+        confirmLabel={confirmCount > 1 ? `Delete ${confirmCount}` : "Delete"}
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirm(null)}
+      />
     </div>
   );
 }
@@ -313,7 +301,7 @@ function ListingCardContent({
         <div className="font-display font-bold text-lg leading-tight truncate">
           {l.title}
         </div>
-        <div className="text-xs text-ink/60">{when}</div>
+        <div className="text-xs text-ink/60">{when || "Date not set"}</div>
         <div className="text-xs text-ink/60">
           {left} / {total} {isTable ? t("host.seats") : t("host.units")} {t("host.leftSuffix")}
         </div>
@@ -331,7 +319,79 @@ function ListingCardContent({
   );
 }
 
-// Swipeable wrapper: swipe left to reveal delete button
+// A single host listing card: swipeable to reveal Delete, with a three-dot
+// fallback menu so deletion always works even if the swipe gesture fails.
+function ListingRow({
+  listing, left, total, when, isTable, t, onDelete,
+}: {
+  listing: Listing;
+  left: number | undefined;
+  total: number | undefined;
+  when: string | undefined;
+  isTable: boolean;
+  t: (key: TKey, fallback?: string) => string;
+  onDelete: () => void;
+}) {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  return (
+    <SwipeableCard onDelete={onDelete}>
+      <div className="relative">
+        <Link
+          to={`/host/listing/${listing.id}`}
+          className="flex gap-3 p-3 pr-10 rounded-2xl bg-white border-2 border-ink/90 hover:shadow-float transition"
+        >
+          <ListingCardContent l={listing} left={left} total={total} when={when} isTable={isTable} t={t} />
+        </Link>
+
+        {/* Three-dot fallback menu */}
+        <button
+          type="button"
+          aria-label="More options"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMenuOpen((v) => !v); }}
+          className="absolute top-1.5 right-1.5 w-8 h-8 flex items-center justify-center rounded-full text-ink/50 hover:bg-ink/5"
+        >
+          <span className="text-lg leading-none" aria-hidden>⋮</span>
+        </button>
+
+        {menuOpen && (
+          <>
+            <div
+              className="fixed inset-0 z-20"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMenuOpen(false); }}
+            />
+            <div className="absolute top-10 right-2 z-30 min-w-[140px] rounded-2xl border-2 border-ink bg-white shadow-float overflow-hidden">
+              <Link
+                to={`/host/listing/${listing.id}`}
+                className="block px-4 py-2.5 text-sm font-semibold text-ink hover:bg-ink/5"
+                onClick={() => setMenuOpen(false)}
+              >
+                Open
+              </Link>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setMenuOpen(false);
+                  onDelete();
+                }}
+                className="block w-full text-left px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 border-t border-ink/10"
+              >
+                Delete
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </SwipeableCard>
+  );
+}
+
+// Swipeable wrapper: right-to-left swipe reveals a Delete action.
+//
+// Built on Pointer Events with an explicit direction lock so it works on touch
+// (iOS Safari / Android), pen and mouse without fighting vertical page scroll.
 function SwipeableCard({
   children,
   onDelete,
@@ -339,76 +399,114 @@ function SwipeableCard({
   children: React.ReactNode;
   onDelete: () => void;
 }) {
-  const DELETE_THRESHOLD = 80;
-  const containerRef = useRef<HTMLDivElement>(null);
-  const startXRef = useRef<number | null>(null);
+  const REVEAL = 96;   // px width of the revealed Delete action
+  const COMMIT = 44;   // px past which the row snaps fully open
+  const DIR_LOCK = 10; // px of movement before we lock horizontal vs vertical
+
+  const startX = useRef(0);
+  const startY = useRef(0);
+  const decided = useRef(false);
+  const horizontal = useRef(false);
+  const moved = useRef(false);
+  const offsetRef = useRef(0);
+  const activePointer = useRef<number | null>(null);
   const [offset, setOffset] = useState(0);
   const [revealed, setRevealed] = useState(false);
+  const [animate, setAnimate] = useState(true);
 
-  const handlePointerDown = (e: React.PointerEvent) => {
-    startXRef.current = e.clientX;
+  const setOff = (v: number) => { offsetRef.current = v; setOffset(v); };
+
+  const close = () => { setAnimate(true); setRevealed(false); setOff(0); };
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    activePointer.current = e.pointerId;
+    startX.current = e.clientX;
+    startY.current = e.clientY;
+    decided.current = false;
+    horizontal.current = false;
+    moved.current = false;
+    setAnimate(false);
   };
 
-  const handlePointerMove = (e: React.PointerEvent) => {
-    if (startXRef.current === null) return;
-    const dx = startXRef.current - e.clientX; // positive = swiping left
-    if (dx > 0) setOffset(Math.min(dx, DELETE_THRESHOLD + 20));
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (activePointer.current !== e.pointerId) return;
+    const dx = e.clientX - startX.current;
+    const dy = e.clientY - startY.current;
+
+    if (!decided.current) {
+      if (Math.abs(dx) < DIR_LOCK && Math.abs(dy) < DIR_LOCK) return;
+      decided.current = true;
+      horizontal.current = Math.abs(dx) > Math.abs(dy);
+      if (horizontal.current) {
+        try { (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); } catch { /* not fatal */ }
+      }
+    }
+    if (!horizontal.current) return; // vertical gesture → let the page scroll
+    moved.current = true;
+    const base = revealed ? REVEAL : 0;
+    const next = Math.max(0, Math.min(base - dx, REVEAL + 16)); // swipe left (dx<0) opens
+    setOff(next);
   };
 
-  const handlePointerUp = () => {
-    if (startXRef.current === null) return;
-    startXRef.current = null;
-    if (offset >= DELETE_THRESHOLD) {
-      setOffset(DELETE_THRESHOLD);
-      setRevealed(true);
-    } else {
-      setOffset(0);
-      setRevealed(false);
+  const finish = (e: React.PointerEvent) => {
+    if (activePointer.current !== e.pointerId) return;
+    activePointer.current = null;
+    if (horizontal.current) {
+      const open = offsetRef.current >= COMMIT;
+      setAnimate(true);
+      setRevealed(open);
+      setOff(open ? REVEAL : 0);
+    }
+    horizontal.current = false;
+    decided.current = false;
+  };
+
+  // Swallow the click that follows a swipe so the underlying <Link> doesn't
+  // navigate, and let a tap on an open card close it.
+  const onClickCapture = (e: React.MouseEvent) => {
+    if (moved.current || revealed) {
+      e.preventDefault();
+      e.stopPropagation();
+      moved.current = false;
+      if (revealed) close();
     }
   };
 
-  const handleClose = () => {
-    setOffset(0);
-    setRevealed(false);
-  };
-
   return (
-    <div ref={containerRef} className="relative overflow-hidden rounded-2xl">
+    <div
+      className="relative overflow-hidden rounded-2xl"
+      style={{ overscrollBehaviorX: "contain" }}
+    >
       {/* Delete action behind the card */}
-      <div
-        className="absolute inset-y-0 right-0 flex items-center justify-end pr-3 bg-red-500 rounded-2xl"
-        style={{ width: DELETE_THRESHOLD + 20 }}
-      >
+      <div className="absolute inset-y-0 right-0 flex" style={{ width: REVEAL }}>
         <button
-          onClick={() => { handleClose(); onDelete(); }}
-          className="flex flex-col items-center justify-center w-14 h-14 rounded-xl bg-red-600 text-white text-xs font-bold gap-1"
+          type="button"
+          aria-label="Delete listing"
+          onClick={() => { close(); onDelete(); }}
+          className="flex flex-col items-center justify-center w-full bg-red-600 text-white text-xs font-bold gap-1 rounded-2xl"
         >
-          <span className="text-lg">🗑</span>
+          <span className="text-lg" aria-hidden>🗑</span>
           Delete
         </button>
       </div>
 
-      {/* Swipeable card */}
+      {/* Swipeable foreground */}
       <div
-        className="relative touch-pan-y select-none"
-        style={{ transform: `translateX(-${offset}px)`, transition: offset === 0 || offset === DELETE_THRESHOLD ? "transform 0.2s ease" : "none" }}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerLeave={handlePointerUp}
-        onPointerCancel={handlePointerUp}
+        className="relative select-none"
+        style={{
+          transform: `translateX(-${offset}px)`,
+          transition: animate ? "transform 0.2s ease" : "none",
+          touchAction: "pan-y",
+        }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={finish}
+        onPointerCancel={finish}
+        onClickCapture={onClickCapture}
       >
         {children}
       </div>
-
-      {/* Tap outside overlay to close */}
-      {revealed && (
-        <div
-          className="absolute inset-0 z-10"
-          style={{ right: DELETE_THRESHOLD + 20 }}
-          onClick={handleClose}
-        />
-      )}
     </div>
   );
 }

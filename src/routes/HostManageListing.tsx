@@ -5,6 +5,8 @@ import { Chip } from "../components/Chip";
 import { useHost } from "../store/hostListings";
 import { useOrders, type Order } from "../store/orders";
 import { cancelListing, fetchListing } from "../lib/db";
+import { formatWhen } from "../lib/datetime";
+import { useLanguage } from "../i18n";
 import { cancelOrder as remoteCancel, isStripeConfigured } from "../lib/stripe";
 import type { Listing, MarketListing, TableListing } from "../types";
 
@@ -185,6 +187,7 @@ function HostOrderRow({
   order: Order;
   onConfirm: (attended: boolean) => void;
 }) {
+  const { code: lang } = useLanguage();
   const isTable = order.listing_type === "table";
   const showConfirm = order.status === "confirmed" && !order.host_confirmed;
   const statusLabel: Record<Order["status"], string> = {
@@ -207,7 +210,7 @@ function HostOrderRow({
         <div className="flex-1 min-w-0">
           <div className="font-display font-bold leading-tight">Guest · {order.id.slice(2, 8)}</div>
           <div className="text-xs text-ink/60">
-            {order.quantity} {isTable ? "seat(s)" : "unit(s)"} · {order.listing_snapshot.when}
+            {order.quantity} {isTable ? "seat(s)" : "unit(s)"} · {formatWhen(order.listing_snapshot.when, lang)}
           </div>
           <div className="text-xs text-ink/60">{statusLabel[order.status]}</div>
         </div>
