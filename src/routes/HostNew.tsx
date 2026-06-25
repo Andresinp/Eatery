@@ -161,6 +161,7 @@ export default function HostNew() {
           dietary_tags: d.dietary_tags,
           allergen_flags: d.allergen_flags,
           price_per_unit: d.price_per_unit,
+          currency: d.currency,
           location_lat: d.lat,
           location_lng: d.lng,
           location_display: d.neighborhood || "Madrid",

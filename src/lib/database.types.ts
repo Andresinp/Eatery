@@ -94,6 +94,7 @@ export type ListingRow = {
   title: string;
   description: string;
   photos: string[];
+  currency: string;
   cuisine_tags: string[];
   dietary_tags: string[];
   allergen_flags: string[];
