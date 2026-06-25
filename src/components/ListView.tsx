@@ -81,11 +81,17 @@ export default function ListView({
               className="flex gap-3 items-start py-3 transition-colors active:bg-ink/[0.02]"
             >
               {/* Column 1: Thumbnail */}
-              <img
-                src={l.photo}
-                alt={l.title}
-                className="w-[70px] h-[70px] rounded-xl object-cover flex-none"
-              />
+              {l.photo ? (
+                <img
+                  src={l.photo}
+                  alt={l.title}
+                  className="w-[70px] h-[70px] rounded-xl object-cover flex-none"
+                />
+              ) : (
+                <div className="w-[70px] h-[70px] rounded-xl bg-ink/10 flex-none flex items-center justify-center text-2xl">
+                  🍽
+                </div>
+              )}
 
               {/* Column 2: Main content — compact vertical stack */}
               <div className="flex-1 min-w-0 flex flex-col gap-[4px]">

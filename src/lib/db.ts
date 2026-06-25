@@ -55,6 +55,7 @@ export async function createListing(args: {
   dietary_tags: string[];
   allergen_flags: string[];
   price_per_unit: number;
+  currency?: string;
   location_lat: number;
   location_lng: number;
   location_display: string;
@@ -77,6 +78,7 @@ export async function createListing(args: {
     title: args.title,
     description: args.description,
     photos: args.photo ? [args.photo] : [],
+    currency: args.currency ?? "€",
     cuisine_tags: args.cuisine_tags,
     product_type_tags: args.product_type_tags,
     dietary_tags: args.dietary_tags,
@@ -172,7 +174,7 @@ function rowToListing(row: ListingWithHost): Listing {
     dietary_tags: row.dietary_tags,
     allergen_flags: row.allergen_flags,
     price_per_unit: Number(row.price_per_unit),
-    currency: "€",
+    currency: row.currency ?? "€",
     location_lat: Number(row.location_lat),
     location_lng: Number(row.location_lng),
     location_display: row.location_display,
