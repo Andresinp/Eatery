@@ -98,6 +98,12 @@ select test.raises('anon cannot read emails', 'select email from public.profiles
 select test.eq('anon can read public profile', (select full_name from public.profiles where id = test.id(1)), 'Hana Host');
 reset role;
 
+select test.eq('public map position is snapped, not the pin',
+  (select location_lat::text || ',' || location_lng::text from public.listings where id = test.id(101)), '41.032000,28.972000');
+select test.as_anon();
+select test.raises('nobody can read the exact pin', 'select exact_lat from public.listings', 'permission denied');
+reset role;
+
 select test.as_user(3);
 select test.raises('other user cannot read allergies', 'select allergen_exclusions from public.profiles', 'permission denied');
 select test.eq('my_profile returns my own private fields',

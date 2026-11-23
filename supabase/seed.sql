@@ -1,0 +1,56 @@
+-- LOCAL DEVELOPMENT ONLY. Applied by `supabase start` / `supabase db reset` on a local stack;
+-- never pushed to the live project. Demo people (password for all: eatery-demo-123):
+--   host@eatery.test  (Hana, hosts every listing)    guest@eatery.test (Gil, one past booking)
+--   new@eatery.test   (not onboarded yet)
+-- Listings are the web app's sample listings (src/data/mockListings.ts), with times relative to now.
+
+insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, email_change,
+  email_change_token_new, recovery_token)
+select '00000000-0000-0000-0000-000000000000', id::uuid, 'authenticated', 'authenticated', email,
+  crypt('eatery-demo-123', gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}',
+  jsonb_build_object('full_name', name), now(), now(), '', '', '', ''
+from (values
+  ('11111111-1111-4111-8111-111111111111', 'host@eatery.test', 'Hana Host'),
+  ('22222222-2222-4222-8222-222222222222', 'guest@eatery.test', 'Gil Guest'),
+  ('33333333-3333-4333-8333-333333333333', 'new@eatery.test', 'Nova New')
+) as u(id, email, name);
+
+insert into auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
+select gen_random_uuid(), id, id::text, jsonb_build_object('sub', id::text, 'email', email), 'email', now(), now(), now()
+from auth.users where email like '%@eatery.test';
+
+update public.profiles set onboarded = true, bio = 'Home cook. Moroccan grandmother, Madrid kitchen.',
+  identity_verified = true, avatar_url = 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&q=80'
+where id = '11111111-1111-4111-8111-111111111111';
+update public.profiles set onboarded = true, allergen_exclusions = '{Nuts}'
+where id = '22222222-2222-4222-8222-222222222222';
+
+insert into public.listings (id, host_id, listing_type, title, description, photos, currency, cuisine_tags, dietary_tags, allergen_flags, price_per_unit, location_lat, location_lng, location_display, exact_address, meal_time, meal_end_time, seats_total, seats_available, dining_setting, drinks_included, drinks)
+values ('aaaaaaaa-0000-4000-8000-000000000001'::uuid, '11111111-1111-4111-8111-111111111111'::uuid, 'table'::public.listing_type, 'Chicken Tagine & Mint Tea', 'Slow-cooked Moroccan tagine with preserved lemon and olives, served family-style with fresh bread and a pot of mint tea to close.', array['https://images.unsplash.com/photo-1547592180-85f173990554?w=900&q=80']::text[], '€', array['Moroccan','North African']::text[], array['Halal']::text[], array['Gluten']::text[], 22, 40.4259, -3.7038, 'Malasaña, Madrid', 'Calle de Ejemplo 3, 2º', date_trunc('hour', now()) + interval '1 days 20 hours', date_trunc('hour', now()) + interval '1 days 23 hours', 6, 3, 'indoor_table'::public.dining_setting, true, array['Water','Tea']::text[]);
+insert into public.listings (id, host_id, listing_type, title, description, photos, currency, cuisine_tags, dietary_tags, allergen_flags, price_per_unit, location_lat, location_lng, location_display, exact_address, meal_time, meal_end_time, seats_total, seats_available, dining_setting, drinks_included, drinks)
+values ('aaaaaaaa-0000-4000-8000-000000000002'::uuid, '11111111-1111-4111-8111-111111111111'::uuid, 'table'::public.listing_type, 'Sunday Pasta, Three Ways', 'Hand-rolled cavatelli, slow ragù, and a light lemon-ricotta. Wine included, bring stories.', array['https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=900&q=80']::text[], '€', array['Italian']::text[], array['Vegetarian']::text[], array['Gluten','Dairy','Eggs']::text[], 28, 40.4145, -3.6995, 'Lavapiés, Madrid', 'Calle de Ejemplo 4, 2º', date_trunc('hour', now()) + interval '2 days 20 hours', date_trunc('hour', now()) + interval '2 days 23 hours', 8, 2, 'garden'::public.dining_setting, true, array['Water','Wine']::text[]);
+insert into public.listings (id, host_id, listing_type, title, description, photos, currency, cuisine_tags, dietary_tags, allergen_flags, price_per_unit, location_lat, location_lng, location_display, exact_address, meal_time, meal_end_time, seats_total, seats_available, dining_setting, drinks_included, drinks)
+values ('aaaaaaaa-0000-4000-8000-000000000003'::uuid, '11111111-1111-4111-8111-111111111111'::uuid, 'table'::public.listing_type, 'Tokyo-style Ramen Night', '12-hour shoyu broth, soft egg, springy noodles. Counter seats around the open kitchen.', array['https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=900&q=80']::text[], '€', array['Japanese']::text[], array[]::text[], array['Gluten','Eggs','Soy']::text[], 24, 40.4302, -3.7102, 'Chamberí, Madrid', 'Calle de Ejemplo 5, 2º', date_trunc('hour', now()) + interval '3 days 20 hours', date_trunc('hour', now()) + interval '3 days 23 hours', 5, 4, 'open_kitchen'::public.dining_setting, false, array[]::text[]);
+insert into public.listings (id, host_id, listing_type, title, description, photos, currency, cuisine_tags, dietary_tags, allergen_flags, price_per_unit, location_lat, location_lng, location_display, exact_address, meal_time, meal_end_time, seats_total, seats_available, dining_setting, drinks_included, drinks)
+values ('aaaaaaaa-0000-4000-8000-000000000004'::uuid, '11111111-1111-4111-8111-111111111111'::uuid, 'table'::public.listing_type, 'Mezze on the Rooftop', 'Hummus, baba ghanoush, kibbeh, fattoush — Lebanese spread under the stars.', array['https://images.unsplash.com/photo-1540420773420-3366772f4999?w=900&q=80']::text[], '€', array['Lebanese','Mediterranean']::text[], array['Vegetarian','Halal']::text[], array['Sesame','Nuts']::text[], 19, 40.4205, -3.7167, 'Conde Duque, Madrid', 'Calle de Ejemplo 6, 2º', date_trunc('hour', now()) + interval '4 days 20 hours', date_trunc('hour', now()) + interval '4 days 23 hours', 10, 6, 'rooftop'::public.dining_setting, true, array['Water','Wine','Tea']::text[]);
+insert into public.listings (id, host_id, listing_type, title, description, photos, currency, cuisine_tags, dietary_tags, allergen_flags, price_per_unit, location_lat, location_lng, location_display, exact_address, product_type_tags, quantity_total, quantity_available, pickup_window_start, pickup_window_end)
+values ('aaaaaaaa-0000-4000-8000-000000000005'::uuid, '11111111-1111-4111-8111-111111111111'::uuid, 'market'::public.listing_type, 'Lemon-Olive Oil Cake', 'Whole Sicilian lemons, cold-pressed olive oil, a hint of rosemary. Sold by the loaf, best within 4 days.', array['https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=900&q=80']::text[], '€', array[]::text[], array['Vegetarian']::text[], array['Gluten','Eggs','Dairy']::text[], 14, 40.418, -3.694, 'La Latina, Madrid', 'Calle de Ejemplo 7, 2º', array['Baked Goods','Cake']::text[], 8, 5, date_trunc('hour', now()) + interval '1 days 10 hours', date_trunc('hour', now()) + interval '1 days 13 hours');
+insert into public.listings (id, host_id, listing_type, title, description, photos, currency, cuisine_tags, dietary_tags, allergen_flags, price_per_unit, location_lat, location_lng, location_display, exact_address, product_type_tags, quantity_total, quantity_available, pickup_window_start, pickup_window_end)
+values ('aaaaaaaa-0000-4000-8000-000000000006'::uuid, '11111111-1111-4111-8111-111111111111'::uuid, 'market'::public.listing_type, 'Sourdough — Country Loaf', '72-hour fermented sourdough from heritage wheat. Open crumb, deep crust, real flavour.', array['https://images.unsplash.com/photo-1509440159596-0249088772ff?w=900&q=80']::text[], '€', array[]::text[], array['Vegan']::text[], array['Gluten']::text[], 7, 40.4322, -3.698, 'Salamanca, Madrid', 'Calle de Ejemplo 8, 2º', array['Bread','Baked Goods']::text[], 20, 12, date_trunc('hour', now()) + interval '2 days 10 hours', date_trunc('hour', now()) + interval '2 days 13 hours');
+insert into public.listings (id, host_id, listing_type, title, description, photos, currency, cuisine_tags, dietary_tags, allergen_flags, price_per_unit, location_lat, location_lng, location_display, exact_address, product_type_tags, quantity_total, quantity_available, pickup_window_start, pickup_window_end)
+values ('aaaaaaaa-0000-4000-8000-000000000007'::uuid, '11111111-1111-4111-8111-111111111111'::uuid, 'market'::public.listing_type, 'Frozen Lasagna — Nonna''s recipe', 'Hand-layered, slow ragù, béchamel, fresh pasta. Freeze, bake, devour. Serves 4.', array['https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=900&q=80']::text[], '€', array['Italian']::text[], array[]::text[], array['Gluten','Dairy','Eggs']::text[], 18, 40.4108, -3.708, 'Embajadores, Madrid', 'Calle de Ejemplo 9, 2º', array['Frozen Meals','Pasta']::text[], 12, 4, date_trunc('hour', now()) + interval '3 days 10 hours', date_trunc('hour', now()) + interval '3 days 13 hours');
+insert into public.listings (id, host_id, listing_type, title, description, photos, currency, cuisine_tags, dietary_tags, allergen_flags, price_per_unit, location_lat, location_lng, location_display, exact_address, product_type_tags, quantity_total, quantity_available, pickup_window_start, pickup_window_end)
+values ('aaaaaaaa-0000-4000-8000-000000000008'::uuid, '11111111-1111-4111-8111-111111111111'::uuid, 'market'::public.listing_type, 'Apricot & Lavender Jam', 'Small-batch, low-sugar. Apricots from the Aragón hills, a whisper of organic lavender.', array['https://images.unsplash.com/photo-1597528380102-0381a7a4f6c2?w=900&q=80']::text[], '€', array[]::text[], array['Vegan','Gluten-Free']::text[], array[]::text[], 6, 40.424, -3.689, 'Retiro, Madrid', 'Calle de Ejemplo 10, 2º', array['Jam & Preserves']::text[], 24, 18, date_trunc('hour', now()) + interval '4 days 10 hours', date_trunc('hour', now()) + interval '4 days 13 hours');
+
+-- A past dinner Gil booked, so reviews, "mark as done" and chat have something to show.
+insert into public.listings (id, host_id, listing_type, title, description, photos, currency, cuisine_tags, price_per_unit, location_lat, location_lng, location_display, exact_address, meal_time, meal_end_time, seats_total, seats_available, dining_setting)
+values ('aaaaaaaa-0000-4000-8000-000000000099', '11111111-1111-4111-8111-111111111111', 'table', 'Paella by the window', 'Saffron, socarrat, slow Sunday.', array['https://images.unsplash.com/photo-1534080564583-6be75777b70a?w=900&q=80'], '€', '{Spanish}', 25, 40.4168, -3.7038, 'Sol, Madrid', 'Calle Mayor 1, 3º', now() + interval '2 hours', now() + interval '5 hours', 6, 6, 'indoor_table');
+select public.server_create_order('aaaaaaaa-0000-4000-8000-000000000099', '22222222-2222-4222-8222-222222222222', 2, 6.00, 'pi_demo_past');
+update public.listings set meal_time = now() - interval '1 day', meal_end_time = now() - interval '21 hours' where id = 'aaaaaaaa-0000-4000-8000-000000000099';
+insert into public.messages (order_id, sender_id, content)
+select id, '11111111-1111-4111-8111-111111111111', 'Hi Gil! The buzzer says "Host". See you at 8.' from public.orders where payment_intent_id = 'pi_demo_past';
+
+-- An upcoming booking for Gil on the first table.
+select public.server_create_order('aaaaaaaa-0000-4000-8000-000000000001', '22222222-2222-4222-8222-222222222222', 1, 2.64, null);
+

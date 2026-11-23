@@ -78,7 +78,7 @@ module.exports = {
       'expo-sqlite',
       'expo-web-browser',
       'expo-apple-authentication',
-      ['expo-splash-screen', { backgroundColor: BRAND, image: './assets/images/splash-icon.png', imageWidth: 120 }],
+      ['expo-splash-screen', { backgroundColor: BRAND, image: './assets/images/splash-icon.png', imageWidth: 200 }],
       [
         'expo-location',
         {

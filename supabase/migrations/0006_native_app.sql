@@ -217,6 +217,33 @@ drop trigger if exists listings_guard_cancel on public.listings;
 create trigger listings_guard_cancel before update of status on public.listings
   for each row execute function private.guard_listing_cancel();
 
+-- The map shows where a listing is only roughly: the public coordinates are snapped to a grid of
+-- about 300–500 m, and the pin the host dropped is kept in exact_lat/exact_lng, which no client
+-- can read. Before this the map pin was the host's front door, whatever the address field said.
+alter table public.listings
+  add column if not exists exact_lat numeric(9, 6),
+  add column if not exists exact_lng numeric(9, 6);
+
+create or replace function private.fuzz_listing_location()
+returns trigger
+language plpgsql
+set search_path = public
+as $$
+begin
+  if tg_op = 'INSERT' or new.location_lat is distinct from old.location_lat
+     or new.location_lng is distinct from old.location_lng then
+    new.exact_lat := new.location_lat;
+    new.exact_lng := new.location_lng;
+    new.location_lat := round(new.location_lat / 0.004) * 0.004;
+    new.location_lng := round(new.location_lng / 0.004) * 0.004;
+  end if;
+  return new;
+end;
+$$;
+drop trigger if exists listings_fuzz_location on public.listings;
+create trigger listings_fuzz_location before insert or update of location_lat, location_lng on public.listings
+  for each row execute function private.fuzz_listing_location();
+
 -- Never below zero. NOT VALID so a live row that is already wrong does not stop the migration.
 do $$
 begin
