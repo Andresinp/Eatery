@@ -102,7 +102,12 @@ module.exports = {
         },
       ],
       ['expo-notifications', { color: BRAND }],
-      ['@stripe/stripe-react-native', { merchantIdentifier: 'merchant.com.andresinp.eatery', enableGooglePay: true }],
+      // Apple Pay needs the merchant id registered with Apple and its certificate in Stripe; until
+      // then (EATERY_APPLE_PAY unset) no entitlement is added and the sheet takes cards only.
+      ['@stripe/stripe-react-native', {
+        merchantIdentifier: process.env.EATERY_APPLE_PAY === '1' ? ['merchant.com.andresinp.eatery'] : [],
+        enableGooglePay: true,
+      }],
       '@maplibre/maplibre-react-native',
       ...(googleIosUrlScheme ? [['@react-native-google-signin/google-signin', { iosUrlScheme: googleIosUrlScheme }]] : []),
       // Stripe's iOS SDK resolves through Swift Package Manager, which needs dynamic frameworks.
