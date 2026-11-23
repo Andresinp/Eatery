@@ -1,1 +1,9 @@
 project_id = "pgbyxglxpcckvygtlhgo"
+
+# Called by Stripe (signed with STRIPE_WEBHOOK_SECRET) and by the database (shared secret), not
+# by a signed-in person, so the gateway must not demand a user JWT. Every other function does.
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.send-push]
+verify_jwt = false

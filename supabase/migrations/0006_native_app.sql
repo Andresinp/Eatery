@@ -39,7 +39,9 @@ alter type public.notification_type add value if not exists 'review_received';
 alter table public.profiles
   add column if not exists notification_prefs jsonb not null default
     '{"bookings": true, "reminders": true, "messages": true, "reviews": true, "marketing": false}'::jsonb,
-  add column if not exists deleted_at timestamptz;
+  add column if not exists deleted_at timestamptz,
+  -- Set by create-payment-intent; never granted to clients.
+  add column if not exists stripe_customer_id text;
 
 create or replace function public.handle_new_user()
 returns trigger
@@ -443,6 +445,21 @@ end;
 $$;
 revoke execute on function public.mark_order_done(uuid) from public, anon;
 grant execute on function public.mark_order_done(uuid) to authenticated;
+
+-- A strike on someone's public record (shown on their profile): a host cancelling, or a no-show.
+-- Atomic increment, server only (the cancel-order function).
+create or replace function public.server_add_strike(p_user uuid, p_kind text)
+returns void
+language sql security definer
+set search_path = public
+as $$
+  update public.profiles set
+    cancellation_count = cancellation_count + case when p_kind = 'cancellation' then 1 else 0 end,
+    no_show_count = no_show_count + case when p_kind = 'no_show' then 1 else 0 end
+  where id = p_user;
+$$;
+revoke execute on function public.server_add_strike(uuid, text) from public, anon, authenticated;
+grant execute on function public.server_add_strike(uuid, text) to service_role;
 
 -- ---------------------------------------------------------------------------------------------
 -- 5. Reviews: one per side per order, after the event, reviewee derived not chosen
