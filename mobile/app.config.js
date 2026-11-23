@@ -106,7 +106,15 @@ module.exports = {
       '@maplibre/maplibre-react-native',
       ...(googleIosUrlScheme ? [['@react-native-google-signin/google-signin', { iosUrlScheme: googleIosUrlScheme }]] : []),
       // Stripe's iOS SDK resolves through Swift Package Manager, which needs dynamic frameworks.
-      ['expo-build-properties', { ios: { useFrameworks: 'dynamic' } }],
+      [
+        'expo-build-properties',
+        {
+          ios: { useFrameworks: 'dynamic' },
+          // Stripe's card-issuing classes are compiled against but never shipped (see the plugin below).
+          android: { extraProguardRules: '-dontwarn com.stripe.android.pushProvisioning.**' },
+        },
+      ],
+      './plugins/with-stripe-android-fixes',
       '@react-native-community/datetimepicker',
       './plugins/with-release-signing',
     ],
