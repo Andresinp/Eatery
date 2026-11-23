@@ -113,15 +113,22 @@ export async function createListing(args: {
     pickup_window_end: args.pickup_window_end ?? null,
     ...(args.idempotency_key ? { idempotency_key: args.idempotency_key } : {}),
   };
-  // upsert on idempotency_key so rapid duplicate submissions return the same row
+  // upsert on idempotency_key so rapid duplicate submissions return the same row. The exact
+  // address is set by a separate update: an upsert reads every column back through EXCLUDED,
+  // which needs SELECT on it, and since migration 0006 no client may select exact_address.
+  const { exact_address: exactAddress, ...publicRow } = row;
   const { data, error } = args.idempotency_key
     ? await supabase
         .from("listings")
-        .upsert(row, { onConflict: "idempotency_key", ignoreDuplicates: false })
+        .upsert(publicRow, { onConflict: "idempotency_key", ignoreDuplicates: false })
         .select("id")
         .single()
-    : await supabase.from("listings").insert(row).select("id").single();
+    : await supabase.from("listings").insert(publicRow).select("id").single();
   if (error) throw error;
+  if (exactAddress) {
+    const { error: addressError } = await supabase.from("listings").update({ exact_address: exactAddress }).eq("id", data.id);
+    if (addressError) throw addressError;
+  }
   return data.id;
 }
 

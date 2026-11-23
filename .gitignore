@@ -8,3 +8,5 @@ dist
 tsconfig.tsbuildinfo
 *.tsbuildinfo
 deno.lock
+supabase/.temp/
+supabase/.branches/

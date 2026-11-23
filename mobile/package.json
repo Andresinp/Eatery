@@ -14,7 +14,8 @@
     "check:env": "node scripts/check-build-env.mjs pre",
     "check:bundle": "node scripts/check-build-env.mjs post",
     "test:db": "sh ../supabase/tests/db-test.sh",
-    "verify": "npm run typecheck && npm run lint && npm run i18n:check && npm test && npm run test:db"
+    "verify": "npm run typecheck && npm run lint && npm run i18n:check && npm test && npm run test:db",
+    "i18n:resources": "node scripts/i18n-resources.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/bricolage-grotesque": "^0.4.1",
@@ -26,6 +27,7 @@
     "@supabase/supabase-js": "^2.119.0",
     "expo": "~58.0.23",
     "expo-apple-authentication": "~58.0.3",
+    "expo-build-properties": "~58.0.12",
     "expo-calendar": "~58.0.8",
     "expo-constants": "~58.0.16",
     "expo-crypto": "~58.0.8",

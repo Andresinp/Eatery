@@ -105,6 +105,9 @@ module.exports = {
       ['@stripe/stripe-react-native', { merchantIdentifier: 'merchant.com.andresinp.eatery', enableGooglePay: true }],
       '@maplibre/maplibre-react-native',
       ...(googleIosUrlScheme ? [['@react-native-google-signin/google-signin', { iosUrlScheme: googleIosUrlScheme }]] : []),
+      // Stripe's iOS SDK resolves through Swift Package Manager, which needs dynamic frameworks.
+      ['expo-build-properties', { ios: { useFrameworks: 'dynamic' } }],
+      '@react-native-community/datetimepicker',
       './plugins/with-release-signing',
     ],
     experiments: { typedRoutes: true, reactCompiler: true },

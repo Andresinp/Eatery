@@ -173,7 +173,9 @@ grant insert (host_id, listing_type, title, description, photos, currency, cuisi
               quantity_total, quantity_available, pickup_window_start, pickup_window_end,
               allows_local_delivery, idempotency_key)
   on public.listings to authenticated;
-grant update (title, description, photos, currency, cuisine_tags, dietary_tags, allergen_flags,
+-- host_id, listing_type and idempotency_key are updatable only so "publish" can upsert (an
+-- upsert needs UPDATE on every column it writes); the policy still pins host_id to the caller.
+grant update (host_id, listing_type, idempotency_key, title, description, photos, currency, cuisine_tags, dietary_tags, allergen_flags,
               price_per_unit, location_lat, location_lng, location_display, exact_address,
               status, meal_time, meal_end_time, seats_total, seats_available, dining_setting,
               drinks_included, drinks, product_type_tags, quantity_total, quantity_available,
@@ -216,6 +218,14 @@ $$;
 drop trigger if exists listings_guard_cancel on public.listings;
 create trigger listings_guard_cancel before update of status on public.listings
   for each row execute function private.guard_listing_cancel();
+
+-- "Publish" upserts on idempotency_key so a double tap returns the same listing. 0005 made that
+-- index PARTIAL (where idempotency_key is not null), and ON CONFLICT cannot use a partial index
+-- without repeating its predicate, so every publish with a key failed ("no unique or exclusion
+-- constraint matching the ON CONFLICT specification"). A plain unique index behaves the same for
+-- NULLs (they never conflict) and works with upsert.
+create unique index if not exists listings_idempotency_key_uniq on public.listings (idempotency_key);
+drop index if exists public.listings_idempotency_key_idx;
 
 -- The map shows where a listing is only roughly: the public coordinates are snapped to a grid of
 -- about 300–500 m, and the pin the host dropped is kept in exact_lat/exact_lng, which no client

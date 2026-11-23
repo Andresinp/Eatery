@@ -49,8 +49,27 @@ const langs = readdirSync(localesDir).filter((n) => existsSync(join(localesDir, 
 for (const lang of langs) {
   const dict = lang === 'en' ? en : loadLang(lang);
   if (lang !== 'en') {
-    for (const k of keys) if (!(k in dict)) problems.push(`${lang}: missing ${k}`);
-    for (const k of Object.keys(dict)) if (!keys.has(k)) problems.push(`${lang}: extra key ${k}`);
+    // Plural keys: English has base_one/base_other; other languages carry the forms their grammar
+    // needs (CLDR: zero, one, two, few, many, other) and must at least have base_other.
+    const PLURAL = /_(zero|one|two|few|many|other)$/;
+    const pluralBases = new Set([...keys].filter((k) => PLURAL.test(k)).map((k) => k.replace(PLURAL, '')));
+    for (const k of keys) {
+      if (PLURAL.test(k)) continue;
+      if (!(k in dict)) problems.push(`${lang}: missing ${k}`);
+    }
+    for (const base of pluralBases) if (!(`${base}_other` in dict)) problems.push(`${lang}: missing ${base}_other`);
+    for (const k of Object.keys(dict)) {
+      const isPluralForm = PLURAL.test(k) && pluralBases.has(k.replace(PLURAL, ''));
+      if (!keys.has(k) && !isPluralForm) problems.push(`${lang}: extra key ${k}`);
+    }
+    // Every {{placeholder}} in English must survive translation.
+    for (const [k, v] of Object.entries(dict)) {
+      const enValue = en[k] ?? en[k.replace(PLURAL, '_other')];
+      if (typeof enValue !== 'string') continue;
+      for (const ph of enValue.match(/{{\s*\w+\s*}}/g) ?? []) {
+        if (!String(v).includes(ph.replace(/\s/g, '')) && !String(v).includes(ph)) problems.push(`${lang}: ${k} lost ${ph}`);
+      }
+    }
   }
   for (const [k, v] of Object.entries(dict)) {
     if (/\b(android|iphone|ios|app store|google play|play store|apple store)\b/i.test(String(v))) problems.push(`${lang}: platform named in ${k}`);

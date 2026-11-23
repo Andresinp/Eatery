@@ -453,9 +453,12 @@ export const api = {
   },
 
   // `idempotencyKey`: one per create screen, so a double tap or a retry returns the same row.
+  // The exact address is written by a separate update: an upsert reads every column it sets back
+  // through EXCLUDED, which needs SELECT on it, and no client may select exact_address.
   async createListing(hostId: string, input: ListingInput, idempotencyKey: string): Promise<string> {
+    const { exact_address: exactAddress, ...publicInput } = input;
     const row = {
-      ...input,
+      ...publicInput,
       host_id: hostId,
       status: 'active' as const,
       seats_available: input.listing_type === 'table' ? (input.seats_total ?? null) : null,
@@ -466,7 +469,9 @@ export const api = {
       await supabase.from('listings').upsert(row, { onConflict: 'idempotency_key', ignoreDuplicates: false }).select('id').single(),
       'createListing',
     );
-    return (data as { id: string }).id;
+    const id = (data as { id: string }).id;
+    if (exactAddress) check(await supabase.from('listings').update({ exact_address: exactAddress }).eq('id', id), 'createListing address');
+    return id;
   },
 
   // Editing never touches availability directly unless the host changed the total: then the
