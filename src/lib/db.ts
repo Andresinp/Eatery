@@ -8,22 +8,28 @@ import type { ListingRow, ProfileRow } from "./database.types";
 // Profiles
 // =========================================================================
 
+// Only your own profile has private fields (email, allergies); the database serves them through
+// my_profile() since migration 0006, and refuses `select *` on profiles.
 export async function fetchProfile(userId: string): Promise<ProfileRow | null> {
   if (!supabase) return null;
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", userId)
-    .maybeSingle();
+  const { data, error } = await supabase.rpc("my_profile" as never);
   if (error) return null;
-  return data;
+  const rows = (data ?? []) as unknown as ProfileRow[];
+  return rows.find((r) => r.id === userId) ?? null;
 }
 
 // Profile rows are created by the `on_auth_user_created` trigger, so we update
 // the existing row (RLS allows "update own") rather than inserting.
+// The columns a person may change about themselves (column grants in migration 0006). Email
+// belongs to the auth account and is not written here.
+const EDITABLE_PROFILE = ["username", "full_name", "avatar_url", "bio", "dietary_prefs", "allergen_exclusions", "language", "onboarded"] as const;
+
 export async function updateProfile(id: string, patch: Partial<ProfileRow>) {
   if (!supabase) return;
-  const { error } = await supabase.from("profiles").update(patch).eq("id", id);
+  const allowed = Object.fromEntries(
+    Object.entries(patch).filter(([k]) => (EDITABLE_PROFILE as readonly string[]).includes(k)),
+  ) as Partial<ProfileRow>;
+  const { error } = await supabase.from("profiles").update(allowed).eq("id", id);
   if (error) throw error;
 }
 
@@ -31,13 +37,18 @@ export async function updateProfile(id: string, patch: Partial<ProfileRow>) {
 // Listings
 // =========================================================================
 
+// Every public listing column. Since migration 0006 the exact address is not readable with a
+// plain select (it goes to the host and booked guests through listing_address()), so `*` fails.
+const LISTING_SELECT =
+  "id, host_id, listing_type, title, description, photos, currency, cuisine_tags, dietary_tags, allergen_flags, price_per_unit, booking_fee_rate, location_lat, location_lng, location_display, status, created_at, meal_time, meal_end_time, seats_total, seats_available, dining_setting, drinks_included, drinks, product_type_tags, quantity_total, quantity_available, pickup_window_start, pickup_window_end, allows_local_delivery, idempotency_key, host:profiles!host_id(full_name, avatar_url, host_rating, identity_verified)";
+
 export async function fetchListings(): Promise<Listing[]> {
   if (!supabase) {
     return [...useHost.getState().myListings, ...mockListings];
   }
   const { data, error } = await supabase
     .from("listings")
-    .select("*, host:profiles!host_id(full_name, avatar_url, host_rating, identity_verified)")
+    .select(LISTING_SELECT)
     .eq("status", "active")
     .order("created_at", { ascending: false });
   if (error) throw error;
@@ -114,12 +125,11 @@ export async function createListing(args: {
   return data.id;
 }
 
+// Cancels the listing and refunds every guest who booked it (Edge Function cancel-listing). A
+// direct status update is refused by the database when the listing has bookings.
 export async function cancelListing(id: string): Promise<void> {
   if (!supabase) return;
-  const { error } = await supabase
-    .from("listings")
-    .update({ status: "cancelled" })
-    .eq("id", id);
+  const { error } = await supabase.functions.invoke("cancel-listing", { body: { listing_id: id } });
   if (error) throw error;
 }
 
@@ -127,7 +137,7 @@ export async function fetchMyListings(hostId: string): Promise<Listing[]> {
   if (!supabase) return useHost.getState().myListings;
   const { data, error } = await supabase
     .from("listings")
-    .select("*, host:profiles!host_id(full_name, avatar_url, host_rating, identity_verified)")
+    .select(LISTING_SELECT)
     .eq("host_id", hostId)
     .neq("status", "cancelled")
     .order("created_at", { ascending: false });
@@ -145,7 +155,7 @@ export async function fetchListing(id: string): Promise<Listing | null> {
   }
   const { data, error } = await supabase
     .from("listings")
-    .select("*, host:profiles!host_id(full_name, avatar_url, host_rating, identity_verified)")
+    .select(LISTING_SELECT)
     .eq("id", id)
     .single();
   if (error || !data) return null;
@@ -218,36 +228,7 @@ function prettyDining(d: ListingRow["dining_setting"]): string {
 // Orders
 // =========================================================================
 
-export async function createOrder(args: {
-  listing_id: string;
-  listing_type: "table" | "market";
-  guest_id: string;
-  quantity: number;
-  deposit_paid: number;
-  balance_due: number;
-  payment_intent_id?: string;
-}) {
-  if (!supabase) throw new Error("Supabase not configured");
-  const row = {
-    listing_id: args.listing_id,
-    listing_type: args.listing_type,
-    guest_id: args.guest_id,
-    quantity: args.quantity,
-    deposit_paid: args.deposit_paid,
-    balance_due: args.balance_due,
-    payment_intent_id: args.payment_intent_id ?? null,
-    status: "confirmed" as const,
-    host_confirmed: false,
-    guest_confirmed: false,
-  };
-  const { data, error } = await supabase
-    .from("orders")
-    .insert(row)
-    .select()
-    .single();
-  if (error) throw error;
-  return data;
-}
+// Orders are created by the server only (stripe-webhook / book_free_listing) since migration 0006.
 
 export async function fetchMyOrders(userId: string) {
   if (!supabase) throw new Error("Supabase not configured");
@@ -260,23 +241,4 @@ export async function fetchMyOrders(userId: string) {
   return data ?? [];
 }
 
-// =========================================================================
-// Notifications
-// =========================================================================
-
-export async function pushServerNotification(args: {
-  user_id: string;
-  type: "booking_confirmed" | "booking_received" | "reminder" | "message" | "review_request" | "no_show" | "order_cancelled" | "system";
-  title: string;
-  body?: string;
-  data?: Record<string, unknown>;
-}) {
-  if (!supabase) return;
-  await supabase.from("notifications").insert({
-    user_id: args.user_id,
-    type: args.type,
-    title: args.title,
-    body: args.body ?? null,
-    data: args.data ?? {},
-  });
-}
+// Notifications are written by database triggers since migration 0006; clients cannot insert them.
