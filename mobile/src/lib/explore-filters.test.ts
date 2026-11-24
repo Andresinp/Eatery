@@ -7,6 +7,7 @@ import {
   activeFilterCount,
   applyFilters,
   bookability,
+  bookingClosesAt,
   DEFAULT_FILTERS,
   isSoldOut,
   matchingAllergens,
@@ -131,6 +132,23 @@ describe('helpers', () => {
     assert.equal(bookability(listing({ id: 'a', meal_time: at(-1) }), 'g', NOW), 'past');
     assert.equal(bookability(listing({ id: 'a', seats_available: 0 }), 'g', NOW), 'soldOut');
     assert.equal(bookability(market({ id: 'b', pickup_window_end: at(1, 12) }), 'g', NOW), 'ok');
+  });
+
+  it('booking closes half an hour before the end, never before the start', () => {
+    const iso = (h: number, m = 0) => new Date(2026, 10, 23, h, m).toISOString();
+    const noon = (m: number) => new Date(2026, 10, 23, 12, m);
+    // Meal 11:00–13:00: open until 12:30.
+    const meal = listing({ id: 'm', meal_time: iso(11), meal_end_time: iso(13) });
+    assert.equal(bookingClosesAt(meal)?.toISOString(), iso(12, 30));
+    assert.equal(bookability(meal, 'g', noon(29)), 'ok');
+    assert.equal(bookability(meal, 'g', noon(30)), 'past');
+    // No end time: three hours from the start, so 11:00 → open until 13:30.
+    assert.equal(bookingClosesAt(listing({ id: 'n', meal_time: iso(11) }))?.toISOString(), iso(13, 30));
+    // Pickup 12:00–12:20 is shorter than half an hour: open until it starts.
+    const short = market({ id: 's', pickup_window_start: iso(12), pickup_window_end: iso(12, 20) });
+    assert.equal(bookingClosesAt(short)?.toISOString(), iso(12));
+    // Pickup with no end: open until the start.
+    assert.equal(bookingClosesAt(market({ id: 'p', pickup_window_start: iso(15) }))?.toISOString(), iso(15));
   });
 
   it('activeFilterCount ignores type and the allergen default', () => {

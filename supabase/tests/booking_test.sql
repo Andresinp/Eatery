@@ -136,6 +136,24 @@ select test.eq('quote in the listing currency',
    from public.quote_booking(test.id(101), 2)), '60.00|7.20|52.80|TRY|true');
 select test.eq('quote refuses more than available', (select reason from public.quote_booking(test.id(101), 5)), 'sold_out');
 select test.eq('quote refuses a past meal', (select reason from public.quote_booking(test.id(103), 1)), 'past');
+-- 0009: booking closes half an hour before the end. 103 has no end time, so it ends 3h after start.
+reset role;
+update public.listings set meal_time = now() - interval '2 hours 40 minutes' where id = test.id(103);
+select test.as_user(2);
+select test.eq('quote refuses a meal ending within half an hour', (select reason from public.quote_booking(test.id(103), 1)), 'past');
+reset role;
+update public.listings set meal_time = now() - interval '2 hours' where id = test.id(103);
+select test.as_user(2);
+select test.eq('quote books a meal under way that ends in an hour', (select bookable from public.quote_booking(test.id(103), 1)), true);
+reset role;
+select test.eq('pickup closes half an hour before the window ends',
+  (select private.booking_closes_at(l) = l.pickup_window_end - interval '30 minutes' from public.listings l where id = test.id(104)), true);
+update public.listings set pickup_window_end = pickup_window_start + interval '10 minutes' where id = test.id(104);
+select test.eq('a window shorter than half an hour stays bookable until it opens',
+  (select private.booking_closes_at(l) = l.pickup_window_start from public.listings l where id = test.id(104)), true);
+update public.listings set pickup_window_end = pickup_window_start + interval '2 hours' where id = test.id(104);
+update public.listings set meal_time = now() - interval '5 hours' where id = test.id(103);
+select test.as_user(2);
 select test.raises('a paid listing cannot be booked free',
   $$select public.book_free_listing('00000000-0000-4000-8000-000000000101', 1)$$, 'payment_required');
 

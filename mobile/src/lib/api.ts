@@ -3,6 +3,7 @@
 // the database's column privileges allow live in one file. See supabase/migrations/0006.
 
 import { decode } from './base64';
+import { bookingClosesAt } from './explore-filter-logic';
 import { logError } from './log';
 import { supabase } from './supabase';
 
@@ -419,9 +420,12 @@ export const api = {
 
   // ---- Listings -------------------------------------------------------------------------------
 
-  // Active and full listings whose event has not ended, nearest first is up to the caller.
+  // Active and full listings still open for booking (bookingClosesAt: half an hour before the
+  // end). The query is loose — a meal with no end time can run three hours from its start — and
+  // the exact cut is made below. Nearest first is up to the caller.
   async listings(): Promise<Listing[]> {
-    const since = new Date(Date.now() - 3 * 3600_000).toISOString();
+    const now = new Date();
+    const since = new Date(now.getTime() - 3 * 3600_000).toISOString();
     const rows = check(
       await supabase
         .from('listings')
@@ -432,7 +436,10 @@ export const api = {
         .limit(500),
       'listings',
     );
-    return ((rows ?? []) as unknown as Row[]).map(toListing);
+    return ((rows ?? []) as unknown as Row[]).map(toListing).filter((l) => {
+      const closes = bookingClosesAt(l);
+      return closes !== null && closes.getTime() > now.getTime();
+    });
   },
 
   async listing(id: string): Promise<Listing | null> {

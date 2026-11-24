@@ -68,16 +68,35 @@ export function isSoldOut(listing: Pick<Listing, 'listing_type' | 'seats_availab
 
 export type Bookability = 'ok' | 'own' | 'closed' | 'past' | 'soldOut';
 
+const HOUR = 3_600_000;
+// A meal with no end time is taken to last this long (private.event_end on the server).
+const DEFAULT_MEAL_LENGTH = 3 * HOUR;
+// Booking closes this long before the meal or pickup window ends (private.booking_closes_at).
+export const BOOKING_CLOSES_BEFORE_END = HOUR / 2;
+
+type Times = Pick<Listing, 'listing_type' | 'meal_time' | 'meal_end_time' | 'pickup_window_start' | 'pickup_window_end'>;
+
+// The last moment a guest can book: half an hour before the end, but never before the start (a
+// short pickup window stays open until it starts). Null when the listing has no time at all.
+// Mirrors private.booking_closes_at in migration 0009; keep the two the same.
+export function bookingClosesAt(listing: Times): Date | null {
+  const startIso = listing.listing_type === 'table' ? listing.meal_time : listing.pickup_window_start;
+  const start = startIso ? new Date(startIso).getTime() : NaN;
+  const endIso = listing.listing_type === 'table' ? listing.meal_end_time : listing.pickup_window_end;
+  let end = endIso ? new Date(endIso).getTime() : NaN;
+  if (Number.isNaN(end)) end = listing.listing_type === 'table' ? start + DEFAULT_MEAL_LENGTH : start;
+  if (Number.isNaN(end)) return null;
+  const closes = end - BOOKING_CLOSES_BEFORE_END;
+  return new Date(Number.isNaN(start) ? closes : Math.max(start, closes));
+}
+
 // Whether the person can book this listing now, and if not why. `userId` null = signed out (still
 // 'ok': the button then leads to sign-in).
 export function bookability(listing: Listing, userId: string | null, now: Date): Bookability {
   if (userId !== null && listing.host_id === userId) return 'own';
   if (listing.status === 'cancelled' || listing.status === 'completed') return 'closed';
-  const endIso =
-    listing.listing_type === 'table'
-      ? (listing.meal_end_time ?? listing.meal_time)
-      : (listing.pickup_window_end ?? listing.pickup_window_start);
-  if (endIso && new Date(endIso).getTime() < now.getTime()) return 'past';
+  const closes = bookingClosesAt(listing);
+  if (closes && closes.getTime() <= now.getTime()) return 'past';
   if (isSoldOut(listing)) return 'soldOut';
   return 'ok';
 }
