@@ -8,6 +8,8 @@
   "tabs.host": "Ev sahibi",
   "tabs.inbox": "Gelen kutusu",
   "tabs.profile": "Profil",
+  "mode.guest": "Misafir",
+  "mode.map": "Harita",
 
   "common.back": "Geri",
   "common.save": "Kaydet",
@@ -47,6 +49,8 @@
   "listing.soldOut": "Tükendi",
   "listing.verifiedHost": "Onaylı ev sahibi",
   "listing.newHost": "Yeni ev sahibi",
+  "listing.drinksWith": "İçecekler dahil: {{list}}",
+  "listing.drinksByo": "İçecek servis edilmiyor — kendi içeceğini getir",
 
   "status.confirmed": "Onaylandı",
   "status.completed": "Tamamlandı",

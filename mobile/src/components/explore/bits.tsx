@@ -5,7 +5,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Icon } from '@/components/icons';
 import { tagLabel } from '@/components/ui';
 import type { Listing } from '@/lib/api';
-import { availableCount, isSoldOut } from '@/lib/explore-filter-logic';
+import { availableCount, isSoldOut, type Bookability } from '@/lib/explore-filter-logic';
 import { colors, fonts, radius, space } from '@/theme';
 
 // "3 seats left", "5 left" or "Sold out".
@@ -20,6 +20,24 @@ export function unitText(t: TFunction, listing: Pick<Listing, 'listing_type'>): 
   return listing.listing_type === 'table' ? t('listing.perSeat') : t('listing.perUnit');
 }
 
+// "Book a seat" / "Order", or why it cannot be booked.
+export function bookLabel(t: TFunction, listing: Pick<Listing, 'listing_type'>, canBook: Bookability): string {
+  if (canBook === 'soldOut') return t('listing.soldOut');
+  if (canBook === 'past') return t('listingDetail.reasonPast');
+  if (canBook === 'closed') return t('listingDetail.reasonClosed');
+  return listing.listing_type === 'table' ? t('listingDetail.bookSeat') : t('listingDetail.order');
+}
+
+// Whether drinks come with the meal, said plainly: "Drinks included: Wine, Tea" or "No drinks
+// served — bring your own".
+export function drinksText(t: TFunction, listing: Pick<Listing, 'drinks' | 'drinks_included'>): string {
+  if (listing.drinks.length > 0)
+    return t('listing.drinksWith', {
+      list: listing.drinks.map(tagLabel).join(', '),
+    });
+  return listing.drinks_included ? t('listingDetail.drinksIncluded') : t('listing.drinksByo');
+}
+
 type AllergenWarningProps = { allergens: string[]; isCompact?: boolean };
 
 // A red strip naming the allergens this listing has that I avoid.
@@ -31,6 +49,20 @@ export function AllergenWarning({ allergens, isCompact }: AllergenWarningProps) 
     <View style={[styles.warning, isCompact && styles.warningCompact]} accessibilityRole="alert">
       <Icon name="alert" size={isCompact ? 14 : 18} color={colors.danger} />
       <Text style={[styles.warningText, isCompact && styles.warningTextCompact]}>{t('explore.containsYourAllergens', { names })}</Text>
+    </View>
+  );
+}
+
+// An amber note naming my dietary preferences (vegan, halal…) the host has not marked. Softer
+// than the allergen warning: an unmarked tag usually means "ask", not "unsafe".
+export function DietaryNote({ diets, isCompact }: { diets: string[]; isCompact?: boolean }) {
+  const { t } = useTranslation();
+  if (diets.length === 0) return null;
+  const names = diets.map(tagLabel).join(', ');
+  return (
+    <View style={[styles.warning, styles.note, isCompact && styles.warningCompact]}>
+      <Icon name="info" size={isCompact ? 14 : 18} color={colors.amberInk} />
+      <Text style={[styles.warningText, styles.noteText, isCompact && styles.warningTextCompact]}>{t('explore.notMarkedDiet', { names })}</Text>
     </View>
   );
 }
@@ -59,9 +91,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.md,
     paddingVertical: space.sm + 2,
   },
-  warningCompact: { paddingHorizontal: space.sm, paddingVertical: space.xs, borderRadius: radius.sm, gap: space.xs },
-  warningText: { flex: 1, fontFamily: fonts.bodySemi, fontSize: 14, lineHeight: 19, color: colors.danger },
+  warningCompact: {
+    paddingHorizontal: space.sm,
+    paddingVertical: space.xs,
+    borderRadius: radius.sm,
+    gap: space.xs,
+  },
+  warningText: {
+    flex: 1,
+    fontFamily: fonts.bodySemi,
+    fontSize: 14,
+    lineHeight: 19,
+    color: colors.danger,
+  },
   warningTextCompact: { fontSize: 12, lineHeight: 16 },
+  note: { backgroundColor: colors.amberSoft },
+  noteText: { color: colors.amberInk },
   badge: {
     flexDirection: 'row',
     alignItems: 'center',

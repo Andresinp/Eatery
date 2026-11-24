@@ -121,6 +121,8 @@ export type Listing = {
   seats_total: number | null;
   seats_available: number | null;
   dining_setting: DiningSetting | null;
+  // Photos of where guests eat (readable since migration 0007).
+  dining_setting_photos: string[];
   drinks_included: boolean;
   drinks: string[];
   // market
@@ -286,7 +288,7 @@ export type CancelResult = { status: OrderStatus; refunded: boolean; deposit_ref
 const LISTING_COLUMNS =
   'id, host_id, listing_type, title, description, photos, currency, cuisine_tags, dietary_tags, allergen_flags, ' +
   'price_per_unit, booking_fee_rate, location_lat, location_lng, location_display, status, created_at, meal_time, ' +
-  'meal_end_time, seats_total, seats_available, dining_setting, drinks_included, drinks, product_type_tags, ' +
+  'meal_end_time, seats_total, seats_available, dining_setting, dining_setting_photos, drinks_included, drinks, product_type_tags, ' +
   'quantity_total, quantity_available, pickup_window_start, pickup_window_end, allows_local_delivery';
 const HOST_EMBED = 'host:profiles!host_id(id, full_name, avatar_url, host_rating, identity_verified)';
 const LISTING_SELECT = `${LISTING_COLUMNS}, ${HOST_EMBED}`;
@@ -311,6 +313,7 @@ function toListing(row: Row): Listing {
     allergen_flags: (row.allergen_flags as string[] | null) ?? [],
     product_type_tags: (row.product_type_tags as string[] | null) ?? [],
     drinks: (row.drinks as string[] | null) ?? [],
+    dining_setting_photos: (row.dining_setting_photos as string[] | null) ?? [],
     drinks_included: !!row.drinks_included,
     allows_local_delivery: !!row.allows_local_delivery,
     currency: (row.currency as string | null) ?? '€',

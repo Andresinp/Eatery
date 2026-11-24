@@ -35,6 +35,29 @@ export function matchingAllergens(listing: Pick<Listing, 'allergen_flags'>, myAl
   return listing.allergen_flags.filter((a) => mine.has(a.toLowerCase()));
 }
 
+// My dietary preferences (vegan, halal…) that the host has NOT marked on this listing. A warning,
+// not a filter: hosts often leave tags out, so the guest should ask rather than never see it.
+export function unmetDietary(listing: Pick<Listing, 'dietary_tags'>, myDiets: readonly string[]): string[] {
+  if (myDiets.length === 0) return [];
+  const marked = new Set(lower(listing.dietary_tags));
+  return myDiets.filter((d) => !marked.has(d.toLowerCase()));
+}
+
+export type ListSort = 'distance' | 'price' | 'seats';
+
+// The list view's order: nearest first, cheapest first, or most places left first. Ties fall
+// back to distance so the order never jumps around between renders.
+export function sortForList<T extends { listing: Listing; km: number }>(items: readonly T[], sort: ListSort): T[] {
+  const byDistance = (a: T, b: T) => a.km - b.km;
+  const compare =
+    sort === 'price'
+      ? (a: T, b: T) => a.listing.price_per_unit - b.listing.price_per_unit || byDistance(a, b)
+      : sort === 'seats'
+        ? (a: T, b: T) => availableCount(b.listing) - availableCount(a.listing) || byDistance(a, b)
+        : byDistance;
+  return [...items].sort(compare);
+}
+
 export function availableCount(listing: Pick<Listing, 'listing_type' | 'seats_available' | 'quantity_available'>): number {
   return (listing.listing_type === 'table' ? listing.seats_available : listing.quantity_available) ?? 0;
 }

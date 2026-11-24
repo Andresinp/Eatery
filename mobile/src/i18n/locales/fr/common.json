@@ -8,6 +8,8 @@
   "tabs.host": "Hôte",
   "tabs.inbox": "Messages",
   "tabs.profile": "Profil",
+  "mode.guest": "Invité",
+  "mode.map": "Carte",
 
   "common.back": "Retour",
   "common.save": "Enregistrer",
@@ -47,6 +49,8 @@
   "listing.soldOut": "Épuisé",
   "listing.verifiedHost": "Hôte vérifié",
   "listing.newHost": "Nouvel hôte",
+  "listing.drinksWith": "Boissons incluses : {{list}}",
+  "listing.drinksByo": "Pas de boissons servies — apportez les vôtres",
 
   "status.confirmed": "Confirmée",
   "status.completed": "Terminée",

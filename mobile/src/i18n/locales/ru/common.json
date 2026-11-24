@@ -8,6 +8,8 @@
   "tabs.host": "Хозяин",
   "tabs.inbox": "Сообщения",
   "tabs.profile": "Профиль",
+  "mode.guest": "Гость",
+  "mode.map": "Карта",
 
   "common.back": "Назад",
   "common.save": "Сохранить",
@@ -51,6 +53,8 @@
   "listing.soldOut": "Разобрано",
   "listing.verifiedHost": "Проверенный хозяин",
   "listing.newHost": "Новый хозяин",
+  "listing.drinksWith": "Напитки включены: {{list}}",
+  "listing.drinksByo": "Напитки не подаются — приносите свои",
 
   "status.confirmed": "Подтверждена",
   "status.completed": "Завершена",

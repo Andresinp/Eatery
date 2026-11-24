@@ -3,7 +3,18 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import type { Listing } from './api';
-import { activeFilterCount, applyFilters, bookability, DEFAULT_FILTERS, isSoldOut, matchingAllergens, parseFilters, type Filters } from './explore-filter-logic.ts';
+import {
+  activeFilterCount,
+  applyFilters,
+  bookability,
+  DEFAULT_FILTERS,
+  isSoldOut,
+  matchingAllergens,
+  parseFilters,
+  sortForList,
+  unmetDietary,
+  type Filters,
+} from './explore-filter-logic.ts';
 
 const NOW = new Date(2026, 10, 23, 12, 0); // Mon 23 Nov 2026, noon local
 const at = (days: number, hour = 20): string => new Date(2026, 10, 23 + days, hour, 0).toISOString();
@@ -31,6 +42,7 @@ function listing(over: Partial<Listing> & { id: string }): Listing {
     seats_total: 6,
     seats_available: 4,
     dining_setting: null,
+    dining_setting_photos: [],
     drinks_included: false,
     drinks: [],
     product_type_tags: [],
@@ -134,5 +146,25 @@ describe('helpers', () => {
       dietary: ['Vegan'],
       hideMyAllergens: false,
     });
+  });
+
+  it('unmetDietary names preferences the listing does not mark', () => {
+    const l = listing({ id: 'a', dietary_tags: ['vegetarian', 'Halal'] });
+    assert.deepEqual(unmetDietary(l, []), []);
+    assert.deepEqual(unmetDietary(l, ['halal', 'Vegetarian']), []);
+    assert.deepEqual(unmetDietary(l, ['Vegan', 'halal']), ['Vegan']);
+  });
+
+  it('sortForList orders by distance, price or places left', () => {
+    const items = [
+      { listing: listing({ id: 'far-cheap', price_per_unit: 10, seats_available: 1 }), km: 5 },
+      { listing: listing({ id: 'near-dear', price_per_unit: 30, seats_available: 8 }), km: 1 },
+      { listing: listing({ id: 'mid', price_per_unit: 10, seats_available: 8 }), km: 2 },
+    ];
+    const ids = (sorted: typeof items) => sorted.map((i) => i.listing.id);
+    assert.deepEqual(ids(sortForList(items, 'distance')), ['near-dear', 'mid', 'far-cheap']);
+    assert.deepEqual(ids(sortForList(items, 'price')), ['mid', 'far-cheap', 'near-dear']);
+    assert.deepEqual(ids(sortForList(items, 'seats')), ['near-dear', 'mid', 'far-cheap']);
+    assert.deepEqual(ids(items), ['far-cheap', 'near-dear', 'mid']); // input untouched
   });
 });

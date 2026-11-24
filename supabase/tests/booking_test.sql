@@ -94,6 +94,7 @@ values
 select test.as_anon();
 select test.eq('anon can browse listings', (select count(*) from public.listings where host_id = test.id(1)), 4::bigint);
 select test.raises('anon cannot read exact_address', 'select exact_address from public.listings', 'permission denied');
+select test.eq('anon can read dining photos', (select count(*) >= 0 from (select dining_setting_photos from public.listings) d), true);
 select test.raises('anon cannot read emails', 'select email from public.profiles', 'permission denied');
 select test.eq('anon can read public profile', (select full_name from public.profiles where id = test.id(1)), 'Hana Host');
 reset role;

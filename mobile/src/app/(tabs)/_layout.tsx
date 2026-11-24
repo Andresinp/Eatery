@@ -1,65 +1,53 @@
 import { Tabs, type BottomTabBarProps } from 'expo-router/js-tabs';
-import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AppState, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Icon, type IconName } from '@/components/icons';
-import { api } from '@/lib/api';
-import { logError } from '@/lib/log';
-import { useNotificationStream } from '@/lib/realtime';
-import { useUserId } from '@/lib/session';
-import { colors, fonts, space } from '@/theme';
+import { TAB_PILL_HEIGHT, useTabBarSpace, useTabPillBottom } from '@/lib/tab-bar';
+import { useUnreadCount } from '@/lib/use-unread-count';
+import { colors, fonts, radius, shadow, space } from '@/theme';
 
 const TABS = ['explore', 'bookings', 'host', 'inbox', 'profile'] as const;
 type TabName = (typeof TABS)[number];
-const ICON: Record<TabName, IconName> = { explore: 'map', bookings: 'ticket', host: 'chef', inbox: 'bell', profile: 'user' };
+const ICON: Record<TabName, IconName> = {
+  explore: 'map',
+  bookings: 'ticket',
+  host: 'chef',
+  inbox: 'bell',
+  profile: 'user',
+};
 
-function useUnreadCount(): number {
-  const userId = useUserId();
-  // Tagged with whose count it is, so signing out or switching accounts never shows a stale dot.
-  const [count, setCount] = useState<{ userId: string; n: number } | null>(null);
-  const refresh = useCallback(() => {
-    if (!userId) return;
-    api.unreadNotificationCount().then(
-      (n) => setCount({ userId, n }),
-      (error: unknown) => logError('unreadNotificationCount', error),
-    );
-  }, [userId]);
-  useEffect(() => {
-    refresh();
-    const sub = AppState.addEventListener('change', (s) => s === 'active' && refresh());
-    return () => sub.remove();
-  }, [refresh]);
-  useNotificationStream(userId, refresh);
-  return userId && count?.userId === userId ? count.n : 0;
-}
-
+// A dark pill floating above the bottom edge, as in the web app's ink-and-amber style: the active
+// tab is an amber chip with its name, the others are icons only (their names stay for VoiceOver).
 function TabBar({ state, navigateToTab }: BottomTabBarProps) {
   const { t } = useTranslation();
-  const insets = useSafeAreaInsets();
+  const bottom = useTabPillBottom();
   const unread = useUnreadCount();
   return (
-    <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, space.sm) }]} accessibilityRole="tablist">
+    <View style={[styles.pill, { bottom }]} accessibilityRole="tablist">
       {state.routes.map((route, index) => {
         const name = route.name as TabName;
         const isFocused = state.index === index;
-        const tint = isFocused ? colors.text : colors.textFaint;
         return (
           <Pressable
             key={route.key}
             accessibilityRole="tab"
             accessibilityState={{ selected: isFocused }}
             accessibilityLabel={t(`tabs.${name}`)}
+            hitSlop={4}
             onPress={() => {
               if (!isFocused) navigateToTab(route.key);
             }}
-            style={styles.tab}>
+            style={[styles.tab, isFocused && styles.tabActive]}>
             <View>
-              <Icon name={ICON[name]} size={24} color={tint} />
+              <Icon name={ICON[name]} size={22} color={isFocused ? colors.amberInk : colors.bg} strokeWidth={isFocused ? 2.4 : 2} />
               {name === 'inbox' && unread > 0 ? <View style={styles.dot} /> : null}
             </View>
-            <Text style={[styles.label, isFocused && styles.labelActive]}>{t(`tabs.${name}`)}</Text>
+            {isFocused ? (
+              <Text style={styles.label} numberOfLines={1}>
+                {t(`tabs.${name}`)}
+              </Text>
+            ) : null}
           </Pressable>
         );
       })}
@@ -68,8 +56,18 @@ function TabBar({ state, navigateToTab }: BottomTabBarProps) {
 }
 
 export default function TabsLayout() {
+  const barSpace = useTabBarSpace();
   return (
-    <Tabs tabBar={(props) => <TabBar {...props} />} screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.bg } }}>
+    <Tabs
+      tabBar={(props) => <TabBar {...props} />}
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        // The map runs under the pill; every other screen stops above it.
+        sceneStyle: {
+          backgroundColor: colors.bg,
+          paddingBottom: route.name === 'explore' ? 0 : barSpace,
+        },
+      })}>
       {TABS.map((name) => (
         <Tabs.Screen key={name} name={name} />
       ))}
@@ -78,15 +76,40 @@ export default function TabsLayout() {
 }
 
 const styles = StyleSheet.create({
-  bar: {
+  pill: {
+    position: 'absolute',
+    left: space.md,
+    right: space.md,
+    height: TAB_PILL_HEIGHT,
     flexDirection: 'row',
-    backgroundColor: colors.bg,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.line,
-    paddingTop: space.sm,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 6,
+    borderRadius: radius.pill,
+    backgroundColor: colors.text,
+    ...shadow.float,
   },
-  tab: { flex: 1, alignItems: 'center', gap: 3 },
-  label: { fontFamily: fonts.bodySemi, fontSize: 11, color: colors.textFaint },
-  labelActive: { color: colors.text },
-  dot: { position: 'absolute', top: -1, right: -3, width: 9, height: 9, borderRadius: 5, backgroundColor: colors.danger, borderWidth: 1.5, borderColor: colors.bg },
+  tab: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    minWidth: 48,
+    height: 48,
+    paddingHorizontal: 12,
+    borderRadius: radius.pill,
+  },
+  tabActive: { backgroundColor: colors.amber, paddingHorizontal: 16 },
+  label: { fontFamily: fonts.bodyBold, fontSize: 13, color: colors.amberInk },
+  dot: {
+    position: 'absolute',
+    top: -2,
+    right: -3,
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: colors.danger,
+    borderWidth: 1.5,
+    borderColor: colors.text,
+  },
 });

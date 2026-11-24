@@ -4,85 +4,68 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Icon } from '@/components/icons';
 import { Photo, tagLabel } from '@/components/ui';
 import type { Listing } from '@/lib/api';
-import { availableCount, isSoldOut } from '@/lib/explore-filter-logic';
-import { eventStart, formatDay, formatDistance, formatListingWhen, formatPrice } from '@/lib/format';
+import { availableCount, isSoldOut, type Bookability } from '@/lib/explore-filter-logic';
+import { formatDistance, formatListingWhen, formatPrice } from '@/lib/format';
 import { colors, fonts, radius, shadow, space } from '@/theme';
 
-import { AllergenWarning, availabilityText, unitText } from './bits';
+import { AllergenWarning, availabilityText, bookLabel, drinksText, unitText } from './bits';
 
 type Props = {
   listing: Listing;
   allergens: string[];
   distanceKm: number | null;
+  canBook: Bookability;
   onPress: () => void;
+  onBook: () => void;
   onClose: () => void;
 };
 
-// The sheet at the bottom of the map for the tapped pin, laid out like the web app's: the photo
-// across the top with a close button, then title and date, area, rating and type, a line of
-// description, tags and drinks on the left; price, seats left and distance on the right.
-export function ListingPreview({ listing, allergens, distanceKm, onPress, onClose }: Props) {
+// The card at the bottom of the map for the selected pin: the basics everyone needs before
+// opening it — when, where, what food, drinks, price and places left — and a Book button.
+export function ListingPreview({ listing, allergens, distanceKm, canBook, onPress, onBook, onClose }: Props) {
   const { t } = useTranslation();
   const isTable = listing.listing_type === 'table';
   const isGone = isSoldOut(listing);
-  const count = availableCount(listing);
-  const isLow = !isGone && count <= 5;
+  const isLow = !isGone && availableCount(listing) <= 5;
   const price = formatPrice(listing.price_per_unit, listing.currency);
-  const tags = [...(isTable ? listing.cuisine_tags : listing.product_type_tags), ...listing.dietary_tags].slice(0, 2);
+  const when = formatListingWhen(listing);
+  const tags = [...(isTable ? listing.cuisine_tags : listing.product_type_tags), ...listing.dietary_tags].slice(0, 3);
   const rating = listing.host?.host_rating ?? null;
-  const drinks = listing.drinks.map(tagLabel).join(', ');
-  const start = eventStart(listing);
+  const isBookable = canBook === 'ok';
+  const hasDrinks = listing.drinks_included || listing.drinks.length > 0;
 
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${listing.title}, ${formatListingWhen(listing)}, ${price} ${unitText(t, listing)}`}
+      accessibilityLabel={`${listing.title}, ${when}, ${price} ${unitText(t, listing)}, ${availabilityText(t, listing)}`}
       accessibilityHint={t('explore.openListingHint')}
       onPress={onPress}
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
       <View style={styles.photoWrap}>
         <Photo uri={listing.photos[0]} style={styles.photo} rounded={false} />
-        <View style={styles.handle} />
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('common.close')}
-          hitSlop={8}
-          onPress={onClose}
-          style={styles.close}>
+        <Pressable accessibilityRole="button" accessibilityLabel={t('common.close')} hitSlop={8} onPress={onClose} style={styles.close}>
           <Icon name="close" size={14} color={colors.text} />
         </Pressable>
       </View>
 
       <View style={styles.body}>
         <View style={styles.main}>
-          <View style={styles.titleRow}>
-            <Text style={styles.title} numberOfLines={1}>
-              {listing.title}
-            </Text>
-            {start ? (
+          <Text style={styles.title} numberOfLines={1}>
+            {listing.title}
+          </Text>
+          {when ? (
+            <View style={styles.whenRow}>
+              <Icon name="clock" size={14} color={colors.text} />
               <Text style={styles.when} numberOfLines={1}>
-                {formatDay(start)}
+                {when}
               </Text>
-            ) : null}
-          </View>
+            </View>
+          ) : null}
           <Text style={styles.muted} numberOfLines={1}>
+            {rating !== null ? `★ ${rating.toFixed(1)} · ` : ''}
+            {distanceKm !== null ? `${formatDistance(distanceKm)} · ` : ''}
             {listing.location_display}
           </Text>
-          <View style={styles.ratingRow}>
-            {rating !== null ? (
-              <>
-                <Text style={styles.star}>★</Text>
-                <Text style={styles.small}>{rating.toFixed(1)}</Text>
-                <Text style={styles.dotSep}>·</Text>
-              </>
-            ) : null}
-            <Text style={styles.small}>{isTable ? t('listing.table') : t('listing.market')}</Text>
-          </View>
-          {listing.description ? (
-            <Text style={styles.description} numberOfLines={1}>
-              {listing.description}
-            </Text>
-          ) : null}
           {tags.length > 0 ? (
             <View style={styles.tags}>
               {tags.map((tag) => (
@@ -93,8 +76,9 @@ export function ListingPreview({ listing, allergens, distanceKm, onPress, onClos
             </View>
           ) : null}
           {isTable ? (
-            <Text style={[styles.drinks, listing.drinks_included ? styles.drinksYes : styles.drinksNo]} numberOfLines={1}>
-              {listing.drinks_included ? `🍷 ${drinks || t('listingDetail.drinksIncluded')}` : `🚫 ${t('listingDetail.noDrinks')}`}
+            <Text style={[styles.drinks, hasDrinks ? styles.drinksYes : styles.drinksNo]} numberOfLines={1}>
+              {hasDrinks ? '🍷 ' : '🥤 '}
+              {drinksText(t, listing)}
             </Text>
           ) : null}
         </View>
@@ -107,7 +91,6 @@ export function ListingPreview({ listing, allergens, distanceKm, onPress, onClos
               {availabilityText(t, listing)}
             </Text>
           </View>
-          {distanceKm !== null ? <Text style={styles.unit}>{formatDistance(distanceKm)}</Text> : null}
         </View>
       </View>
 
@@ -116,6 +99,16 @@ export function ListingPreview({ listing, allergens, distanceKm, onPress, onClos
           <AllergenWarning allergens={allergens} isCompact />
         </View>
       ) : null}
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ disabled: !isBookable }}
+        accessibilityLabel={bookLabel(t, listing, canBook)}
+        disabled={!isBookable}
+        onPress={onBook}
+        style={({ pressed }) => [styles.book, !isBookable && styles.bookDisabled, pressed && styles.pressed]}>
+        <Text style={[styles.bookText, !isBookable && styles.bookTextDisabled]}>{bookLabel(t, listing, canBook)}</Text>
+      </Pressable>
     </Pressable>
   );
 }
@@ -129,54 +122,48 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     ...shadow.float,
   },
-  pressed: { opacity: 0.92 },
-  photoWrap: { height: 112, backgroundColor: colors.surfaceRaised },
+  pressed: { opacity: 0.9 },
+  photoWrap: { height: 92, backgroundColor: colors.surfaceRaised },
   photo: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
-  handle: {
-    position: 'absolute',
-    top: 8,
-    alignSelf: 'center',
-    width: 40,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: 'rgba(255, 253, 247, 0.8)',
-  },
   close: {
     position: 'absolute',
-    top: 12,
-    right: 12,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    top: 10,
+    right: 10,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     backgroundColor: colors.bg,
     borderWidth: 2,
     borderColor: 'rgba(22, 20, 19, 0.9)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  body: { flexDirection: 'row', gap: space.md - 4, paddingHorizontal: space.md, paddingTop: space.md - 4, paddingBottom: space.sm },
-  main: { flex: 1, minWidth: 0, gap: 3 },
-  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  title: { flexShrink: 1, fontFamily: fonts.display, fontSize: 15, lineHeight: 19, color: colors.text },
-  when: {
-    flexShrink: 0,
-    maxWidth: 130,
-    fontFamily: fonts.body,
-    fontSize: 10,
-    color: 'rgba(22, 20, 19, 0.55)',
-    backgroundColor: 'rgba(22, 20, 19, 0.06)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: radius.pill,
-    overflow: 'hidden',
+  body: {
+    flexDirection: 'row',
+    gap: space.sm + 4,
+    paddingHorizontal: space.md,
+    paddingTop: space.sm + 2,
   },
-  muted: { fontFamily: fonts.body, fontSize: 12, color: 'rgba(22, 20, 19, 0.5)' },
-  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  star: { fontSize: 11, color: colors.amber },
-  dotSep: { fontSize: 11, color: 'rgba(22, 20, 19, 0.2)' },
-  small: { fontFamily: fonts.body, fontSize: 11, color: 'rgba(22, 20, 19, 0.55)' },
-  description: { fontFamily: fonts.body, fontSize: 12, lineHeight: 16, color: 'rgba(22, 20, 19, 0.6)' },
-  tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 2 },
+  main: { flex: 1, minWidth: 0, gap: 3 },
+  title: {
+    fontFamily: fonts.display,
+    fontSize: 16,
+    lineHeight: 20,
+    color: colors.text,
+  },
+  whenRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  when: {
+    flexShrink: 1,
+    fontFamily: fonts.bodyBold,
+    fontSize: 13,
+    color: colors.text,
+  },
+  muted: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    color: 'rgba(22, 20, 19, 0.55)',
+  },
+  tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 1 },
   tag: {
     paddingHorizontal: 8,
     paddingVertical: 2,
@@ -186,19 +173,54 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
   },
   tagText: { fontFamily: fonts.bodySemi, fontSize: 10, color: colors.text },
-  drinks: { fontFamily: fonts.body, fontSize: 11, marginTop: 2 },
+  drinks: { fontFamily: fonts.bodySemi, fontSize: 12, marginTop: 1 },
   drinksYes: { color: colors.leafInk },
-  drinksNo: { color: 'rgba(22, 20, 19, 0.4)' },
-  side: { alignItems: 'flex-end', gap: 4 },
-  price: { fontFamily: fonts.bodySemi, fontSize: 13, color: colors.text },
-  unit: { fontFamily: fonts.body, fontSize: 10, color: 'rgba(22, 20, 19, 0.4)', marginTop: -3 },
-  badge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.pill },
-  badgeOk: { backgroundColor: 'rgba(111, 185, 91, 0.15)' },
-  badgeLow: { backgroundColor: 'rgba(245, 165, 36, 0.2)' },
+  drinksNo: { color: colors.textMuted },
+  side: { alignItems: 'flex-end', gap: 3 },
+  price: {
+    fontFamily: fonts.displayHeavy,
+    fontSize: 22,
+    lineHeight: 26,
+    color: colors.text,
+  },
+  unit: {
+    fontFamily: fonts.body,
+    fontSize: 11,
+    color: 'rgba(22, 20, 19, 0.5)',
+    marginTop: -3,
+  },
+  badge: {
+    marginTop: 2,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
+  },
+  badgeOk: { backgroundColor: 'rgba(111, 185, 91, 0.18)' },
+  badgeLow: { backgroundColor: 'rgba(245, 165, 36, 0.25)' },
   badgeGone: { backgroundColor: colors.dangerSoft },
-  badgeText: { fontFamily: fonts.bodyMedium, fontSize: 10 },
+  badgeText: { fontFamily: fonts.bodyBold, fontSize: 12 },
   badgeTextOk: { color: colors.leafInk },
   badgeTextLow: { color: colors.amberInk },
   badgeTextGone: { color: colors.danger },
-  allergens: { paddingHorizontal: space.md, paddingBottom: space.sm },
+  allergens: { paddingHorizontal: space.md, paddingTop: space.sm },
+  book: {
+    margin: space.sm + 2,
+    height: 44,
+    borderRadius: radius.pill,
+    borderWidth: 2,
+    borderColor: colors.text,
+    backgroundColor: colors.amber,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bookDisabled: {
+    backgroundColor: colors.surface,
+    borderColor: colors.lineStrong,
+  },
+  bookText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 15,
+    color: colors.amberInk,
+  },
+  bookTextDisabled: { color: colors.textMuted },
 });

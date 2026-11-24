@@ -8,6 +8,8 @@
   "tabs.host": "Gastgeben",
   "tabs.inbox": "Postfach",
   "tabs.profile": "Profil",
+  "mode.guest": "Gast",
+  "mode.map": "Karte",
 
   "common.back": "Zurück",
   "common.save": "Speichern",
@@ -47,6 +49,8 @@
   "listing.soldOut": "Ausverkauft",
   "listing.verifiedHost": "Verifizierter Gastgeber",
   "listing.newHost": "Neuer Gastgeber",
+  "listing.drinksWith": "Getränke inklusive: {{list}}",
+  "listing.drinksByo": "Keine Getränke — bring deine eigenen mit",
 
   "status.confirmed": "Bestätigt",
   "status.completed": "Abgeschlossen",

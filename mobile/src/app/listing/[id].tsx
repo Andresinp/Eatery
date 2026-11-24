@@ -1,15 +1,16 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { Image } from 'expo-image';
 import { ActionSheetIOS, Alert, Platform, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AreaMap } from '@/components/explore/AreaMap';
-import { AllergenWarning, availabilityText, TypeBadge, unitText } from '@/components/explore/bits';
+import { AllergenWarning, availabilityText, DietaryNote, drinksText, TypeBadge, unitText } from '@/components/explore/bits';
 import { PhotoCarousel } from '@/components/explore/PhotoCarousel';
 import { Icon } from '@/components/icons';
 import { Avatar, Body, Button, Empty, ErrorState, Header, IconButton, Label, Loading, Small, Stars, Tag, tagLabel, Title } from '@/components/ui';
 import { api, type Listing } from '@/lib/api';
-import { bookability, matchingAllergens, type Bookability } from '@/lib/explore-filter-logic';
+import { bookability, matchingAllergens, unmetDietary, type Bookability } from '@/lib/explore-filter-logic';
 import { formatListingWhen, formatPrice } from '@/lib/format';
 import { logError } from '@/lib/log';
 import { useMyProfile, useUserId } from '@/lib/session';
@@ -52,10 +53,13 @@ function ListingDetail({ listing }: { listing: Listing }) {
   const userId = useUserId();
   const profile = useMyProfile();
   const myAllergens = matchingAllergens(listing, profile?.allergen_exclusions ?? NO_ALLERGENS);
+  const myUnmetDiets = unmetDietary(listing, profile?.dietary_prefs ?? NO_ALLERGENS);
   const canBook = bookability(listing, userId, new Date());
   const isOwn = canBook === 'own';
   const isTable = listing.listing_type === 'table';
   const host = listing.host;
+  // What the food is, in one line: "Turkish · Meze" — the description is about the experience.
+  const food = (isTable ? listing.cuisine_tags : listing.product_type_tags).map(tagLabel).join(' · ');
 
   const handleShare = () => {
     Share.share({ title: listing.title, message: `${listing.title} — https://eatery.app/listing/${listing.id}` }).catch((error: unknown) =>
@@ -128,22 +132,17 @@ function ListingDetail({ listing }: { listing: Listing }) {
           ) : null}
 
           <AllergenWarning allergens={myAllergens} />
+          <DietaryNote diets={myUnmetDiets} />
 
           <View style={styles.facts}>
+            {food ? <Fact icon={isTable ? 'plate' : 'bag'} title={food} subtitle={t('listingDetail.food')} /> : null}
             <Fact icon={isTable ? 'calendar' : 'clock'} title={formatListingWhen(listing)} subtitle={isTable ? t('listingDetail.mealTime') : t('listingDetail.pickupWindow')} />
             <Fact icon="pin" title={listing.location_display} subtitle={t('listingDetail.addressAfterBooking')} />
             <Fact icon={isTable ? 'user' : 'bag'} title={availabilityText(t, listing)} subtitle={isTable ? t('listingDetail.seatsTotal', { count: listing.seats_total ?? 0 }) : t('listingDetail.itemsTotal', { count: listing.quantity_total ?? 0 })} />
-            {isTable && listing.dining_setting ? <Fact icon="plate" title={t(`dining.${listing.dining_setting}`)} subtitle={t('listingDetail.setting')} /> : null}
             {isTable ? (
               <Fact
                 icon="drink"
-                title={
-                  listing.drinks.length > 0
-                    ? listing.drinks.map(tagLabel).join(', ')
-                    : listing.drinks_included
-                      ? t('listingDetail.drinksIncluded')
-                      : t('listingDetail.noDrinks')
-                }
+                title={drinksText(t, listing)}
                 subtitle={t('listingDetail.drinks')}
               />
             ) : null}
@@ -182,6 +181,29 @@ function ListingDetail({ listing }: { listing: Listing }) {
             <View style={styles.block}>
               <Label>{t('listingDetail.about')}</Label>
               <Body>{listing.description}</Body>
+            </View>
+          ) : null}
+
+          {isTable ? (
+            <View style={styles.block}>
+              <Label>{t('listingDetail.whereYoullEat')}</Label>
+              {listing.dining_setting ? <Text style={styles.factTitle}>{t(`dining.${listing.dining_setting}`)}</Text> : null}
+              {listing.dining_setting_photos.length > 0 ? (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.diningPhotos}>
+                  {listing.dining_setting_photos.map((uri) => (
+                    <Image
+                      key={uri}
+                      source={{ uri }}
+                      style={styles.diningPhoto}
+                      contentFit="cover"
+                      transition={200}
+                      accessibilityLabel={t('listingDetail.diningPhoto')}
+                    />
+                  ))}
+                </ScrollView>
+              ) : (
+                <Small style={styles.faint}>{t('listingDetail.noDiningPhotos')}</Small>
+              )}
             </View>
           ) : null}
 
@@ -279,6 +301,8 @@ const styles = StyleSheet.create({
   block: { gap: space.sm },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   faint: { color: colors.textFaint },
+  diningPhotos: { gap: space.sm },
+  diningPhoto: { width: 240, height: 160, borderRadius: radius.md, backgroundColor: colors.surfaceRaised },
   topButtons: { position: 'absolute', left: space.md, right: space.md, flexDirection: 'row', justifyContent: 'space-between' },
   topRight: { flexDirection: 'row', gap: space.sm },
   footer: {

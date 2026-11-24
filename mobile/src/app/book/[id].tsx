@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
-import { AllergenWarning, availabilityText, unitText } from '@/components/explore/bits';
+import { AllergenWarning, availabilityText, DietaryNote, unitText } from '@/components/explore/bits';
 import { Icon } from '@/components/icons';
 import {
   Body,
@@ -30,7 +30,7 @@ import {
 } from '@/components/ui';
 import { ApiError, api, type Listing, type Quote } from '@/lib/api';
 import { askForPushAfterFirstBooking, waitForOrder } from '@/lib/explore-booking';
-import { availableCount, matchingAllergens } from '@/lib/explore-filter-logic';
+import { availableCount, matchingAllergens, unmetDietary } from '@/lib/explore-filter-logic';
 import { MERCHANT_COUNTRY_CODE, MERCHANT_DISPLAY_NAME, STRIPE_RETURN_URL } from '@/lib/explore-payments';
 import { env } from '@/lib/env';
 import { formatListingWhen, formatMoney, formatPrice } from '@/lib/format';
@@ -78,6 +78,7 @@ function Booking({ listing, header }: { listing: Listing; header: React.ReactEle
   const { t } = useTranslation();
   const profile = useMyProfile();
   const allergens = matchingAllergens(listing, profile?.allergen_exclusions ?? NO_ALLERGENS);
+  const unmetDiets = unmetDietary(listing, profile?.dietary_prefs ?? NO_ALLERGENS);
   const [quantity, setQuantity] = useState(1);
   const [quoteState, setQuoteState] = useState<QuoteState | null>(null);
   const [quoteAttempt, setQuoteAttempt] = useState(0);
@@ -309,6 +310,12 @@ function Booking({ listing, header }: { listing: Listing; header: React.ReactEle
           <Gap size="lg" />
           <AllergenWarning allergens={allergens} />
           <ToggleRow title={t('booking.allergenConfirm')} help={t('booking.allergenConfirmHelp')} value={isAllergenConfirmed} onChange={setIsAllergenConfirmed} />
+        </>
+      ) : null}
+      {unmetDiets.length > 0 ? (
+        <>
+          <Gap size="lg" />
+          <DietaryNote diets={unmetDiets} />
         </>
       ) : null}
       <Gap size="lg" />

@@ -8,6 +8,8 @@
   "tabs.host": "Ospita",
   "tabs.inbox": "Messaggi",
   "tabs.profile": "Profilo",
+  "mode.guest": "Ospite",
+  "mode.map": "Mappa",
 
   "common.back": "Indietro",
   "common.save": "Salva",
@@ -47,6 +49,8 @@
   "listing.soldOut": "Esaurito",
   "listing.verifiedHost": "Host verificato",
   "listing.newHost": "Nuovo host",
+  "listing.drinksWith": "Bevande incluse: {{list}}",
+  "listing.drinksByo": "Nessuna bevanda servita — porta le tue",
 
   "status.confirmed": "Confermata",
   "status.completed": "Completata",

@@ -8,6 +8,8 @@
   "tabs.host": "Anfitrión",
   "tabs.inbox": "Bandeja",
   "tabs.profile": "Perfil",
+  "mode.guest": "Invitado",
+  "mode.map": "Mapa",
 
   "common.back": "Atrás",
   "common.save": "Guardar",
@@ -47,6 +49,8 @@
   "listing.soldOut": "Agotado",
   "listing.verifiedHost": "Anfitrión verificado",
   "listing.newHost": "Anfitrión nuevo",
+  "listing.drinksWith": "Bebidas incluidas: {{list}}",
+  "listing.drinksByo": "No se sirven bebidas — trae las tuyas",
 
   "status.confirmed": "Confirmada",
   "status.completed": "Completada",

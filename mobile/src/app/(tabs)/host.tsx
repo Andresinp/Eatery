@@ -6,6 +6,7 @@ import { RefreshControl, StyleSheet, Text, View } from 'react-native';
 
 import { HostListingCard, hasListingEnded, listingSortKey } from '@/components/host/listing-cards';
 import { Icon } from '@/components/icons';
+import { ModeSwitch } from '@/components/ModeSwitch';
 import {
   Avatar,
   Button,
@@ -104,14 +105,14 @@ function HostHome({ userId }: { userId: string }) {
 
   if (data.status === 'loading') {
     return (
-      <Screen scroll={false} edges={['top']}>
+      <Screen scroll={false} edges={['top']} header={<ModeBar />}>
         <Loading />
       </Screen>
     );
   }
   if (data.status === 'error') {
     return (
-      <Screen scroll={false} edges={['top']}>
+      <Screen scroll={false} edges={['top']} header={<ModeBar />}>
         <ErrorState error={data.error} onRetry={() => void data.reload()} />
       </Screen>
     );
@@ -129,7 +130,7 @@ function HostHome({ userId }: { userId: string }) {
 
   if (listings.length === 0 && orders.length === 0) {
     return (
-      <Screen scroll={false} edges={['top']}>
+      <Screen scroll={false} edges={['top']} header={<ModeBar />}>
         <Empty
           icon="chef"
           title={t('host.emptyTitle')}
@@ -141,7 +142,7 @@ function HostHome({ userId }: { userId: string }) {
   }
 
   return (
-    <Screen edges={['top']} refreshControl={refresh}>
+    <Screen edges={['top']} header={<ModeBar />} refreshControl={refresh}>
       <Label>{firstName ? t('host.greetingName', { name: firstName }) : t('host.greeting')}</Label>
       <Gap size="xs" />
       <Hero>{t('host.title')}</Hero>
@@ -191,20 +192,29 @@ function HostHome({ userId }: { userId: string }) {
   );
 }
 
+// The web dashboard's "Host | Map" switch, so the way back to the map is where it is on the web.
+function ModeBar() {
+  return (
+    <View style={styles.modeBar}>
+      <ModeSwitch mode="host" />
+    </View>
+  );
+}
+
 export default function HostTab() {
   const { t } = useTranslation();
   const userId = useUserId();
   const { state } = useSession();
   if (state.phase === 'loading') {
     return (
-      <Screen scroll={false} edges={['top']}>
+      <Screen scroll={false} edges={['top']} header={<ModeBar />}>
         <Loading />
       </Screen>
     );
   }
   if (!userId) {
     return (
-      <Screen scroll={false} edges={['top']}>
+      <Screen scroll={false} edges={['top']} header={<ModeBar />}>
         <SignInGate title={t('host.signedOutTitle')} body={t('host.signedOutBody')} />
       </Screen>
     );
@@ -214,6 +224,7 @@ export default function HostTab() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  modeBar: { flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: space.md, paddingTop: space.sm },
   stats: { flexDirection: 'row', gap: space.sm },
   stat: { flex: 1, padding: space.md, borderRadius: radius.lg, backgroundColor: colors.card, gap: space.xs, ...shadow.card },
   statValue: { fontFamily: fonts.displayHeavy, fontSize: 22, color: colors.text },

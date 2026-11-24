@@ -22,9 +22,13 @@ for m in "$ROOT"/migrations/*.sql; do
   echo "migrate  $(basename "$m")"
   $PSQL -f "$m"
 done
-# Applying twice proves the native-app migration is safe to re-run against a live project.
-echo "migrate  0006 again (idempotent)"
-$PSQL -f "$ROOT/migrations/0006_native_app.sql"
+# Applying 0006 and everything after it again proves they are safe to re-run against a live
+# project. The later ones must follow, as they would: 0006 revokes table grants that they add to.
+for m in "$ROOT"/migrations/*.sql; do
+  case "$(basename "$m")" in 000[0-5]_*) continue ;; esac
+  echo "migrate  $(basename "$m") again (idempotent)"
+  $PSQL -f "$m"
+done
 for t in "$ROOT"/tests/*_test.sql; do
   echo "test     $(basename "$t")"
   status=0

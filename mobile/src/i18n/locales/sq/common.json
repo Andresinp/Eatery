@@ -8,6 +8,8 @@
   "tabs.host": "Mikpritës",
   "tabs.inbox": "Mesazhet",
   "tabs.profile": "Profili",
+  "mode.guest": "Mysafir",
+  "mode.map": "Harta",
 
   "common.back": "Kthehu",
   "common.save": "Ruaj",
@@ -47,6 +49,8 @@
   "listing.soldOut": "Shitur krejt",
   "listing.verifiedHost": "Mikpritës i verifikuar",
   "listing.newHost": "Mikpritës i ri",
+  "listing.drinksWith": "Pijet përfshihen: {{list}}",
+  "listing.drinksByo": "Nuk shërbehen pije — sill tëndat",
 
   "status.confirmed": "Konfirmuar",
   "status.completed": "Përfunduar",
