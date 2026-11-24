@@ -50,3 +50,4 @@ uploading. TestFlight first; App Store submission is a separate step.
 | 2026-11-24 | Play internal testing | 1.0.0 (1) | AAB built and signed; upload pending (106 MB, by hand) |
 | 2026-11-24 | TestFlight (internal group "Team") | 1.0.0 (2) | map pins and listing sheet in the web app's style; tapping a pin opens its card; map shows at once |
 | 2026-11-24 | TestFlight (internal group "Team") | 1.0.0 (3) | floating ink tab bar, new top bar, swipeable cards from a pin, list sort; needs migration 0007 live |
+| 2026-11-24 | TestFlight (internal group "Team") | 1.0.0 (4) | new app icon (lamp over a table for two) and splash |

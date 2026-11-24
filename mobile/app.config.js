@@ -45,7 +45,7 @@ module.exports = {
     backgroundColor: CREAM,
     ios: {
       bundleIdentifier: 'com.andresinp.eatery',
-      buildNumber: '3',
+      buildNumber: '4',
       supportsTablet: false,
       appleTeamId: 'SKGWY35456',
       usesAppleSignIn: true,
@@ -56,7 +56,7 @@ module.exports = {
     },
     android: {
       package: 'com.andresinp.eatery',
-      versionCode: 3,
+      versionCode: 4,
       adaptiveIcon: {
         backgroundColor: BRAND,
         foregroundImage: './assets/images/android-icon-foreground.png',
@@ -78,7 +78,7 @@ module.exports = {
       'expo-sqlite',
       'expo-web-browser',
       'expo-apple-authentication',
-      ['expo-splash-screen', { backgroundColor: BRAND, image: './assets/images/splash-icon.png', imageWidth: 200 }],
+      ['expo-splash-screen', { backgroundColor: BRAND, image: './assets/images/splash-icon.png', imageWidth: 220 }],
       [
         'expo-location',
         {
