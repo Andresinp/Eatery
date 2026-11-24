@@ -54,7 +54,7 @@ Available in English, Spanish, Turkish, French, German, Italian, Portuguese, Ara
 
 ## App Review — sign-in information
 
-Demo account: `andresinp+eatery-review@gmail.com`. The password is in
+Demo account: `demo@eatery.com` (was andresinp+eatery-review@gmail.com; eatery.com is not ours, so mail sent to it reaches a stranger). The password is in
 `~/.eatery-signing/review-account.txt` (never in the repo); paste it into App Store Connect by
 hand.
 
