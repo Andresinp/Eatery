@@ -14,6 +14,7 @@ the console. No other platform is named anywhere in store copy (guideline 2.3.10
 | Category | Food & Drink (secondary: Lifestyle) |
 | Price | Free |
 | Age rating | 17+ on iOS (user-generated content, meeting strangers); Play: questionnaire answers below |
+| Availability | 174 countries: all except China mainland (removed 2026-11-24; China needs a security assessment and an AIGC filing) |
 | Support URL | https://andresinp.github.io/eatery-legal/ |
 | Privacy policy URL | https://andresinp.github.io/eatery-legal/privacy.html |
 | Account deletion URL | https://andresinp.github.io/eatery-legal/delete-account.html |
