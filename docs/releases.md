@@ -52,3 +52,4 @@ uploading. TestFlight first; App Store submission is a separate step.
 | 2026-11-24 | TestFlight (internal group "Team") | 1.0.0 (3) | floating ink tab bar, new top bar, swipeable cards from a pin, list sort; needs migration 0007 live |
 | 2026-11-24 | TestFlight (internal group "Team") | 1.0.0 (4) | new app icon (lamp over a table for two) and splash |
 | 2026-11-24 | TestFlight (internal group "Team") | 1.0.0 (5) | wizard: no flicker on step 3, keyboard keeps fields and buttons visible, quick "what's in it?", required photo of where guests eat (saved to profile); map cards: bigger photo, equal heights, "Buy & pick up"; needs migration 0008 live |
+| 2026-11-24 | TestFlight (internal group "Team") | 1.0.0 (6) | listing map opens on the saved spot (was left on the default city); readable red chips; venue-photo error clears once a photo is chosen |

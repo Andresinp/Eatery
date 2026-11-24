@@ -61,7 +61,7 @@
   "hostNew.basics.description": "描述",
   "hostNew.basics.descriptionPlaceholder": "菜单有什么、主要食材，以及客人需要知道的事。",
   "hostNew.basics.counter": "{{n}} / {{max}}",
-  "hostNew.basics.write": "✨ 帮我写",
+  "hostNew.basics.write": "帮我写",
   "hostNew.basics.writing": "撰写中…",
   "hostNew.basics.writeNeedsTitle": "请先添加标题。描述里的备注也会用上。",
   "hostNew.basics.writeFailed": "暂时无法生成描述，你可以自己写。",

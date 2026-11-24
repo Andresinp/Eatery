@@ -66,7 +66,7 @@
   "hostNew.basics.description": "Përshkrimi",
   "hostNew.basics.descriptionPlaceholder": "Çfarë ka në menu, përbërësit kryesorë dhe çdo gjë që duhet të dinë mysafirët.",
   "hostNew.basics.counter": "{{n}} / {{max}}",
-  "hostNew.basics.write": "✨ Më ndihmo ta shkruaj",
+  "hostNew.basics.write": "Më ndihmo ta shkruaj",
   "hostNew.basics.writing": "Po shkruhet…",
   "hostNew.basics.writeNeedsTitle": "Shto fillimisht një titull. Përdoren edhe shënimet në përshkrim.",
   "hostNew.basics.writeFailed": "Tani nuk u shkrua dot një përshkrim. Mund ta shkruash vetë.",

@@ -66,7 +66,7 @@
   "hostNew.basics.description": "Açıklama",
   "hostNew.basics.descriptionPlaceholder": "Menüde neler var, ana malzemeler ve misafirlerin bilmesi gereken her şey.",
   "hostNew.basics.counter": "{{n}} / {{max}}",
-  "hostNew.basics.write": "✨ Yazmama yardım et",
+  "hostNew.basics.write": "Yazmama yardım et",
   "hostNew.basics.writing": "Yazılıyor…",
   "hostNew.basics.writeNeedsTitle": "Önce bir başlık ekle. Açıklamadaki notlar da kullanılır.",
   "hostNew.basics.writeFailed": "Şu an açıklama yazılamadı. Kendin yazabilirsin.",

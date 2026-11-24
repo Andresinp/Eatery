@@ -68,7 +68,7 @@
   "hostNew.basics.description": "Описание",
   "hostNew.basics.descriptionPlaceholder": "Что в меню, основные ингредиенты и всё, что стоит знать гостям.",
   "hostNew.basics.counter": "{{n}} / {{max}}",
-  "hostNew.basics.write": "✨ Помоги написать",
+  "hostNew.basics.write": "Помоги написать",
   "hostNew.basics.writing": "Пишу…",
   "hostNew.basics.writeNeedsTitle": "Сначала добавь название. Заметки из описания тоже пригодятся.",
   "hostNew.basics.writeFailed": "Сейчас не получилось написать описание. Можешь написать своё.",

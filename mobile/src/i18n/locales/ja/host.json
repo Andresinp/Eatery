@@ -61,7 +61,7 @@
   "hostNew.basics.description": "説明",
   "hostNew.basics.descriptionPlaceholder": "メニュー、主な材料、ゲストに知っておいてほしいことを書いてください。",
   "hostNew.basics.counter": "{{n}} / {{max}}",
-  "hostNew.basics.write": "✨ 書くのを手伝って",
+  "hostNew.basics.write": "書くのを手伝って",
   "hostNew.basics.writing": "作成中…",
   "hostNew.basics.writeNeedsTitle": "先にタイトルを入れてください。説明欄のメモも使われます。",
   "hostNew.basics.writeFailed": "今は説明を作成できません。ご自身で書いてください。",

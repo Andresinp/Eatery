@@ -49,9 +49,18 @@ export function WhereStep({ draft, dispatch, errors, isHeaderShown = true }: Pro
     }
   };
 
+  // A camera move sent before the map has loaded is dropped, which once left the pin on the
+  // default city while the saved spot (and the area name) was elsewhere. Until the map is ready we
+  // only record the spot; handleMapReady then brings the camera to it.
+  const isMapReady = useRef(false);
   const moveTo = (lat: number, lng: number) => {
-    camera.current?.easeTo({ center: [lng, lat], zoom: 15, duration: 600 });
+    if (isMapReady.current) camera.current?.easeTo({ center: [lng, lat], zoom: 15, duration: 600 });
     void place(lat, lng);
+  };
+
+  const handleMapReady = () => {
+    isMapReady.current = true;
+    if (draft.lat !== null && draft.lng !== null) camera.current?.easeTo({ center: [draft.lng, draft.lat], zoom: 15, duration: 0 });
   };
 
   // With location already allowed and no pin yet, start where the host is (no prompt here).
@@ -120,6 +129,7 @@ export function WhereStep({ draft, dispatch, errors, isHeaderShown = true }: Pro
           touchPitch={false}
           compass={false}
           onRegionDidChange={handleRegionDidChange}
+          onDidFinishLoadingMap={handleMapReady}
           accessibilityLabel={t('hostNew.where.mapLabel')}>
           <Camera ref={camera} initialViewState={{ center: initialCenter, zoom: hasPin ? 15 : 11 }} />
         </Map>

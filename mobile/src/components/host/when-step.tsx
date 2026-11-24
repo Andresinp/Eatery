@@ -156,7 +156,8 @@ export function WhenStep({ draft, dispatch, errors, userId, minUnits = 0, isHead
             </ChipGroup>
           </Section>
           <Section label={t('hostNew.diningPhoto.title')}>
-            <DiningPhotoPicker photo={draft.diningPhoto} dispatch={dispatch} userId={userId} error={errors.diningPhoto} />
+            {/* The "add a photo" error goes as soon as one is chosen, not only on the next Next. */}
+            <DiningPhotoPicker photo={draft.diningPhoto} dispatch={dispatch} userId={userId} error={draft.diningPhoto ? undefined : errors.diningPhoto} />
           </Section>
           <Section label={t('hostNew.when.drinks')}>
             <ToggleRow

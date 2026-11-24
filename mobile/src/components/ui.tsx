@@ -386,7 +386,7 @@ export function Chip({
         pressed && styles.pressed,
       ]}
     >
-      <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
+      <Text style={[styles.chipText, isSelected && styles.chipTextSelected, isSelected && tone === 'danger' && styles.chipTextOnDanger]}>
         {title}
       </Text>
     </Pressable>
@@ -851,6 +851,7 @@ const styles = StyleSheet.create({
   chipDanger: { backgroundColor: colors.danger, borderColor: colors.danger },
   chipText: { fontFamily: fonts.bodySemi, fontSize: 14, color: colors.text },
   chipTextSelected: { color: colors.text },
+  chipTextOnDanger: { color: colors.onPhoto }, // dark ink on the red fill is hard to read
   tag: {
     paddingHorizontal: 10,
     paddingVertical: 4,

@@ -66,7 +66,7 @@
   "hostNew.basics.description": "Descrizione",
   "hostNew.basics.descriptionPlaceholder": "Cosa c'è nel menu, gli ingredienti principali e tutto ciò che gli ospiti devono sapere.",
   "hostNew.basics.counter": "{{n}} / {{max}}",
-  "hostNew.basics.write": "✨ Aiutami a scriverla",
+  "hostNew.basics.write": "Aiutami a scriverla",
   "hostNew.basics.writing": "Scrivo…",
   "hostNew.basics.writeNeedsTitle": "Aggiungi prima un titolo. Usiamo anche eventuali note nella descrizione.",
   "hostNew.basics.writeFailed": "Al momento non riusciamo a scrivere una descrizione. Puoi scriverla tu.",
