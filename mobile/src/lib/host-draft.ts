@@ -1,6 +1,7 @@
 import type { TFunction } from 'i18next';
 
 import type { DiningSetting, Listing, ListingInput, ListingType } from './api';
+import { ALLERGENS as ALLERGEN_SET } from './vocab.ts';
 
 // The listing a host is writing, as one reducer: the new-listing wizard and the edit screen share
 // it, so both validate the same way and turn it into the same ListingInput.
@@ -23,6 +24,7 @@ export type Draft = {
   end: Date;
   seats: number;
   diningSetting: DiningSetting;
+  diningPhoto: PhotoItem | null; // where guests eat (tables)
   drinksIncluded: boolean;
   drinks: string[];
   quantity: number;
@@ -33,6 +35,8 @@ export type Draft = {
   address: string;
   allergens: string[];
   dietary: string[];
+  hasMeat: boolean; // from the quick check; never stored, only rules out vegetarian and vegan
+  isContentsUnsure: boolean; // the host answered "not sure" to the quick check
   suggestedAllergens: string[];
   suggestedDietary: string[];
   suggestedFor: string | null; // title + description the suggestions were made for
@@ -47,6 +51,7 @@ export type DraftAction =
   | { type: 'updatePhoto'; id: string; patch: Partial<PhotoItem> }
   | { type: 'removePhoto'; id: string }
   | { type: 'makeCover'; id: string }
+  | { type: 'updateDiningPhoto'; id: string; patch: Partial<PhotoItem> }
   | { type: 'applySuggestions'; source: string; allergens: string[]; dietary: string[] };
 
 export type DraftState = { draft: Draft; isDirty: boolean };
@@ -82,6 +87,7 @@ export function emptyDraft(currency: string): Draft {
     end: addHours(start, 3),
     seats: 6,
     diningSetting: 'indoor_table',
+    diningPhoto: null,
     drinksIncluded: false,
     drinks: [],
     quantity: 12,
@@ -92,6 +98,8 @@ export function emptyDraft(currency: string): Draft {
     address: '',
     allergens: [],
     dietary: [],
+    hasMeat: false,
+    isContentsUnsure: false,
     suggestedAllergens: [],
     suggestedDietary: [],
     suggestedFor: null,
@@ -101,6 +109,11 @@ export function emptyDraft(currency: string): Draft {
   };
 }
 
+// A photo that is already uploaded (from a listing or the host's profile).
+export function donePhoto(url: string): PhotoItem {
+  return { id: url, localUri: url, base64: null, url, status: 'done' };
+}
+
 export function draftFromListing(listing: Listing, address: string | null): Draft {
   const isTable = listing.listing_type === 'table';
   const startIso = isTable ? listing.meal_time : listing.pickup_window_start;
@@ -108,7 +121,7 @@ export function draftFromListing(listing: Listing, address: string | null): Draf
   const start = startIso ? new Date(startIso) : nextEvening();
   return {
     listingType: listing.listing_type,
-    photos: listing.photos.map((url) => ({ id: url, localUri: url, base64: null, url, status: 'done' as const })),
+    photos: listing.photos.map(donePhoto),
     title: listing.title,
     description: listing.description,
     tags: isTable ? listing.cuisine_tags : listing.product_type_tags,
@@ -116,6 +129,7 @@ export function draftFromListing(listing: Listing, address: string | null): Draf
     end: endIso ? new Date(endIso) : addHours(start, 3),
     seats: listing.seats_total ?? 6,
     diningSetting: listing.dining_setting ?? 'indoor_table',
+    diningPhoto: listing.dining_setting_photos[0] ? donePhoto(listing.dining_setting_photos[0]) : null,
     drinksIncluded: listing.drinks_included,
     drinks: listing.drinks,
     quantity: listing.quantity_total ?? 12,
@@ -126,6 +140,8 @@ export function draftFromListing(listing: Listing, address: string | null): Draf
     address: address ?? '',
     allergens: listing.allergen_flags,
     dietary: listing.dietary_tags,
+    hasMeat: false,
+    isContentsUnsure: false,
     suggestedAllergens: [],
     suggestedDietary: [],
     suggestedFor: `${listing.title}\n${listing.description}`,
@@ -155,6 +171,10 @@ export function draftReducer(state: DraftState, action: DraftAction): DraftState
       if (!photo) return state;
       return { draft: { ...draft, photos: [photo, ...draft.photos.filter((p) => p.id !== action.id)] }, isDirty: true };
     }
+    case 'updateDiningPhoto':
+      // Only the photo still chosen: an upload that finishes after the host picked another is dropped.
+      if (draft.diningPhoto?.id !== action.id) return state;
+      return { ...state, draft: { ...draft, diningPhoto: { ...draft.diningPhoto, ...action.patch } } };
     case 'applySuggestions':
       // Suggestions are added to what the host already chose, never taken away; they must re-check.
       return {
@@ -213,6 +233,7 @@ export type StepErrors = Partial<Record<string, string>>;
 type ValidateOptions = {
   minUnits: number; // already booked: the total can't go below this
   isTimeChecked: boolean; // false when editing and the times are unchanged
+  isDiningPhotoRequired?: boolean; // new table listings; older listings may have none
 };
 
 // Translated messages per field for one step; an empty object means the step is fine.
@@ -238,6 +259,9 @@ export function validateStep(step: StepId, d: Draft, t: TFunction, options: Vali
         errors.units = t('hostNew.error.belowBooked', { count: options.minUnits });
       }
       if (d.listingType === 'table' && d.drinksIncluded && d.drinks.length === 0) errors.drinks = t('hostNew.error.drinks');
+      if (d.listingType === 'table' && d.diningPhoto?.status === 'uploading') errors.diningPhoto = t('hostNew.error.photosUploading');
+      else if (d.listingType === 'table' && d.diningPhoto?.status === 'failed') errors.diningPhoto = t('hostNew.error.photosFailed');
+      else if (d.listingType === 'table' && options.isDiningPhotoRequired && !d.diningPhoto) errors.diningPhoto = t('hostNew.error.diningPhoto');
       break;
     case 'where':
       if (d.lat === null || d.lng === null) errors.map = t('hostNew.error.map');
@@ -285,6 +309,7 @@ export function draftToInput(d: Draft): ListingInput {
           meal_end_time: d.end.toISOString(),
           seats_total: d.seats,
           dining_setting: d.diningSetting,
+          dining_setting_photos: d.diningPhoto?.url ? [d.diningPhoto.url] : [],
           drinks_included: d.drinksIncluded,
           drinks: d.drinksIncluded ? d.drinks : [],
         }
@@ -294,6 +319,41 @@ export function draftToInput(d: Draft): ListingInput {
           pickup_window_end: d.end.toISOString(),
         }),
   };
+}
+
+// What each quick answer rules out: something that contains X can't be "X-free", and the reverse.
+const RULES_OUT: Record<string, string[]> = {
+  Meat: ['Vegetarian', 'Vegan'],
+  Fish: ['Vegetarian', 'Vegan'],
+  Dairy: ['Vegan', 'Dairy-Free'],
+  Eggs: ['Vegan'],
+  Gluten: ['Gluten-Free'],
+  Nuts: ['Nut-Free'],
+  Vegetarian: ['Meat', 'Fish'],
+  Vegan: ['Meat', 'Fish', 'Dairy', 'Eggs'],
+  'Gluten-Free': ['Gluten'],
+  'Dairy-Free': ['Dairy'],
+};
+
+export function isQuickSelected(d: Draft, value: string): boolean {
+  return value === 'Meat' ? d.hasMeat : d.allergens.includes(value) || d.dietary.includes(value);
+}
+
+// The patch for tapping a quick answer: toggles it and drops whatever it contradicts. Vegan also
+// means vegetarian. The safety step shows the same allergens and diets, so the host re-checks there.
+export function quickToggle(d: Draft, value: string): Partial<Draft> {
+  const isOn = !isQuickSelected(d, value);
+  const out = isOn ? (RULES_OUT[value] ?? []) : [];
+  const isAllergen = (ALLERGEN_SET as readonly string[]).includes(value);
+  let allergens = d.allergens.filter((a) => !out.includes(a));
+  let dietary = d.dietary.filter((x) => !out.includes(x));
+  let hasMeat = out.includes('Meat') ? false : d.hasMeat;
+  if (value === 'Meat') hasMeat = isOn;
+  else if (isAllergen) allergens = isOn ? [...allergens, value] : allergens.filter((a) => a !== value);
+  else dietary = isOn ? [...dietary, value] : dietary.filter((x) => x !== value);
+  if (value === 'Vegan' && isOn && !dietary.includes('Vegetarian')) dietary = [...dietary, 'Vegetarian'];
+  if (value === 'Vegetarian' && !isOn) dietary = dietary.filter((x) => x !== 'Vegan');
+  return { allergens, dietary, hasMeat, isContentsUnsure: false, isSafetyChecked: false };
 }
 
 export function toggle(list: string[], value: string): string[] {

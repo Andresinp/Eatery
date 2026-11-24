@@ -203,5 +203,19 @@
   "earnings.monthCollected": "{{amount}}を受け取り済み",
   "earnings.monthUpcoming": "{{amount}}を受け取り予定",
   "earnings.emptyTitle": "まだ収益はありません",
-  "earnings.emptyBody": "ゲストが予約して来てくれたあと、受け取った金額がここに表示されます。"
+  "earnings.emptyBody": "ゲストが予約して来てくれたあと、受け取った金額がここに表示されます。",
+
+  "hostNew.quick.title": "何が入っていますか？",
+  "hostNew.quick.help": "当てはまるものをタップ。ゲストはこれで絞り込みます。安全ステップで調整できます。",
+  "hostNew.quick.contains": "含む",
+  "hostNew.quick.suitable": "対応",
+  "hostNew.quick.meat": "肉",
+  "hostNew.quick.unsure": "わからない",
+  "hostNew.quick.unsureHelp": "大丈夫です。説明からアレルゲンを提案するので、公開前に確認してください。",
+  "hostNew.diningPhoto.title": "食事をする場所の写真",
+  "hostNew.diningPhoto.label": "ゲストが食事をする場所の写真",
+  "hostNew.diningPhoto.add": "写真を追加",
+  "hostNew.diningPhoto.help": "必須。テーブルや部屋の写真を1枚。次回のためにプロフィールに保存されます。",
+  "hostNew.diningPhoto.helpSaved": "必須。保存済みの写真を選ぶか、新しく追加してください。",
+  "hostNew.error.diningPhoto": "ゲストが食事をする場所の写真を追加してください。"
 }

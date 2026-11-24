@@ -138,5 +138,7 @@
   "errors.openSettings": "Apri Impostazioni",
 
   "signInGate.title": "Accedi per continuare",
-  "signInGate.body": "Crea un account gratuito per prenotare posti, ordinare cibo, ospitare e scrivere agli host."
+  "signInGate.body": "Crea un account gratuito per prenotare posti, ordinare cibo, ospitare e scrivere agli host.",
+
+  "tag.keto": "Adatto keto"
 }

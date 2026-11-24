@@ -223,5 +223,19 @@
   "earnings.monthCollected": "{{amount}} collected",
   "earnings.monthUpcoming": "{{amount}} to collect",
   "earnings.emptyTitle": "No earnings yet",
-  "earnings.emptyBody": "Once guests book and you host them, what you collect shows here."
+  "earnings.emptyBody": "Once guests book and you host them, what you collect shows here.",
+
+  "hostNew.quick.title": "What's in it?",
+  "hostNew.quick.help": "Tap what applies — guests filter by this. You can fine-tune it on the safety step.",
+  "hostNew.quick.contains": "Contains",
+  "hostNew.quick.suitable": "Suitable for",
+  "hostNew.quick.meat": "Meat",
+  "hostNew.quick.unsure": "Not sure",
+  "hostNew.quick.unsureHelp": "No problem: we'll suggest allergens from your description, and you check them before publishing.",
+  "hostNew.diningPhoto.title": "Photo of where you'll eat",
+  "hostNew.diningPhoto.label": "Photo of where guests eat",
+  "hostNew.diningPhoto.add": "Add photo",
+  "hostNew.diningPhoto.help": "Required. A quick photo of the table or room; it's saved to your profile for next time.",
+  "hostNew.diningPhoto.helpSaved": "Required. Pick a saved photo or add a new one.",
+  "hostNew.error.diningPhoto": "Add a photo of where guests will eat."
 }

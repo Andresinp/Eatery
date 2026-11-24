@@ -29,7 +29,7 @@ export function ListingPreview({ listing, allergens, distanceKm, canBook, onPres
   const isLow = !isGone && availableCount(listing) <= 5;
   const price = formatPrice(listing.price_per_unit, listing.currency);
   const when = formatListingWhen(listing);
-  const tags = [...(isTable ? listing.cuisine_tags : listing.product_type_tags), ...listing.dietary_tags].slice(0, 3);
+  const tags = [...(isTable ? listing.cuisine_tags : listing.product_type_tags), ...listing.dietary_tags].slice(0, isTable ? 2 : 3);
   const rating = listing.host?.host_rating ?? null;
   const isBookable = canBook === 'ok';
   const hasDrinks = listing.drinks_included || listing.drinks.length > 0;
@@ -66,20 +66,22 @@ export function ListingPreview({ listing, allergens, distanceKm, canBook, onPres
             {distanceKm !== null ? `${formatDistance(distanceKm)} · ` : ''}
             {listing.location_display}
           </Text>
-          {tags.length > 0 ? (
+          {tags.length > 0 || isTable ? (
             <View style={styles.tags}>
               {tags.map((tag) => (
                 <View key={tag} style={styles.tag}>
                   <Text style={styles.tagText}>{tagLabel(tag)}</Text>
                 </View>
               ))}
+              {isTable ? (
+                <View style={[styles.tag, styles.drinksTag]}>
+                  <Text style={[styles.tagText, hasDrinks ? styles.drinksYes : styles.drinksNo]} numberOfLines={1}>
+                    {hasDrinks ? '🍷 ' : '🥤 '}
+                    {drinksText(t, listing)}
+                  </Text>
+                </View>
+              ) : null}
             </View>
-          ) : null}
-          {isTable ? (
-            <Text style={[styles.drinks, hasDrinks ? styles.drinksYes : styles.drinksNo]} numberOfLines={1}>
-              {hasDrinks ? '🍷 ' : '🥤 '}
-              {drinksText(t, listing)}
-            </Text>
           ) : null}
         </View>
 
@@ -94,6 +96,8 @@ export function ListingPreview({ listing, allergens, distanceKm, canBook, onPres
         </View>
       </View>
 
+      {/* Pushes the button to the bottom, so every card in the strip is the same height. */}
+      <View style={styles.flex} />
       {allergens.length > 0 ? (
         <View style={styles.allergens}>
           <AllergenWarning allergens={allergens} isCompact />
@@ -115,6 +119,7 @@ export function ListingPreview({ listing, allergens, distanceKm, canBook, onPres
 
 const styles = StyleSheet.create({
   card: {
+    flex: 1,
     backgroundColor: colors.bg,
     borderRadius: radius.xl,
     borderWidth: 2,
@@ -123,7 +128,8 @@ const styles = StyleSheet.create({
     ...shadow.float,
   },
   pressed: { opacity: 0.9 },
-  photoWrap: { height: 92, backgroundColor: colors.surfaceRaised },
+  flex: { flex: 1 },
+  photoWrap: { height: 124, backgroundColor: colors.surfaceRaised },
   photo: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
   close: {
     position: 'absolute',
@@ -142,7 +148,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: space.sm + 4,
     paddingHorizontal: space.md,
-    paddingTop: space.sm + 2,
+    paddingTop: space.sm,
   },
   main: { flex: 1, minWidth: 0, gap: 3 },
   title: {
@@ -173,7 +179,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
   },
   tagText: { fontFamily: fonts.bodySemi, fontSize: 10, color: colors.text },
-  drinks: { fontFamily: fonts.bodySemi, fontSize: 12, marginTop: 1 },
+  drinksTag: { flexShrink: 1 },
   drinksYes: { color: colors.leafInk },
   drinksNo: { color: colors.textMuted },
   side: { alignItems: 'flex-end', gap: 3 },
@@ -204,8 +210,8 @@ const styles = StyleSheet.create({
   badgeTextGone: { color: colors.danger },
   allergens: { paddingHorizontal: space.md, paddingTop: space.sm },
   book: {
-    margin: space.sm + 2,
-    height: 44,
+    margin: space.sm,
+    height: 36,
     borderRadius: radius.pill,
     borderWidth: 2,
     borderColor: colors.text,
@@ -219,7 +225,7 @@ const styles = StyleSheet.create({
   },
   bookText: {
     fontFamily: fonts.bodyBold,
-    fontSize: 15,
+    fontSize: 14,
     color: colors.amberInk,
   },
   bookTextDisabled: { color: colors.textMuted },

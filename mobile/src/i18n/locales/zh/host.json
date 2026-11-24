@@ -203,5 +203,19 @@
   "earnings.monthCollected": "已收取 {{amount}}",
   "earnings.monthUpcoming": "待收取 {{amount}}",
   "earnings.emptyTitle": "还没有收入",
-  "earnings.emptyBody": "客人预订并完成用餐后，你收取的金额会显示在这里。"
+  "earnings.emptyBody": "客人预订并完成用餐后，你收取的金额会显示在这里。",
+
+  "hostNew.quick.title": "里面有什么？",
+  "hostNew.quick.help": "点选适用项，客人会据此筛选。可在安全步骤中细调。",
+  "hostNew.quick.contains": "含有",
+  "hostNew.quick.suitable": "适合",
+  "hostNew.quick.meat": "肉类",
+  "hostNew.quick.unsure": "不确定",
+  "hostNew.quick.unsureHelp": "没关系：我们会根据描述建议过敏原，发布前由你确认。",
+  "hostNew.diningPhoto.title": "用餐地点照片",
+  "hostNew.diningPhoto.label": "客人用餐地点的照片",
+  "hostNew.diningPhoto.add": "添加照片",
+  "hostNew.diningPhoto.help": "必填。拍一张餐桌或房间的照片；会保存到你的资料中，下次直接使用。",
+  "hostNew.diningPhoto.helpSaved": "必填。选择已保存的照片或添加新照片。",
+  "hostNew.error.diningPhoto": "请添加客人用餐地点的照片。"
 }

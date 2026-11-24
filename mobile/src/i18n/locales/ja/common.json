@@ -127,5 +127,7 @@
   "errors.permission_photos": "Eateryの写真へのアクセスがオフです。設定でオンにできます。",
   "errors.openSettings": "設定を開く",
   "signInGate.title": "ログインして続ける",
-  "signInGate.body": "無料アカウントを作ると、席の予約、注文、ホスト、ホストとのチャットができます。"
+  "signInGate.body": "無料アカウントを作ると、席の予約、注文、ホスト、ホストとのチャットができます。",
+
+  "tag.keto": "ケト対応"
 }

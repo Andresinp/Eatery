@@ -138,5 +138,7 @@
   "errors.openSettings": "Hap Cilësimet",
 
   "signInGate.title": "Hyr për të vazhduar",
-  "signInGate.body": "Krijo një llogari falas për të rezervuar vende, porositur ushqim, pritur mysafirë dhe biseduar me mikpritësit."
+  "signInGate.body": "Krijo një llogari falas për të rezervuar vende, porositur ushqim, pritur mysafirë dhe biseduar me mikpritësit.",
+
+  "tag.keto": "Keto"
 }

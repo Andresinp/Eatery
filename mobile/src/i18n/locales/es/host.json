@@ -223,5 +223,19 @@
   "earnings.monthCollected": "{{amount}} cobrados",
   "earnings.monthUpcoming": "{{amount}} por cobrar",
   "earnings.emptyTitle": "Aún no hay ganancias",
-  "earnings.emptyBody": "Cuando los invitados reserven y los recibas, lo que cobres aparecerá aquí."
+  "earnings.emptyBody": "Cuando los invitados reserven y los recibas, lo que cobres aparecerá aquí.",
+
+  "hostNew.quick.title": "¿Qué lleva?",
+  "hostNew.quick.help": "Toca lo que aplique: los comensales filtran por esto. Puedes ajustarlo en el paso de seguridad.",
+  "hostNew.quick.contains": "Contiene",
+  "hostNew.quick.suitable": "Apto para",
+  "hostNew.quick.meat": "Carne",
+  "hostNew.quick.unsure": "No estoy seguro",
+  "hostNew.quick.unsureHelp": "Sin problema: sugeriremos alérgenos a partir de tu descripción y los revisas antes de publicar.",
+  "hostNew.diningPhoto.title": "Foto de donde se come",
+  "hostNew.diningPhoto.label": "Foto de donde comen los invitados",
+  "hostNew.diningPhoto.add": "Añadir foto",
+  "hostNew.diningPhoto.help": "Obligatoria. Una foto rápida de la mesa o la sala; se guarda en tu perfil para la próxima vez.",
+  "hostNew.diningPhoto.helpSaved": "Obligatoria. Elige una foto guardada o añade una nueva.",
+  "hostNew.error.diningPhoto": "Añade una foto de donde comerán los invitados."
 }

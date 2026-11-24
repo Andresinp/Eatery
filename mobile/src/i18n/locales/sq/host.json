@@ -223,5 +223,19 @@
   "earnings.monthCollected": "{{amount}} të arkëtuara",
   "earnings.monthUpcoming": "{{amount}} për t'u arkëtuar",
   "earnings.emptyTitle": "Ende pa të ardhura",
-  "earnings.emptyBody": "Kur mysafirët rezervojnë dhe i prit, ajo që arkëton shfaqet këtu."
+  "earnings.emptyBody": "Kur mysafirët rezervojnë dhe i prit, ajo që arkëton shfaqet këtu.",
+
+  "hostNew.quick.title": "Çfarë përmban?",
+  "hostNew.quick.help": "Prek atë që vlen: mysafirët filtrojnë sipas kësaj. Mund ta rregullosh te hapi i sigurisë.",
+  "hostNew.quick.contains": "Përmban",
+  "hostNew.quick.suitable": "I përshtatshëm për",
+  "hostNew.quick.meat": "Mish",
+  "hostNew.quick.unsure": "Nuk e di",
+  "hostNew.quick.unsureHelp": "S'ka problem: do të sugjerojmë alergjenë nga përshkrimi yt dhe i kontrollon para publikimit.",
+  "hostNew.diningPhoto.title": "Foto e vendit ku hahet",
+  "hostNew.diningPhoto.label": "Foto e vendit ku hanë mysafirët",
+  "hostNew.diningPhoto.add": "Shto foto",
+  "hostNew.diningPhoto.help": "E detyrueshme. Një foto e shpejtë e tavolinës ose dhomës; ruhet në profilin tënd për herën tjetër.",
+  "hostNew.diningPhoto.helpSaved": "E detyrueshme. Zgjidh një foto të ruajtur ose shto një të re.",
+  "hostNew.error.diningPhoto": "Shto një foto të vendit ku do të hanë mysafirët."
 }

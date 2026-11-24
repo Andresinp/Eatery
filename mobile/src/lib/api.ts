@@ -153,6 +153,7 @@ export type ListingInput = {
   meal_end_time?: string | null;
   seats_total?: number | null;
   dining_setting?: DiningSetting | null;
+  dining_setting_photos?: string[];
   drinks_included?: boolean;
   drinks?: string[];
   product_type_tags?: string[];
@@ -190,10 +191,11 @@ export type MyProfile = PublicProfile & {
   language: string;
   onboarded: boolean;
   notification_prefs: NotificationPrefs;
+  dining_place_photos: string[]; // the host's saved photos of where guests eat, newest first
 };
 
 export type ProfilePatch = Partial<
-  Pick<MyProfile, 'full_name' | 'avatar_url' | 'bio' | 'dietary_prefs' | 'allergen_exclusions' | 'language' | 'onboarded' | 'notification_prefs'>
+  Pick<MyProfile, 'full_name' | 'avatar_url' | 'bio' | 'dietary_prefs' | 'allergen_exclusions' | 'language' | 'onboarded' | 'notification_prefs' | 'dining_place_photos'>
 >;
 
 export type Order = {
@@ -375,6 +377,7 @@ export const api = {
       language: (row.language as string | null) ?? 'en',
       onboarded: !!row.onboarded,
       notification_prefs: { ...DEFAULT_PREFS, ...((row.notification_prefs as Partial<NotificationPrefs> | null) ?? {}) },
+      dining_place_photos: (row.dining_place_photos as string[] | null) ?? [],
     };
   },
 

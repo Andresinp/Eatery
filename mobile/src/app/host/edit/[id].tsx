@@ -93,7 +93,7 @@ function EditForm({ listing, address, userId }: Props) {
       <BasicsStep {...stepProps} isHeaderShown={false} />
       <Divider />
       <Heading>{isTable ? t('hostNew.when.titleTable') : t('hostNew.when.titleMarket')}</Heading>
-      <WhenStep {...stepProps} minUnits={Math.max(0, booked)} isHeaderShown={false} />
+      <WhenStep {...stepProps} userId={userId} minUnits={Math.max(0, booked)} isHeaderShown={false} />
       <Divider />
       <Heading>{t('hostNew.where.title')}</Heading>
       <WhereStep {...stepProps} isHeaderShown={false} />

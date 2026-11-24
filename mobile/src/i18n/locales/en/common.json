@@ -138,5 +138,7 @@
   "errors.openSettings": "Open Settings",
 
   "signInGate.title": "Sign in to continue",
-  "signInGate.body": "Create a free account to book seats, order food, host and chat with hosts."
+  "signInGate.body": "Create a free account to book seats, order food, host and chat with hosts.",
+
+  "tag.keto": "Keto-friendly"
 }

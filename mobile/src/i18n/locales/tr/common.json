@@ -138,5 +138,7 @@
   "errors.openSettings": "Ayarlar'ı aç",
 
   "signInGate.title": "Devam etmek için giriş yap",
-  "signInGate.body": "Yer ayırtmak, yemek sipariş etmek, ev sahipliği yapmak ve ev sahipleriyle yazışmak için ücretsiz hesap aç."
+  "signInGate.body": "Yer ayırtmak, yemek sipariş etmek, ev sahipliği yapmak ve ev sahipleriyle yazışmak için ücretsiz hesap aç.",
+
+  "tag.keto": "Keto dostu"
 }

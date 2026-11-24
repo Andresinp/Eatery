@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: space.md,
     paddingTop: space.md,
-    alignItems: 'flex-end',
+    alignItems: 'stretch', // every card as tall as the tallest
   }, // top room for the card shadow
   gap: { width: GAP },
 });

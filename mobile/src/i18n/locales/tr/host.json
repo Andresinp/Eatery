@@ -223,5 +223,19 @@
   "earnings.monthCollected": "{{amount}} tahsil edildi",
   "earnings.monthUpcoming": "{{amount}} tahsil edilecek",
   "earnings.emptyTitle": "Henüz kazanç yok",
-  "earnings.emptyBody": "Misafirler rezervasyon yapıp onları ağırladıktan sonra tahsil ettiklerin burada görünür."
+  "earnings.emptyBody": "Misafirler rezervasyon yapıp onları ağırladıktan sonra tahsil ettiklerin burada görünür.",
+
+  "hostNew.quick.title": "İçinde ne var?",
+  "hostNew.quick.help": "Geçerli olanlara dokun; misafirler buna göre filtreler. Güvenlik adımında ayrıntılandırabilirsin.",
+  "hostNew.quick.contains": "İçerir",
+  "hostNew.quick.suitable": "Uygun",
+  "hostNew.quick.meat": "Et",
+  "hostNew.quick.unsure": "Emin değilim",
+  "hostNew.quick.unsureHelp": "Sorun değil: açıklamandan alerjen önereceğiz, yayınlamadan önce kontrol edersin.",
+  "hostNew.diningPhoto.title": "Yemek yenecek yerin fotoğrafı",
+  "hostNew.diningPhoto.label": "Misafirlerin yemek yediği yerin fotoğrafı",
+  "hostNew.diningPhoto.add": "Fotoğraf ekle",
+  "hostNew.diningPhoto.help": "Zorunlu. Masanın ya da odanın hızlı bir fotoğrafı; bir dahaki sefere profilinde saklanır.",
+  "hostNew.diningPhoto.helpSaved": "Zorunlu. Kayıtlı bir fotoğraf seç ya da yenisini ekle.",
+  "hostNew.error.diningPhoto": "Misafirlerin yemek yiyeceği yerin fotoğrafını ekle."
 }

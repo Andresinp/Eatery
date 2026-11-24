@@ -237,5 +237,19 @@
   "earnings.monthCollected": "Получено: {{amount}}",
   "earnings.monthUpcoming": "К получению: {{amount}}",
   "earnings.emptyTitle": "Дохода пока нет",
-  "earnings.emptyBody": "Когда гости забронируют и ты их примешь, полученное появится здесь."
+  "earnings.emptyBody": "Когда гости забронируют и ты их примешь, полученное появится здесь.",
+
+  "hostNew.quick.title": "Что в составе?",
+  "hostNew.quick.help": "Отметьте нужное — гости фильтруют по этому. Уточнить можно на шаге безопасности.",
+  "hostNew.quick.contains": "Содержит",
+  "hostNew.quick.suitable": "Подходит для",
+  "hostNew.quick.meat": "Мясо",
+  "hostNew.quick.unsure": "Не уверен",
+  "hostNew.quick.unsureHelp": "Ничего страшного: мы предложим аллергены по описанию, а вы проверите их перед публикацией.",
+  "hostNew.diningPhoto.title": "Фото места, где едят",
+  "hostNew.diningPhoto.label": "Фото места, где едят гости",
+  "hostNew.diningPhoto.add": "Добавить фото",
+  "hostNew.diningPhoto.help": "Обязательно. Быстрое фото стола или комнаты; сохранится в профиле на следующий раз.",
+  "hostNew.diningPhoto.helpSaved": "Обязательно. Выберите сохранённое фото или добавьте новое.",
+  "hostNew.error.diningPhoto": "Добавьте фото места, где будут есть гости."
 }

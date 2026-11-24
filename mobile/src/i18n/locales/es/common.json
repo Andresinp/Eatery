@@ -138,5 +138,7 @@
   "errors.openSettings": "Abrir Ajustes",
 
   "signInGate.title": "Entra para continuar",
-  "signInGate.body": "Crea una cuenta gratis para reservar plazas, pedir comida, ser anfitrión y chatear con anfitriones."
+  "signInGate.body": "Crea una cuenta gratis para reservar plazas, pedir comida, ser anfitrión y chatear con anfitriones.",
+
+  "tag.keto": "Apto keto"
 }

@@ -138,5 +138,7 @@
   "errors.openSettings": "Ouvrir les Réglages",
 
   "signInGate.title": "Connecte-toi pour continuer",
-  "signInGate.body": "Crée un compte gratuit pour réserver des places, commander à manger, être hôte et discuter avec les hôtes."
+  "signInGate.body": "Crée un compte gratuit pour réserver des places, commander à manger, être hôte et discuter avec les hôtes.",
+
+  "tag.keto": "Compatible keto"
 }

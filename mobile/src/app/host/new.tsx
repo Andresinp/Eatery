@@ -3,7 +3,8 @@ import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useReducer, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
+import { KeyboardAwareScrollView, type KeyboardAwareScrollViewRef } from 'react-native-keyboard-controller';
 
 import { BasicsStep } from '@/components/host/basics-step';
 import { DraftPreview } from '@/components/host/listing-cards';
@@ -13,7 +14,7 @@ import { SafetyStep } from '@/components/host/safety-step';
 import { TypeStep } from '@/components/host/type-step';
 import { WhenStep } from '@/components/host/when-step';
 import { WhereStep } from '@/components/host/where-step';
-import { Button, errorMessage, Header, Screen, SignInGate, Small } from '@/components/ui';
+import { Button, errorMessage, FOOTER_KEYBOARD_GAP, Header, Screen, SignInGate, Small } from '@/components/ui';
 import { api } from '@/lib/api';
 import { defaultCurrency } from '@/lib/host-currency';
 import { draftReducer, draftToInput, emptyDraft, validateStep, WIZARD_STEPS, type StepErrors } from '@/lib/host-draft';
@@ -31,7 +32,7 @@ export default function NewListing() {
   const [publishError, setPublishError] = useState<string | null>(null);
   // One key per wizard: a double tap or a retry after a timeout returns the same listing.
   const idempotencyKey = useRef(Crypto.randomUUID()).current;
-  const scroll = useRef<ScrollViewInstance>(null);
+  const scroll = useRef<KeyboardAwareScrollViewRef>(null);
   const { draft, isDirty } = state;
   const step = WIZARD_STEPS[stepIndex] ?? 'type';
   const isLast = stepIndex === WIZARD_STEPS.length - 1;
@@ -63,7 +64,7 @@ export default function NewListing() {
   };
 
   const handleNext = () => {
-    const found = validateStep(step, draft, t, { minUnits: 0, isTimeChecked: true });
+    const found = validateStep(step, draft, t, { minUnits: 0, isTimeChecked: true, isDiningPhotoRequired: true });
     if (Object.keys(found).length > 0) {
       setErrors(found);
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
@@ -75,7 +76,7 @@ export default function NewListing() {
   const handlePublish = async () => {
     // The start may have slipped into the past while the host was on later steps.
     for (const [index, id] of WIZARD_STEPS.entries()) {
-      const found = validateStep(id, draft, t, { minUnits: 0, isTimeChecked: true });
+      const found = validateStep(id, draft, t, { minUnits: 0, isTimeChecked: true, isDiningPhotoRequired: true });
       if (Object.keys(found).length > 0) {
         goTo(index);
         setErrors(found);
@@ -130,8 +131,9 @@ export default function NewListing() {
           </View>
         </View>
       }>
-      <ScrollView
+      <KeyboardAwareScrollView
         ref={scroll}
+        bottomOffset={FOOTER_KEYBOARD_GAP}
         style={styles.flex}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
@@ -140,12 +142,12 @@ export default function NewListing() {
         {step === 'type' ? <TypeStep {...stepProps} /> : null}
         {step === 'photos' ? <PhotosStep {...stepProps} userId={userId} /> : null}
         {step === 'basics' ? <BasicsStep {...stepProps} /> : null}
-        {step === 'when' ? <WhenStep {...stepProps} /> : null}
+        {step === 'when' ? <WhenStep {...stepProps} userId={userId} /> : null}
         {step === 'where' ? <WhereStep {...stepProps} /> : null}
         {step === 'safety' ? <SafetyStep {...stepProps} /> : null}
         {step === 'price' ? <PriceStep {...stepProps} /> : null}
         {step === 'review' ? <DraftPreview draft={draft} /> : null}
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </Screen>
   );
 }

@@ -238,5 +238,19 @@
   "earnings.monthCollected": "تم تحصيل {{amount}}",
   "earnings.monthUpcoming": "{{amount}} مستحقة التحصيل",
   "earnings.emptyTitle": "لا أرباح بعد",
-  "earnings.emptyBody": "بعد أن يحجز الضيوف وتستضيفهم، سيظهر هنا ما حصّلته."
+  "earnings.emptyBody": "بعد أن يحجز الضيوف وتستضيفهم، سيظهر هنا ما حصّلته.",
+
+  "hostNew.quick.title": "ماذا يحتوي؟",
+  "hostNew.quick.help": "اضغط على ما ينطبق، فالضيوف يصفّون حسبه. يمكنك ضبطه في خطوة السلامة.",
+  "hostNew.quick.contains": "يحتوي على",
+  "hostNew.quick.suitable": "مناسب لـ",
+  "hostNew.quick.meat": "لحم",
+  "hostNew.quick.unsure": "لست متأكدًا",
+  "hostNew.quick.unsureHelp": "لا مشكلة: سنقترح مسببات الحساسية من وصفك، وتراجعها قبل النشر.",
+  "hostNew.diningPhoto.title": "صورة مكان الأكل",
+  "hostNew.diningPhoto.label": "صورة المكان الذي يأكل فيه الضيوف",
+  "hostNew.diningPhoto.add": "إضافة صورة",
+  "hostNew.diningPhoto.help": "مطلوبة. صورة سريعة للطاولة أو الغرفة؛ تُحفظ في ملفك للمرة القادمة.",
+  "hostNew.diningPhoto.helpSaved": "مطلوبة. اختر صورة محفوظة أو أضف صورة جديدة.",
+  "hostNew.error.diningPhoto": "أضف صورة للمكان الذي سيأكل فيه الضيوف."
 }

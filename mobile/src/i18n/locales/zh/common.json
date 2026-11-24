@@ -127,5 +127,7 @@
   "errors.permission_photos": "Eatery 的照片权限已关闭。你可以在设置中开启。",
   "errors.openSettings": "打开设置",
   "signInGate.title": "登录后继续",
-  "signInGate.body": "创建免费账号，即可订位、点餐、开桌，还能和主人聊天。"
+  "signInGate.body": "创建免费账号，即可订位、点餐、开桌，还能和主人聊天。",
+
+  "tag.keto": "生酮友好"
 }

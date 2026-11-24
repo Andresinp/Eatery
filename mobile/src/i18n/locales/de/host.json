@@ -223,5 +223,19 @@
   "earnings.monthCollected": "{{amount}} kassiert",
   "earnings.monthUpcoming": "{{amount}} einzukassieren",
   "earnings.emptyTitle": "Noch keine Einnahmen",
-  "earnings.emptyBody": "Sobald Gäste buchen und du sie bewirtest, erscheint hier, was du einnimmst."
+  "earnings.emptyBody": "Sobald Gäste buchen und du sie bewirtest, erscheint hier, was du einnimmst.",
+
+  "hostNew.quick.title": "Was ist drin?",
+  "hostNew.quick.help": "Tippe an, was zutrifft – Gäste filtern danach. Im Sicherheitsschritt kannst du es anpassen.",
+  "hostNew.quick.contains": "Enthält",
+  "hostNew.quick.suitable": "Geeignet für",
+  "hostNew.quick.meat": "Fleisch",
+  "hostNew.quick.unsure": "Weiß nicht",
+  "hostNew.quick.unsureHelp": "Kein Problem: Wir schlagen Allergene anhand deiner Beschreibung vor, du prüfst sie vor dem Veröffentlichen.",
+  "hostNew.diningPhoto.title": "Foto vom Essplatz",
+  "hostNew.diningPhoto.label": "Foto vom Essplatz der Gäste",
+  "hostNew.diningPhoto.add": "Foto hinzufügen",
+  "hostNew.diningPhoto.help": "Pflicht. Ein schnelles Foto vom Tisch oder Raum; es wird für das nächste Mal in deinem Profil gespeichert.",
+  "hostNew.diningPhoto.helpSaved": "Pflicht. Wähle ein gespeichertes Foto oder füge ein neues hinzu.",
+  "hostNew.error.diningPhoto": "Füge ein Foto vom Essplatz der Gäste hinzu."
 }

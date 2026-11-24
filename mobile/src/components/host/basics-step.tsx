@@ -6,9 +6,9 @@ import { StyleSheet, View } from 'react-native';
 import { Icon } from '@/components/icons';
 import { Body, Button, Chip, ChipGroup, Field, Gap, Section, Small, Title, tagLabel } from '@/components/ui';
 import { api } from '@/lib/api';
-import { DESCRIPTION_MAX, TITLE_MAX, toggle } from '@/lib/host-draft';
+import { DESCRIPTION_MAX, isQuickSelected, quickToggle, TITLE_MAX, toggle } from '@/lib/host-draft';
 import { logError } from '@/lib/log';
-import { CUISINES, PRODUCT_TYPES } from '@/lib/vocab';
+import { CUISINES, PRODUCT_TYPES, QUICK_CONTAINS, QUICK_SUITABLE } from '@/lib/vocab';
 import { i18n } from '@/i18n';
 import { colors, space } from '@/theme';
 
@@ -95,6 +95,39 @@ export function BasicsStep({ draft, dispatch, errors, isHeaderShown = true }: Pr
         {hasWriteFailed ? <Small style={styles.error}>{t('hostNew.basics.writeFailed')}</Small> : null}
       </View>
 
+      <Section label={t('hostNew.quick.title')} help={t('hostNew.quick.help')}>
+        <Small style={styles.groupLabel}>{t('hostNew.quick.contains')}</Small>
+        <ChipGroup>
+          {QUICK_CONTAINS.map((value) => (
+            <Chip
+              key={value}
+              tone="danger"
+              title={value === 'Meat' ? t('hostNew.quick.meat') : tagLabel(value)}
+              isSelected={isQuickSelected(draft, value)}
+              onPress={() => dispatch({ type: 'set', patch: quickToggle(draft, value) })}
+            />
+          ))}
+        </ChipGroup>
+        <Small style={styles.groupLabel}>{t('hostNew.quick.suitable')}</Small>
+        <ChipGroup>
+          {QUICK_SUITABLE.map((value) => (
+            <Chip
+              key={value}
+              tone="leaf"
+              title={tagLabel(value)}
+              isSelected={isQuickSelected(draft, value)}
+              onPress={() => dispatch({ type: 'set', patch: quickToggle(draft, value) })}
+            />
+          ))}
+          <Chip
+            title={t('hostNew.quick.unsure')}
+            isSelected={draft.isContentsUnsure}
+            onPress={() => dispatch({ type: 'set', patch: { isContentsUnsure: !draft.isContentsUnsure } })}
+          />
+        </ChipGroup>
+        {draft.isContentsUnsure ? <Small style={styles.faint}>{t('hostNew.quick.unsureHelp')}</Small> : null}
+      </Section>
+
       <Section label={isTable ? t('hostNew.basics.cuisine') : t('hostNew.basics.productType')}>
         <ChipGroup>
           {vocab.map((tag) => (
@@ -127,5 +160,6 @@ export function BasicsStep({ draft, dispatch, errors, isHeaderShown = true }: Pr
 const styles = StyleSheet.create({
   writeRow: { alignItems: 'flex-start', gap: space.xs },
   faint: { color: colors.textFaint },
+  groupLabel: { color: colors.textMuted, marginBottom: space.xs, marginTop: space.xs },
   error: { color: colors.danger },
 });

@@ -11,6 +11,7 @@ import { DINING_SETTINGS, DRINKS } from '@/lib/vocab';
 import { i18n } from '@/i18n';
 import { colors, fonts, radius, space } from '@/theme';
 
+import { DiningPhotoPicker } from './dining-photo';
 import { diningLabel } from './labels';
 import type { StepProps } from './types';
 
@@ -66,9 +67,9 @@ export function DateTimeRow({ label, value, mode, onChange, minimumDate, error }
   );
 }
 
-type Props = StepProps & { minUnits?: number; isHeaderShown?: boolean };
+type Props = StepProps & { userId: string; minUnits?: number; isHeaderShown?: boolean };
 
-export function WhenStep({ draft, dispatch, errors, minUnits = 0, isHeaderShown = true }: Props) {
+export function WhenStep({ draft, dispatch, errors, userId, minUnits = 0, isHeaderShown = true }: Props) {
   const { t } = useTranslation();
   const isTable = draft.listingType === 'table';
   const today = new Date();
@@ -153,6 +154,9 @@ export function WhenStep({ draft, dispatch, errors, minUnits = 0, isHeaderShown 
                 />
               ))}
             </ChipGroup>
+          </Section>
+          <Section label={t('hostNew.diningPhoto.title')}>
+            <DiningPhotoPicker photo={draft.diningPhoto} dispatch={dispatch} userId={userId} error={errors.diningPhoto} />
           </Section>
           <Section label={t('hostNew.when.drinks')}>
             <ToggleRow
