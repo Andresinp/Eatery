@@ -13,7 +13,8 @@ Vite web app in `src/` and the native iOS/Android app in `mobile/` (Expo).
 - Native: `mobile/` — Expo SDK 58, React Native 0.88, Expo Router (typed routes), React Compiler,
   MapLibre (OpenFreeMap tiles, no key), Stripe PaymentSheet, Expo push. `mobile/AGENTS.md` is
   Expo's own guidance for this SDK — read it before touching any Expo API.
-- Server: Supabase project `pgbyxglxpcckvygtlhgo` ("Eatery", Seoul). SQL in `supabase/migrations/`,
+- Server: Supabase project `pgbyxglxpcckvygtlhgo` ("Eatery", Seoul), in the apieschacong@unal.edu.co
+  organization since 2026-11-24 (Andresinp is a Developer there; free plan, 2 active projects). SQL in `supabase/migrations/`,
   Edge Functions in `supabase/functions/` (shared code in `_shared/`).
 
 ## Commands

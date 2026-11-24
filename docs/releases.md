@@ -8,7 +8,9 @@ greppable and Actions artifacts expire after 90 days, so this file is the record
 `~/.eatery-signing/` (chmod 700): `eatery-upload.keystore` + `credentials.properties` (Android
 upload key — Google must reset it if lost), and later the APNs key `AuthKey_<id>.p8` (cannot be
 re-downloaded). Keep an encrypted copy off the Mac (password manager with attachments).
-**A CI secret is not a backup.** Not yet created — see "Before the first release".
+**A CI secret is not a backup.** Upload keystore created 2026-11-24 (alias `eatery-upload`); the
+App Review and demo-host logins are in `review-account.txt` in the same folder. Copy the folder
+off the Mac.
 
 ## Cutting a release (local, no EAS build)
 
@@ -44,4 +46,5 @@ uploading. TestFlight first; App Store submission is a separate step.
 
 | Date | Channel | Version (build) | What a user would notice |
 |---|---|---|---|
-| — | — | — | not released yet |
+| 2026-11-24 | TestFlight (internal group "Team") | 1.0.0 (1) | first native build, against the live project |
+| 2026-11-24 | Play internal testing | 1.0.0 (1) | AAB built and signed; upload pending (106 MB, by hand) |
