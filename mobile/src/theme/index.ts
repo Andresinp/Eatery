@@ -20,6 +20,9 @@ export const colors = {
   leafDeep: '#4E9A3A',
   leafInk: '#1F3A12',
   leafSoft: '#E5F3DF',
+  // Market pins on the map (the web app's bordeaux dot with a kraft bag on a beige placemat).
+  bordeaux: '#7D1D2E',
+  placemat: '#EDD9B5',
   danger: '#C2410C',
   dangerSoft: '#FDE7DC',
   onPhoto: '#FFFFFF',

@@ -23,6 +23,7 @@ import { useAsync } from '@/lib/use-async';
 import { colors, radius, shadow, space } from '@/theme';
 
 const NO_ALLERGENS: string[] = [];
+const SAME_TAP_MS = 400;
 const PREVIEW_BOTTOM = space.xl; // leaves MapLibre's attribution button visible under the card
 
 export default function ExploreScreen() {
@@ -36,27 +37,27 @@ export default function ExploreScreen() {
 
   const [mode, setMode] = useState<'map' | 'list'>('map');
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  // The first camera position: the last saved centre, else the device (if already allowed), else
-  // the default. Null while that is being worked out.
-  const [initialCenter, setInitialCenter] = useState<LngLatPair | null>(() => savedCenter());
+  // The first camera position: the last saved centre, else the default. The map shows at once;
+  // the device position (if location is already allowed) arrives later and the camera flies there.
+  // Waiting for it first left the screen on a spinner for a minute when a fix was slow.
+  const [initialCenter] = useState<LngLatPair>(() => savedCenter() ?? DEFAULT_MAP_CENTER);
+  const hasSavedCenter = useRef(savedCenter() !== null);
   const [center, setCenter] = useState<LngLatPair | null>(initialCenter);
   const [userPosition, setUserPosition] = useState<LngLatPair | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const cameraRef = useRef<CameraRef>(null);
+  const isPinTap = useRef(false);
   const isFirstFocus = useRef(true);
 
   useEffect(() => {
     let isActive = true;
     positionIfAllowed().then(
       (position) => {
-        if (!isActive) return;
-        if (position) setUserPosition(position);
-        setInitialCenter((prev) => prev ?? position ?? DEFAULT_MAP_CENTER);
+        if (!isActive || !position) return;
+        setUserPosition(position);
+        if (!hasSavedCenter.current) cameraRef.current?.flyTo({ center: position, zoom: DEFAULT_ZOOM, duration: 800 });
       },
-      (error: unknown) => {
-        logError('explore: position on open', error);
-        if (isActive) setInitialCenter((prev) => prev ?? DEFAULT_MAP_CENTER);
-      },
+      (error: unknown) => logError('explore: position on open', error),
     );
     return () => {
       isActive = false;
@@ -81,7 +82,7 @@ export default function ExploreScreen() {
 
   const visible = all ? applyFilters(all, filters, myAllergens, new Date()) : [];
   const selected = visible.find((l) => l.id === selectedId) ?? null;
-  const origin = userPosition ?? center ?? initialCenter ?? DEFAULT_MAP_CENTER;
+  const origin = userPosition ?? center ?? initialCenter;
   const distanceTo = (l: Listing) => distanceKm({ lat: origin[1], lng: origin[0] }, { lat: l.location_lat, lng: l.location_lng });
   const sorted = mode === 'list' ? visible.map((l) => ({ listing: l, km: distanceTo(l) })).sort((a, b) => a.km - b.km) : [];
   const filterCount = activeFilterCount(filters);
@@ -89,12 +90,21 @@ export default function ExploreScreen() {
   const openListing = (id: string) => router.push({ pathname: '/listing/[id]', params: { id } });
 
   const handleMarkerPress = (id: string) => {
+    isPinTap.current = true;
+    setTimeout(() => {
+      isPinTap.current = false;
+    }, SAME_TAP_MS);
     setSelectedId(id);
     Haptics.selectionAsync().catch((error: unknown) => logError('explore: haptics', error));
   };
 
-  // Marker taps take precedence over the map's own tap natively, so a map tap means "deselect".
-  const handleMapPress = () => setSelectedId(null);
+  // A tap on a pin also reaches the map a few milliseconds later (seen on Android 16 with
+  // MapLibre 11.5), which used to deselect the pin straight away so nothing ever showed. A map tap
+  // right after a pin tap is the same gesture; any other map tap means "deselect".
+  const handleMapPress = () => {
+    if (isPinTap.current) return;
+    setSelectedId(null);
+  };
 
   const handleRegionDidChange = (event: NativeSyntheticEvent<ViewStateChangeEvent>) => {
     const next = event.nativeEvent.center;
@@ -152,34 +162,30 @@ export default function ExploreScreen() {
 
   return (
     <View style={styles.screen}>
-      {initialCenter ? (
-        <Map
-          style={StyleSheet.absoluteFill}
-          mapStyle={MAP_STYLE_URL}
-          attribution
-          attributionPosition={{ bottom: space.sm, left: space.sm }}
-          logo={false}
-          compass={false}
-          tintColor={colors.amberDeep}
-          onPress={handleMapPress}
-          onRegionDidChange={handleRegionDidChange}
-          accessibilityLabel={t('explore.mapLabel')}>
-          <Camera ref={cameraRef} initialViewState={{ center: initialCenter, zoom: DEFAULT_ZOOM }} />
-          {userPosition ? <UserLocation /> : null}
-          {visible.map((listing) => (
-            <Marker
-              key={listing.id}
-              id={listing.id}
-              lngLat={[listing.location_lng, listing.location_lat]}
-              onPress={() => handleMarkerPress(listing.id)}
-              accessibilityLabel={listing.title}>
-              <PriceMarker listing={listing} isSelected={listing.id === selectedId} />
-            </Marker>
-          ))}
-        </Map>
-      ) : (
-        <Loading />
-      )}
+      <Map
+        style={StyleSheet.absoluteFill}
+        mapStyle={MAP_STYLE_URL}
+        attribution
+        attributionPosition={{ bottom: space.sm, left: space.sm }}
+        logo={false}
+        compass={false}
+        tintColor={colors.amberDeep}
+        onPress={handleMapPress}
+        onRegionDidChange={handleRegionDidChange}
+        accessibilityLabel={t('explore.mapLabel')}>
+        <Camera ref={cameraRef} initialViewState={{ center: initialCenter, zoom: DEFAULT_ZOOM }} />
+        {userPosition ? <UserLocation /> : null}
+        {visible.map((listing) => (
+          <Marker
+            key={listing.id}
+            id={listing.id}
+            lngLat={[listing.location_lng, listing.location_lat]}
+            onPress={() => handleMarkerPress(listing.id)}
+            accessibilityLabel={listing.title}>
+            <PriceMarker listing={listing} isSelected={listing.id === selectedId} />
+          </Marker>
+        ))}
+      </Map>
 
       {mode === 'list' ? (
         <View style={[StyleSheet.absoluteFill, styles.listLayer]}>
@@ -226,7 +232,7 @@ export default function ExploreScreen() {
         />
       </View>
 
-      {mode === 'map' && listings.status === 'loading' && initialCenter ? (
+      {mode === 'map' && listings.status === 'loading' ? (
         <View style={[styles.statusPill, { top: insets.top + 76 }]} accessibilityLabel={t('common.loading')}>
           <ActivityIndicator color={colors.amberDeep} />
         </View>
@@ -240,7 +246,7 @@ export default function ExploreScreen() {
 
       {mode === 'map' && all !== null && visible.length === 0 ? <View style={styles.floatingCard}>{emptyState}</View> : null}
 
-      <View style={[styles.fabs, { bottom: selected && mode === 'map' ? PREVIEW_BOTTOM + 150 : PREVIEW_BOTTOM }]} pointerEvents="box-none">
+      <View style={[styles.fabs, { bottom: selected && mode === 'map' ? PREVIEW_BOTTOM + 260 : PREVIEW_BOTTOM }]} pointerEvents="box-none">
         {mode === 'map' ? (
           isLocating ? (
             <View style={styles.fabBusy}>
@@ -260,7 +266,13 @@ export default function ExploreScreen() {
 
       {mode === 'map' && selected ? (
         <View style={styles.preview}>
-          <ListingPreview listing={selected} allergens={matchingAllergens(selected, myAllergens)} onPress={() => openListing(selected.id)} />
+          <ListingPreview
+            listing={selected}
+            allergens={matchingAllergens(selected, myAllergens)}
+            distanceKm={userPosition ? distanceTo(selected) : null}
+            onPress={() => openListing(selected.id)}
+            onClose={() => setSelectedId(null)}
+          />
         </View>
       ) : null}
     </View>
