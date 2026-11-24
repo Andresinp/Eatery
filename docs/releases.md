@@ -38,7 +38,9 @@ uploading. TestFlight first; App Store submission is a separate step.
 2. Stripe publishable key in the root `.env`; Apple Pay merchant id `merchant.com.andresinp.eatery`
    registered and its certificate uploaded to Stripe; merchant country set in the app.
 3. Sign in with Apple enabled for the bundle id and in Supabase Auth; Google OAuth clients.
-4. EAS project id for push (`EXPO_PUBLIC_EAS_PROJECT_ID`), APNs key uploaded to Expo.
+4. EAS project id for push (`EXPO_PUBLIC_EAS_PROJECT_ID`, Expo project `@andresinp/eatery`,
+   created 2026-11-25), APNs key generated and assigned through `eas credentials -p ios` (kept on Expo;
+   `mobile/eas.json` exists only so that command runs — builds stay local).
 5. Legal pages live (privacy, terms, support, account deletion).
 6. Demo account for App Review with a host listing and a past booking.
 
@@ -55,3 +57,4 @@ uploading. TestFlight first; App Store submission is a separate step.
 | 2026-11-24 | TestFlight (internal group "Team") | 1.0.0 (6) | listing map opens on the saved spot (was left on the default city); readable red chips; venue-photo error clears once a photo is chosen |
 | 2026-11-24 | TestFlight (internal group "Team") | 1.0.0 (7) | booking deposits work (Stripe test mode, separate Eatery Stripe account); first build for App Review |
 | 2026-11-24 | App Store review | 1.0.0 (7) | submitted; status "Waiting for Review" (demo account demo@eatery.com, China mainland excluded) |
+| 2026-11-25 | TestFlight (internal group "Team") | 1.0.0 (8) | push notifications on (bookings, messages, reminders); booking closes 30 min before a meal or pickup ends (needs migration 0009, live) |
