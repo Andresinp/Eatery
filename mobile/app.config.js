@@ -45,7 +45,7 @@ module.exports = {
     backgroundColor: CREAM,
     ios: {
       bundleIdentifier: 'com.andresinp.eatery',
-      buildNumber: '1',
+      buildNumber: '2',
       supportsTablet: false,
       appleTeamId: 'SKGWY35456',
       usesAppleSignIn: true,
@@ -56,7 +56,7 @@ module.exports = {
     },
     android: {
       package: 'com.andresinp.eatery',
-      versionCode: 1,
+      versionCode: 2,
       adaptiveIcon: {
         backgroundColor: BRAND,
         foregroundImage: './assets/images/android-icon-foreground.png',
