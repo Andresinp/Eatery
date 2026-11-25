@@ -58,3 +58,4 @@ uploading. TestFlight first; App Store submission is a separate step.
 | 2026-11-24 | TestFlight (internal group "Team") | 1.0.0 (7) | booking deposits work (Stripe test mode, separate Eatery Stripe account); first build for App Review |
 | 2026-11-24 | App Store review | 1.0.0 (7) | submitted; status "Waiting for Review" (demo account demo@eatery.com, China mainland excluded) |
 | 2026-11-25 | TestFlight (internal group "Team") | 1.0.0 (8) | push notifications on (bookings, messages, reminders); booking closes 30 min before a meal or pickup ends (needs migration 0009, live) |
+| 2026-11-25 | Play internal testing (list "Eatery") | 1.0.0 (8) | first Android release to testers, same features as iOS build 8; Android push still needs Firebase (FCM). Join: https://play.google.com/apps/internaltest/4700439458674839662 |
