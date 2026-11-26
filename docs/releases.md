@@ -45,6 +45,9 @@ uploading. TestFlight first; App Store submission is a separate step.
 4. EAS project id for push (`EXPO_PUBLIC_EAS_PROJECT_ID`, Expo project `@andresinp/eatery`,
    created 2026-11-25), APNs key generated and assigned through `eas credentials -p ios` (kept on Expo;
    `mobile/eas.json` exists only so that command runs — builds stay local).
+   Android push: Firebase project `eatery-90cd7` (andresinp@gmail.com), `mobile/google-services.json`
+   committed; FCM V1 service-account key in `~/.eatery-signing/` and assigned on Expo through
+   `npx eas-cli credentials -p android` (2026-11-26). First Android build with it: 9.
 5. Legal pages live (privacy, terms, support, account deletion).
 6. Demo account for App Review with a host listing and a past booking.
 
