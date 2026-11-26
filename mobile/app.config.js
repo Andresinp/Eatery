@@ -58,7 +58,7 @@ module.exports = {
       package: 'com.andresinp.eatery',
       // Firebase project eatery-90cd7: FCM for Android push (not secret, ships in the app)
       googleServicesFile: './google-services.json',
-      versionCode: 8,
+      versionCode: 9,
       adaptiveIcon: {
         backgroundColor: BRAND,
         foregroundImage: './assets/images/android-icon-foreground.png',
