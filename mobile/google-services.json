@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "715055435393",
+    "project_id": "eatery-90cd7",
+    "storage_bucket": "eatery-90cd7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:715055435393:android:1b0c9d21ab5c18f0d70780",
+        "android_client_info": {
+          "package_name": "com.andresinp.eatery"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDvrg2lt1rXeZwaeXuHUOYAJKt6m3CbRdA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
