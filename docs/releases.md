@@ -35,6 +35,10 @@ uploading. TestFlight first; App Store submission is a separate step.
 1. Supabase project restored; `supabase db push` of 0006; functions deployed; secrets set
    (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `PUSH_WEBHOOK_SECRET`, `ANTHROPIC_API_KEY`);
    `private.secrets` rows for push; Stripe webhook endpoint added.
+   Live mode: Eatery account activated 2026-11-26 and the webhook imported into live (same URL,
+   same two events). The functions read one key pair, so switching `STRIPE_SECRET_KEY` and
+   `STRIPE_WEBHOOK_SECRET` to live breaks payments in every build that still carries `pk_test_`:
+   flip them only when the first live-key build is released.
 2. Stripe publishable key in the root `.env`; Apple Pay merchant id `merchant.com.andresinp.eatery`
    registered and its certificate uploaded to Stripe; merchant country set in the app.
 3. Sign in with Apple enabled for the bundle id and in Supabase Auth; Google OAuth clients.
